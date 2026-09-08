@@ -1,0 +1,38 @@
+name: Aclaración de requisito
+description: Registrar una duda, contradicción o decisión pendiente de los documentos fuente.
+title: "[Requisito]: "
+labels:
+  - requirements
+body:
+  - type: markdown
+    attributes:
+      value: No incluyas datos personales ni enlaces operativos.
+  - type: input
+    id: source
+    attributes:
+      label: Fuente y sección
+      description: Documento, encabezado y, si aplica, página del PDF.
+      placeholder: "Kit de inicio > Especificaciones del registro"
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Pregunta o contradicción
+      description: Explica qué no está definido o qué fuentes difieren.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impacto
+      description: ¿Qué parte de la planeación o implementación queda bloqueada?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterio para cerrar
+      description: ¿Qué decisión o evidencia permitirá considerar resuelto el issue?
+    validations:
+      required: true

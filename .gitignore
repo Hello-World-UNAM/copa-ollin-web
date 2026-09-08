@@ -1,0 +1,22 @@
+# Material operativo y datos no publicables
+.private/
+
+# Variables locales y credenciales
+.env
+.env.*
+!.env.example
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dependencias y resultados de compilacion futuros
+node_modules/
+dist/
+.astro/
+.vercel/
+coverage/

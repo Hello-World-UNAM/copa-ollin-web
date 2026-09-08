@@ -1,0 +1,34 @@
+name: Tarea
+description: Proponer un cambio pequeño y verificable en el proyecto.
+title: "[Tarea]: "
+body:
+  - type: markdown
+    attributes:
+      value: Antes de crearla, confirma que no existe otra tarea con el mismo objetivo.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objetivo
+      description: Describe el resultado, no solamente la actividad.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Enlaza requisitos, decisiones o issues relacionados.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      description: Escribe una lista de resultados observables y verificables.
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Fuera de alcance
+      description: Aclara qué no debe incluir esta tarea.

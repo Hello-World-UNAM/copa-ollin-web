@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Reporte privado de seguridad
+    url: https://github.com/Hello-World-UNAM/copa-ollin-web/security/advisories/new
+    about: No publiques vulnerabilidades ni datos personales en un issue.
