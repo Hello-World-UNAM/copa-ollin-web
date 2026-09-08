@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="assets/brand/crofito.png" alt="CROFITO, mascota de CROFI" width="220" />
+  <p>
+    <img src="assets/brand/crofito.png" alt="CROFITO, mascota de CROFI" width="220" />
+    &nbsp;&nbsp;&nbsp;
+    <img src="assets/brand/hello-world-transparent.png" alt="Logo de Club Hello World" width="112" />
+  </p>
 
   <h1>Copa Ollin</h1>
 

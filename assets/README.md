@@ -7,7 +7,13 @@ Los archivos de esta carpeta fueron entregados por CROFI como material de refere
 - `brand/crofi-fondo-blanco.png`
 - `brand/crofito.png`
 - `brand/facultad-de-ingenieria.png`
+- `brand/hello-world-transparent.png`
+- `brand/hello-world-transparent.svg`
+- `brand/hello-world-white-background.png`
+- `brand/hello-world-white-background.svg`
 - `brand/unam.png`
+
+Las variantes transparentes de Hello World son adecuadas para composiciones y fondos controlados; las variantes con fondo blanco conservan el contraste cuando el fondo de destino no está definido. El README principal utiliza el PNG transparente.
 
 ## Categorías
 
