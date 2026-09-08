@@ -1,5 +1,6 @@
 # Material operativo y datos no publicables
 .private/
+CLAUDE.local.md
 
 # Variables locales y credenciales
 .env

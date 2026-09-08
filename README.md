@@ -64,6 +64,7 @@ Estos campos representan requisitos iniciales, no un contrato de API ni un esque
 - [Guía de contribución](CONTRIBUTING.md)
 - [Política de seguridad](SECURITY.md)
 - [Recursos de marca](assets/README.md)
+- [Instrucciones para agentes de IA](AGENTS.md) y [adaptador para Claude Code](CLAUDE.md)
 
 ## Colaborar
 
