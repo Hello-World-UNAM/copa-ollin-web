@@ -1,5 +1,7 @@
 <div align="center">
   <p>
+    <img src="assets/brand/crofi-fondo-blanco.png" alt="Logo de CROFI" width="180" />
+    &nbsp;&nbsp;&nbsp;
     <img src="assets/brand/crofito.png" alt="CROFITO, mascota de CROFI" width="220" />
     &nbsp;&nbsp;&nbsp;
     <img src="assets/brand/hello-world-transparent.png" alt="Logo de Club Hello World" width="112" />
