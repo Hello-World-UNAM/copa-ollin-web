@@ -63,6 +63,7 @@ Estos campos representan requisitos iniciales, no un contrato de API ni un esque
 
 ## Documentación y recursos
 
+- [Sistema de diseño](DESIGN.md)
 - [Índice documental](docs/README.md)
 - [Especificaciones técnicas](docs/requirements/especificaciones-tecnicas.md)
 - [Kit de inicio](docs/requirements/kit-de-inicio.md)

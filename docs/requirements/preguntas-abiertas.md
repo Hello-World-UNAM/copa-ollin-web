@@ -1,14 +1,20 @@
 # Preguntas para validación con CROFI
 
-Este documento concentra únicamente las decisiones que todavía requieren respuesta o confirmación de CROFI. Su propósito es evitar que el equipo de desarrollo convierta supuestos en reglas del producto, especialmente al diseñar el registro y el tratamiento de documentos personales.
+Este documento concentra las decisiones que todavía requieren respuesta o confirmación de CROFI. Las preguntas están ordenadas por la fecha en que el equipo necesita la respuesta, no sólo por su importancia general.
 
 Para que una respuesta se considere aprobada debe incluir, cuando corresponda, una persona responsable y una fecha de validación. Si una pregunta no aplica, conviene indicarlo expresamente.
 
-## Prioridades
+## Calendario de prioridades
 
-- **P0 — bloqueante:** debe resolverse antes de implementar el formulario, la integración con Google o el manejo de archivos reales. Una respuesta tardía puede provocar retrabajo o impedir un lanzamiento seguro.
-- **P1 — necesaria antes de publicar:** puede avanzarse temporalmente con contenido de prueba, pero debe cerrarse antes de abrir el registro al público.
-- **P2 — importante, no bloqueante:** mejora la operación o comunicación del sitio y puede resolverse después del flujo principal.
+| Prioridad | Momento para resolver | Consecuencia de no responder |
+|---|---|---|
+| **P0 — para el arranque** | Reunión inicial del **13 de septiembre de 2026** | Impide planear la primera semana o validar la viabilidad de Google Workspace. |
+| **P1 — durante el Sprint 1** | A más tardar el **20 de septiembre** | Impide cerrar el contrato del formulario y genera retrabajo en el Sprint 2. |
+| **P2 — durante el Sprint 2** | A más tardar el **27 de septiembre** | Impide cerrar el ciclo de la inscripción y preparar una versión candidata segura. |
+| **P3 — durante el Sprint 3** | A más tardar el **4 de octubre** | Puede bloquear la aceptación, la operación o el lanzamiento del Sprint 4. |
+| **P4 — Sprint 4 o después** | Desde el **5 de octubre** | No bloquea el flujo principal; mejora comunicación, medición o cierre del producto. |
+
+Las fechas corresponden al plan interno de cuatro sprints. Si cambia el calendario, debe conservarse la relación entre cada pregunta y el sprint que depende de ella.
 
 ## Información ya recibida
 
@@ -56,97 +62,107 @@ Estos puntos aparecen de forma distinta entre documentos y necesitan una respues
 5. **Fecha y sede frente a autorización de publicación:** el kit proporciona fecha y lugar, pero no identifica si ya cuentan con aprobación final para anunciarse públicamente.
 6. **Acceso actual a Google Workspace:** de acuerdo con la información proporcionada por Hello World, los recursos compartidos actualmente son accesibles mediante enlace. Esa configuración no es adecuada cuando contengan datos o documentos reales y debe sustituirse por acceso restringido antes de producción.
 
-## P0 — Respuestas bloqueantes
+## P0 — Preguntas para la reunión inicial
 
-### Gobierno y alcance del registro
+Estas siete respuestas son las únicas que se necesitan para distribuir el trabajo de la primera semana y ejecutar el experimento técnico de Google. Las reglas de negocio detalladas se resolverán de forma escalonada en P1 y P2.
+
+| ID | Pregunta para CROFI | Decisión que habilita esta semana |
+|---|---|---|
+| P0-01 | ¿El enlace oficial ya designado será el **Product Owner** facultado para priorizar requisitos y aprobar entregables en nombre de CROFI? ¿Quién lo sustituirá si no está disponible? | Establecer una sola autoridad de producto y el proceso de aceptación. |
+| P0-02 | ¿Cuál es la fecha y hora límite real para publicar el sitio y cuál es la fecha y hora de apertura del registro, en horario de Ciudad de México? | Ordenar el backlog y medir el margen entre desarrollo, aceptación y apertura. |
+| P0-03 | ¿CROFI autoriza publicar desde el primer prototipo la fecha, sede, nombres de categorías y recursos de marca entregados? Confirmen además el nombre público de Minisumo —con o sin "autónomo"— y cualquier restricción de uso de logotipos. | Construir la landing y las categorías sin publicar información provisional ni usar indebidamente las marcas. |
+| P0-04 | ¿La cuenta propietaria de Sheets y Drive es institucional y puede proporcionar recursos **separados y restringidos** para pruebas y producción? ¿Dispone de una Unidad compartida o qué mecanismo autoriza para que la integración escriba sin hacer públicos los recursos? | Probar durante el Sprint 1 autenticación, propiedad, permisos y continuidad de Google Workspace. |
+| P0-05 | ¿Qué documentos se pedirán realmente: comprobante de pago o de inscripción, identificación, carta responsiva, bitácora y/o fotografías? Si existe pago, indiquen concepto, unidad de cobro, monto, medio, referencia y responsable de validarlo. | Definir el alcance real de datos y cargas, y resolver las contradicciones entre el kit y el SRS. |
+| P0-06 | Para cada documento confirmado, ¿cuántos archivos se admitirán y cuáles serán sus formatos y tamaño máximo? ¿Se aceptarán PDF protegidos con contraseña? | Elegir y probar una estrategia de carga compatible con el hosting y con Drive. |
+| P0-07 | El objetivo de 500 usuarios concurrentes, ¿se refiere a visitantes de la landing o a envíos simultáneos? ¿Cuántos equipos, inscripciones por minuto y archivos por inscripción esperan en el pico? | Definir escenarios de carga realistas y comprobar cuotas y límites antes de comprometer la arquitectura. |
+
+## P1 — Resolver durante el Sprint 1
+
+Fecha objetivo: **20 de septiembre de 2026**, antes de implementar el formulario completo.
+
+### Participación y modelo del registro
 
 | ID | Pregunta para CROFI | Por qué se necesita |
 |---|---|---|
-| P0-01 | ¿El enlace oficial ya designado está facultado para responder requisitos, priorizar cambios y aprobar formalmente el formulario y el aviso de privacidad en nombre de CROFI? ¿Quién lo sustituirá si no está disponible? | Confirma el alcance de una responsabilidad ya asignada y evita respuestas contradictorias o bloqueos de aceptación. |
-| P0-02 | ¿Quién puede participar: sólo estudiantes activos, egresados, público general o equipos mixtos? ¿Se admitirán menores de edad, asesores o coaches y deben registrarse? | Cambia los datos, consentimientos y documentos legales requeridos. |
-| P0-03 | ¿La unidad de inscripción es un equipo, un robot o la participación en una categoría? ¿Un equipo, persona o robot puede registrarse en varias categorías? | Define el modelo de datos y las reglas para detectar duplicados. |
-| P0-04 | ¿Cuál es el mínimo y máximo de integrantes por categoría? ¿Debe existir exactamente un capitán y puede una misma persona ser capitán o integrante de varios equipos? | Define validaciones y campos dinámicos. Los reglamentos no especifican tamaños de equipo. |
-| P0-05 | ¿Cuál es el cupo total y por categoría? ¿El sistema debe impedir nuevos registros, crear lista de espera o aceptar solicitudes para revisión cuando se alcance el cupo? | Determina si se necesita control de capacidad y concurrencia. |
+| P1-01 | ¿Quién puede participar: estudiantes activos, egresados, público general o equipos mixtos? ¿Se admitirán menores de edad, asesores o coaches y deben registrarse? | Cambia los datos, consentimientos y documentos legales requeridos. |
+| P1-02 | ¿La unidad de inscripción es un equipo, un robot o la participación en una categoría? ¿Un equipo, persona o robot puede registrarse en varias categorías? | Define el modelo de datos y las reglas para detectar duplicados. |
+| P1-03 | ¿Cuál es el mínimo y máximo de integrantes por categoría? ¿Debe existir exactamente un capitán y puede una persona participar en varios equipos? | Define campos dinámicos y validaciones. Los reglamentos no especifican tamaños de equipo. |
+| P1-04 | ¿Cuál es el cupo total y por categoría? Al alcanzarlo, ¿el sistema debe cerrar, crear una lista de espera o aceptar solicitudes para revisión? | Determina si el flujo necesita control de capacidad. |
 
-### Campos, pago y archivos
-
-| ID | Pregunta para CROFI | Por qué se necesita |
-|---|---|---|
-| P0-06 | ¿Existe una cuota económica? Si existe, ¿se paga por equipo, robot, categoría o integrante, cuál es el monto, a quién y por qué medio, qué referencia debe utilizarse y quién valida o corrige el pago? Si no existe, ¿qué significa "comprobante de inscripción" y debe eliminarse el comprobante de pago? | Resuelve la contradicción principal del formulario y evita pedir documentos innecesarios. |
-| P0-07 | Tomando como base la lista de campos ya recibida, ¿cuáles son obligatorios, opcionales, condicionales o únicos? ¿Alguna categoría requiere información adicional? | Permite cerrar el contrato y los schemas de validación sin volver a preguntar por cada campo ya listado. |
-| P0-08 | ¿Es indispensable pedir el número y una copia completa de la identificación del capitán? ¿A qué participantes aplica y puede sustituirse por una versión redactada, una verificación presencial o un dato menos sensible? | Existe una contradicción documental y debe aplicarse minimización de datos. |
-| P0-09 | Además de los tres archivos del kit, ¿se requieren bitácora o fotografías del robot? Para cada archivo, indiquen si es obligatorio o condicional, formatos admitidos, tamaño máximo, cantidad, resolución y si se aceptan PDF protegidos con contraseña. | Define la arquitectura de carga, almacenamiento y validación. |
-| P0-10 | ¿Cuál es el formato definitivo de la carta responsiva, quién lo proporcionará, quién debe firmarla y se requiere una firma adicional para participantes menores de edad? | Sin la plantilla y los firmantes no puede cerrarse el flujo documental. |
-| P0-11 | ¿La aceptación del reglamento y del uso de imagen la realiza sólo el capitán en nombre del equipo o cada integrante debe consentir individualmente? ¿Cómo cambia el proceso para menores de edad? | Define checkboxes, carta responsiva y evidencia del consentimiento. |
-
-### Ciclo de vida de la inscripción
+### Contrato del formulario y presentación
 
 | ID | Pregunta para CROFI | Por qué se necesita |
 |---|---|---|
-| P0-12 | Después de enviar el formulario, ¿el registro queda recibido, pendiente de revisión, aceptado o rechazado? ¿Quién cambia ese estado y qué condiciones provocan rechazo? | Define la confirmación que puede mostrarse sin prometer aceptación automática. |
-| P0-13 | ¿Se generará folio y se enviará confirmación por correo? ¿Qué dato identifica un duplicado y qué debe ocurrir ante doble envío o reintento por falla de red? | Evita registros duplicados y mensajes engañosos. |
-| P0-14 | ¿Cómo podrá un equipo corregir, completar o cancelar su inscripción? ¿Cuál será el canal y hasta qué fecha podrá hacerlo? | Determina si se necesita funcionalidad adicional o un proceso manual claramente comunicado. |
+| P1-05 | Sobre la lista de campos ya entregada, ¿cuáles son obligatorios, opcionales, condicionales o únicos? ¿Alguna categoría requiere información adicional? | Permite cerrar los esquemas de validación sin volver a preguntar por cada campo ya conocido. |
+| P1-06 | ¿Es indispensable pedir el número y una copia completa de la identificación del capitán? ¿A quién aplica y puede sustituirse por una versión redactada, verificación presencial o dato menos sensible? | Resuelve una contradicción documental y permite minimizar datos personales. |
+| P1-07 | ¿Cuál es el formato definitivo de la carta responsiva, quién lo proporcionará y quién debe firmarla? ¿Cambia para participantes menores de edad? | Define la carga documental y sus firmantes. |
+| P1-08 | ¿La aceptación del reglamento y el uso de imagen la realiza sólo el capitán o cada integrante? ¿Cómo cambia para menores de edad? | Define consentimientos y su evidencia. |
+| P1-09 | Los archivos de Robotic ya fueron entregados, pero sus metadatos indican “All Rights Reserved” y no incluyen licencia. ¿CROFI confirma por escrito que puede autorizar su uso y redistribución pública en el sitio? | Evita publicar una fuente sin derechos suficientes. Mientras se resuelve se utilizará el fallback definido en `DESIGN.md`. |
 
-### Privacidad y Google Workspace
+## P2 — Resolver durante el Sprint 2
 
-| ID | Pregunta para CROFI | Por qué se necesita |
-|---|---|---|
-| P0-15 | ¿Qué entidad será responsable del tratamiento de los datos y quién entregará y aprobará el aviso de privacidad? ¿Cuál será el correo o canal para ejercer derechos de acceso, rectificación, cancelación u oposición y reportar incidentes? | El formulario procesará identificaciones, teléfonos, comprobantes y documentos firmados; no debe publicarse sin estas definiciones. |
-| P0-16 | ¿Durante cuánto tiempo se conservarán registros, identificaciones, comprobantes y cartas? ¿Quién autorizará y ejecutará su eliminación al finalizar el evento? | Define retención, eliminación y operación posterior al torneo. |
-| P0-17 | ¿Qué personas o roles podrán acceder a Sheets y Drive? ¿Los enlaces a archivos deben permanecer restringidos exclusivamente a esas personas? ¿Cómo se revocarán accesos? | Los recursos contienen información personal y no pueden depender de enlaces públicos. |
-| P0-18 | ¿La cuenta propietaria de Sheets y Drive es institucional y dispone de una Unidad compartida? ¿CROFI puede proporcionar recursos separados y restringidos para pruebas y producción, compartidos únicamente con cuentas nominales y, si la integración técnica la utiliza, una cuenta de servicio? | Define propiedad, continuidad, almacenamiento y autenticación. Una cuenta personal o recursos públicos no son adecuados para producción. |
-| P0-19 | El objetivo de 500 usuarios concurrentes, ¿se refiere a visitantes consultando la landing o a envíos simultáneos del formulario? ¿Cuántos equipos y cuántas inscripciones por minuto esperan en el pico de apertura o cierre? | Define la prueba de carga y permite validar las cuotas de Google. |
+Fecha objetivo: **27 de septiembre de 2026**, antes de cerrar el ciclo completo de la inscripción.
 
-## P1 — Respuestas necesarias antes de abrir el registro
-
-### Calendario, publicación y operación
+### Estado, confirmación y correcciones
 
 | ID | Pregunta para CROFI | Por qué se necesita |
 |---|---|---|
-| P1-01 | ¿Cuáles son la fecha y hora exactas de apertura y cierre del registro y se interpretan en la zona horaria de Ciudad de México? | Permite comunicar y aplicar el periodo correcto. |
-| P1-02 | ¿La fecha del 5 al 7 de noviembre de 2026 y el Edificio X del Anexo de Ingeniería cuentan ya con autorización final para publicarse? Si cambian, ¿quién notificará al equipo? | Evita publicar información todavía provisional. |
-| P1-03 | ¿Quién operará el registro durante su vigencia, atenderá dudas de participantes y tomará decisiones ante una caída o inscripción incompleta? Indiquen un canal público de soporte y uno privado para incidentes. | Hace operable el sistema una vez lanzado. |
-| P1-04 | ¿Quién puede actualizar fechas, premios, reglamentos y demás contenido, y quién debe aprobar cada cambio antes de publicarlo? | Define permisos y el flujo de cambios. |
-| P1-05 | ¿Se requiere una exportación o respaldo periódico adicional a Sheets y Drive? ¿Qué información mínima debe poder recuperarse después de una falla? | Permite acordar respaldo y recuperación sin asumir herramientas específicas. |
-| P1-06 | ¿Qué dominio o subdominio utilizará el sitio, quién controla su DNS y en qué fecha podrá dar acceso al equipo para configurarlo? | Evita que una dependencia administrativa bloquee el lanzamiento. |
+| P2-01 | Después del envío, ¿la inscripción queda recibida, pendiente, aceptada o rechazada? ¿Quién cambia el estado y qué condiciones provocan rechazo? | Evita prometer aceptación automática y define la confirmación. |
+| P2-02 | ¿Se generará folio y se enviará confirmación por correo? ¿Qué datos identifican un duplicado y qué debe ocurrir ante doble envío o reintento? | Define idempotencia, comunicación y manejo de duplicados. |
+| P2-03 | ¿Cómo podrá un equipo corregir, completar o cancelar su inscripción y hasta qué fecha? | Determina si se requiere funcionalidad adicional o un proceso manual comunicado. |
 
-### Reglamentos, marca y contenido
+### Privacidad y conservación
 
 | ID | Pregunta para CROFI | Por qué se necesita |
 |---|---|---|
-| P1-07 | ¿Los seis reglamentos entregados son las versiones finales? Indiquen fecha de vigencia, responsable de aprobación y cómo se comunicarán futuras modificaciones a participantes ya registrados. | Evita publicar o aceptar reglamentos obsoletos. |
-| P1-08 | ¿Cuál debe ser el nombre público definitivo de las categorías de Minisumo: con o sin la palabra "autónomo"? | Mantiene consistencia entre landing, formulario, reglamentos y Sheets. |
-| P1-09 | ¿CROFI autoriza expresamente el uso público de los logotipos e imágenes entregados para este sitio? ¿Existen restricciones de proporción, fondos, separación o convivencia con las marcas de UNAM, Facultad de Ingeniería y Hello World? | Evita uso incorrecto de identidad institucional. |
-| P1-10 | ¿Pueden proporcionar el archivo y licencia de la tipografía Robotic? ¿"Times Roman" se refiere a Times New Roman? Si Robotic no está disponible o no es accesible, ¿autorizan una alternativa visualmente compatible? | Permite implementar fuentes publicables y legibles. |
-| P1-11 | ¿La paleta entregada tiene roles aprobados —primario, acento, éxito, advertencia y error— o puede el equipo asignarlos respetando contraste accesible? | Evita interpretar colores institucionales como estados de interfaz sin aprobación. |
+| P2-04 | ¿Qué entidad será responsable del tratamiento de datos y quién entregará y aprobará el aviso de privacidad? ¿Cuál será el canal para ejercer derechos ARCO y reportar incidentes? | El registro manejará teléfonos, identificaciones, comprobantes y documentos firmados. |
+| P2-05 | ¿Durante cuánto tiempo se conservarán registros y documentos? ¿Quién autorizará y ejecutará su eliminación? | Define retención y cierre operativo. |
+| P2-06 | ¿Qué personas o roles podrán acceder a Sheets y Drive y cómo se autorizarán y revocarán accesos? | Permite aplicar mínimo privilegio y evitar enlaces públicos. |
 
-### Compatibilidad y aceptación
+## P3 — Resolver durante el Sprint 3
 
-| ID | Pregunta para CROFI | Por qué se necesita |
-|---|---|---|
-| P1-12 | Proponemos soporte para las dos versiones recientes de Chrome, Firefox, Edge y Safari, diseño mobile-first y nivel WCAG 2.1 AA. ¿Existe algún dispositivo, navegador o necesidad de accesibilidad adicional indispensable para participantes? | Permite establecer una línea de aceptación concreta sin trasladar decisiones técnicas a CROFI. |
-| P1-13 | ¿Quién participará en la prueba de aceptación y emitirá el visto bueno final para abrir el registro? ¿Con cuánta anticipación necesita recibir el ambiente de pruebas? | Evita que la aprobación aparezca como bloqueo el día del lanzamiento. |
+Fecha objetivo: **4 de octubre de 2026**, antes de la aceptación y preparación de producción.
 
-## P2 — Respuestas importantes, no bloqueantes
+### Operación, publicación y continuidad
 
 | ID | Pregunta para CROFI | Por qué se necesita |
 |---|---|---|
-| P2-01 | Además del texto de bienvenida, ¿qué agenda, premios, patrocinadores, contacto y preguntas frecuentes desean publicar, y en qué fecha podrán entregar ese contenido? | Mejora la información pública; la sección de premios puede permanecer "Por confirmar". |
-| P2-02 | ¿Necesitan métricas de visitas o conversiones? Si es así, ¿qué preguntas concretas desean responder y quién tendrá acceso a los reportes? | Permite decidir si la analítica aporta valor y si requiere consentimiento adicional. |
-| P2-03 | ¿Qué información o documentos desean conservar como archivo histórico después del evento y qué contenido debe retirarse del sitio? | Define el cierre del producto sin bloquear el registro inicial. |
-| P2-04 | ¿Necesitan reportes o exportaciones adicionales a la hoja operativa, por ejemplo por categoría, procedencia, estado de revisión o pagos? | Ayuda a preparar la operación sin asumir un panel administrativo. |
-| P2-05 | ¿Desean anunciar cambios de reglamento, cierre de cupo o incidencias mediante algún canal externo específico, como correo o redes sociales? | Coordina comunicación, pero puede ejecutarse manualmente. |
+| P3-01 | ¿Cuál es la fecha y hora exactas de cierre del registro, en horario de Ciudad de México? | Permite comunicar y aplicar el periodo completo. |
+| P3-02 | ¿Quién operará el registro, atenderá dudas y decidirá ante una caída o inscripción incompleta? Indiquen un canal público de soporte y uno privado para incidentes. | Hace operable el sistema una vez lanzado. |
+| P3-03 | ¿Quién puede actualizar fechas, premios, reglamentos y demás contenido, y quién aprueba cada cambio? | Define el flujo editorial. |
+| P3-04 | ¿Se requiere respaldo periódico adicional a Sheets y Drive? ¿Qué información mínima debe poder recuperarse después de una falla? | Permite acordar recuperación y continuidad. |
+| P3-05 | ¿Qué dominio o subdominio utilizará el sitio, quién controla el DNS y cuándo dará acceso al equipo? | Evita un bloqueo administrativo de lanzamiento. |
+
+### Aceptación final
+
+| ID | Pregunta para CROFI | Por qué se necesita |
+|---|---|---|
+| P3-06 | ¿Los seis reglamentos entregados son las versiones finales? Indiquen vigencia, responsable de aprobación y cómo se comunicarán cambios a equipos ya registrados. | Evita aceptar reglamentos obsoletos. |
+| P3-07 | Proponemos las dos versiones recientes de Chrome, Firefox, Edge y Safari, diseño mobile-first y WCAG 2.1 AA. ¿Existe algún dispositivo, navegador o necesidad adicional indispensable? | Establece una línea verificable de compatibilidad y accesibilidad. |
+| P3-08 | ¿Quién participará en la prueba de aceptación y emitirá el visto bueno para abrir el registro? ¿Con cuánta anticipación necesita el ambiente de pruebas? | Evita que la aprobación aparezca como bloqueo el día del lanzamiento. |
+
+## P4 — Sprint 4 o después
+
+Estas respuestas mejoran el producto, pero no deben desplazar el flujo principal ni bloquear una salida condicionada.
+
+| ID | Pregunta para CROFI | Por qué se necesita |
+|---|---|---|
+| P4-01 | Además del texto de bienvenida, ¿qué agenda, premios, patrocinadores, contacto y preguntas frecuentes desean publicar y cuándo entregarán el contenido? | La premiación puede permanecer "Por confirmar" sin bloquear el registro. |
+| P4-02 | ¿Necesitan métricas de visitas o conversiones? ¿Qué preguntas desean responder y quién accederá a los reportes? | Permite evaluar valor, privacidad y consentimiento de analítica. |
+| P4-03 | ¿Qué información o documentos desean conservar como archivo histórico y qué contenido debe retirarse después del evento? | Define el cierre del producto. |
+| P4-04 | ¿Necesitan reportes o exportaciones adicionales a la hoja operativa, por ejemplo por categoría, procedencia, estado o pagos? | Ayuda a la operación sin asumir un panel administrativo. |
+| P4-05 | ¿Desean anunciar cambios de reglamento, cierre de cupo o incidencias por algún canal externo, como correo o redes sociales? | Coordina comunicaciones que pueden ejecutarse manualmente. |
 
 ## Decisiones internas del equipo técnico
 
-Salvo que CROFI tenga una restricción institucional que deba comunicar, las siguientes decisiones corresponden a Hello World y no requieren una respuesta técnica de CROFI:
+Salvo que CROFI tenga una restricción institucional, estas decisiones corresponden a Hello World y no requieren que CROFI elija tecnología.
 
 La restricción presupuestaria actual es operar sin servicios pagados por CROFI ni Hello World. Cualquier componente con costo deberá sustituirse por una alternativa gratuita o recibir aprobación expresa antes de contratarse.
 
 - Framework, librerías, lenguaje y organización del código.
 - Uso interno de una base de datos, cola o almacenamiento temporal para garantizar integridad, siempre que Sheets y Drive conserven la función operativa acordada.
 - Proveedor de hosting dentro del presupuesto disponible y estrategia de despliegue.
-- Implementación de validación, rate limiting, protección contra automatización, CSP y demás controles de seguridad.
+- Validación, rate limiting, protección contra automatización, CSP y demás controles de seguridad.
 - Herramientas de CI, pruebas, monitoreo técnico y registro de errores.
 - Estrategia concreta de carga, reintentos, idempotencia y limpieza de archivos incompletos, una vez que CROFI confirme tamaños, formatos y reglas de negocio.
 

@@ -56,6 +56,7 @@ Si una transcripción Markdown contradice su PDF, el PDF conserva precedencia ha
 ## Mapa del repositorio
 
 - `README.md`: resumen público, estado y enlaces principales.
+- `DESIGN.md`: sistema de diseño, tokens, componentes y reglas responsive.
 - `docs/requirements/`: SRS normalizado, kit sanitizado y decisiones pendientes.
 - `docs/regulations/`: seis reglamentos en Markdown.
 - `docs/sources/`: PDF originales aptos para publicación.
@@ -84,6 +85,7 @@ El sistema futuro podría procesar nombres, correos, teléfonos, identificacione
 - No modifiques ni recomprimas imágenes o PDF originales sin una solicitud explícita.
 - No presentes una pregunta abierta como requisito confirmado.
 - Mantén el `README.md` como resumen; coloca el detalle durable en `docs/` y enlázalo.
+- Antes de implementar o revisar interfaz, sigue `DESIGN.md`; no añadas colores, tipografías o patrones visuales ad hoc.
 - Actualiza este archivo cuando se aprueben comandos, arquitectura o convenciones que todo agente deba conocer.
 
 ## Licencias y atribución

@@ -20,3 +20,9 @@ Las variantes transparentes de Hello World son adecuadas para composiciones y fo
 Existe una imagen para cada una de las seis categorías documentadas en el [README principal](../README.md#categorías).
 
 Estos recursos no están cubiertos por la licencia MIT del futuro código. No deben reutilizarse fuera del proyecto sin autorización de sus titulares.
+
+## Tipografías
+
+CROFI entregó ocho archivos OTF de la familia **ROBOTIC**. Los metadatos de los archivos indican “All Rights Reserved” y no se incluyó una licencia de redistribución; por ello se conservan localmente en `.private/fonts/robotic/` y no forman parte del repositorio público.
+
+No copies esos binarios a `assets/`, `public/` ni al código versionado hasta contar con autorización escrita. El uso previsto, las alternativas y la ruta pública futura están documentados en el [sistema de diseño](../DESIGN.md#tipografía).
