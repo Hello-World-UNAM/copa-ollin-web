@@ -65,6 +65,7 @@ Estos campos representan requisitos iniciales, no un contrato de API ni un esque
 
 - [Sistema de diseño](DESIGN.md)
 - [Arquitectura](docs/architecture/README.md)
+- [Flujo de trabajo](docs/workflow.md)
 - [Índice documental](docs/README.md)
 - [Especificaciones técnicas](docs/requirements/especificaciones-tecnicas.md)
 - [Kit de inicio](docs/requirements/kit-de-inicio.md)
@@ -98,6 +99,8 @@ La landing, categorías y registro actuales son cascarones de fundación con `no
 ## Colaborar
 
 El proyecto utiliza un GitHub Flow ligero: cada cambio parte de un issue acotado, se desarrolla en una rama corta y llega a `main` mediante pull request con al menos una revisión. Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de participar.
+
+La operación semanal, el tablero, el CI, el staging central y el QA posterior al merge están resumidos en la [guía de flujo](docs/workflow.md).
 
 No publiques credenciales, identificaciones, teléfonos, datos de participantes ni enlaces operativos de Google Workspace en commits, issues o pull requests.
 

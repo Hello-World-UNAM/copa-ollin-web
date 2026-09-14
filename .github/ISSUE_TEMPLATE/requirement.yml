@@ -1,6 +1,6 @@
 name: Aclaración de requisito
 description: Registrar una duda, contradicción o decisión pendiente de los documentos fuente.
-title: "[Requisito]: "
+title: '[Requisito]: '
 labels:
   - requirements
 body:
@@ -12,7 +12,7 @@ body:
     attributes:
       label: Fuente y sección
       description: Documento, encabezado y, si aplica, página del PDF.
-      placeholder: "Kit de inicio > Especificaciones del registro"
+      placeholder: 'Kit de inicio > Especificaciones del registro'
     validations:
       required: true
   - type: textarea
@@ -27,6 +27,28 @@ body:
     attributes:
       label: Impacto
       description: ¿Qué parte de la planeación o implementación queda bloqueada?
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencias
+      description: Indica requisitos, decisiones, personas o accesos necesarios para resolverlo. Escribe "Ninguna" si no aplica.
+    validations:
+      required: true
+  - type: input
+    id: reviewer
+    attributes:
+      label: Reviewer o responsable de validar
+      description: Username, rol o "Pendiente de kickoff".
+      placeholder: '@usuario, CROFI o Pendiente de kickoff'
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidencia para cerrar
+      description: Describe la respuesta, documento o aprobación que permitirá cerrar el issue.
     validations:
       required: true
   - type: textarea

@@ -5,6 +5,7 @@ Este directorio registra decisiones técnicas aprobadas y contratos internos de 
 ## Decisiones
 
 - [ADR-0001: stack y fundación inicial](decisions/0001-stack-y-fundacion.md)
+- [ADR-0002: flujo operativo, CI y staging](decisions/0002-flujo-ci-y-staging.md)
 
 ## Contratos internos
 

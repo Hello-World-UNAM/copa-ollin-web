@@ -1,0 +1,66 @@
+name: staging
+
+on:
+  workflow_run:
+    workflows:
+      - quality
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy-staging
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: staging
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout del commit probado por CI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+          run_install: false
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Obtener configuración de Vercel
+        run: pnpm exec vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Construir artefactos de Vercel
+        run: pnpm exec vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Desplegar artefactos en staging
+        run: pnpm exec vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

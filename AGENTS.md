@@ -29,7 +29,7 @@ La plataforma deberá mostrar categorías y reglamentos, recibir registros de eq
 
 ## Estado técnico: no inventar decisiones
 
-La fundación técnica F0–F5 está aprobada y documentada en `docs/architecture/decisions/0001-stack-y-fundacion.md`. La aplicación usa Astro 6, React 19 sólo para islas interactivas, Tailwind CSS 4, TypeScript estricto, pnpm, ESLint, Prettier y Vitest. El adaptador de Vercel está instalado, pero la configuración remota, CI, previews e issues del Sprint 1 siguen fuera de alcance hasta aprobar F6 y F7.
+La fundación técnica F0–F5 está aprobada y documentada en `docs/architecture/decisions/0001-stack-y-fundacion.md`. El flujo operativo F6–F7, CI y staging están aprobados en `docs/architecture/decisions/0002-flujo-ci-y-staging.md` y se describen en `docs/workflow.md`. La aplicación usa Astro 6, React 19 sólo para islas interactivas, Tailwind CSS 4, TypeScript estricto, pnpm, ESLint, Prettier y Vitest. El adaptador de Vercel y la CLI fijada están preparados, pero los recursos remotos, secretos, Project, protección de rama y asignaciones requieren configuración administrativa.
 
 Google Sheets y Drive continúan como destino solicitado sujeto al spike del Sprint 1. No implementes credenciales, carga de archivos ni contrato del formulario hasta resolver sus dependencias documentadas.
 
@@ -61,6 +61,7 @@ Si una transcripción Markdown contradice su PDF, el PDF conserva precedencia ha
 - `docs/regulations/`: seis reglamentos en Markdown.
 - `docs/sources/`: PDF originales aptos para publicación.
 - `docs/architecture/`: decisiones técnicas y contratos internos aprobados.
+- `docs/workflow.md`: flujo de issues, PR, CI, staging y QA.
 - `src/`: aplicación Astro, componentes, layouts, estilos, datos y rutas.
 - `public/`: recursos públicos propios de la aplicación.
 - `assets/brand/`: identidad institucional entregada.
@@ -110,6 +111,16 @@ Sigue `CONTRIBUTING.md`:
 - no hagas commit, push, release ni cambios de configuración remota salvo petición explícita.
 
 Preserva cambios existentes que no pertenezcan a tu tarea. Antes de editar, ejecuta `git status --short` y revisa el diff al terminar.
+
+### Reglas obligatorias para agentes
+
+Antes de actuar sobre una tarea, un agente debe leer el issue completo, sus criterios de aceptación, dependencias, fuera de alcance y reviewer sugerido. También debe comprobar `git status --short --branch`, la rama actual y el diff existente; no debe ocultar, descartar ni sobrescribir trabajo ajeno.
+
+El agente debe permanecer dentro del issue. Si encuentra una decisión pendiente o un bloqueo, debe explicar la causa, el impacto y las opciones concretas con una recomendación; no debe suponer silenciosamente ni ampliar el alcance. Si una persona aprueba una decisión, ésta se registra en la documentación correspondiente antes de depender de ella.
+
+Debe ejecutar las validaciones reales que correspondan y reportar sus resultados exactos. Compilar no basta para marcar una tarea como terminada: también deben cumplirse los criterios de aceptación, la revisión, el despliegue y el QA posterior al merge cuando apliquen.
+
+Los agentes no hacen commit, push, merge, release ni cambios de configuración remota sin autorización explícita para esa acción. Cuando preparen un PR, deben dejar un resumen del alcance, la evidencia, los riesgos, los bloqueos y las validaciones ejecutadas.
 
 ## Validación actual
 

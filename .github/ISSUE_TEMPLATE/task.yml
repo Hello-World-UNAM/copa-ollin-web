@@ -1,6 +1,6 @@
 name: Tarea
 description: Proponer un cambio pequeño y verificable en el proyecto.
-title: "[Tarea]: "
+title: '[Tarea]: '
 body:
   - type: markdown
     attributes:
@@ -24,11 +24,45 @@ body:
     attributes:
       label: Criterios de aceptación
       description: Escribe una lista de resultados observables y verificables.
-      placeholder: "- [ ] ..."
+      placeholder: '- [ ] ...'
     validations:
       required: true
   - type: textarea
     id: out_of_scope
     attributes:
       label: Fuera de alcance
-      description: Aclara qué no debe incluir esta tarea.
+      description: Aclara qué no debe incluir esta tarea. Escribe "Ninguno" si no aplica.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencias y bloqueos
+      description: Indica decisiones pendientes, issues, accesos o recursos necesarios. Escribe "Ninguna" si no aplica.
+      placeholder: "- Depende de #...\n- Requiere la respuesta P1-..."
+    validations:
+      required: true
+  - type: input
+    id: responsible
+    attributes:
+      label: Responsable
+      description: Username de GitHub o "Pendiente de kickoff".
+      placeholder: '@usuario o Pendiente de kickoff'
+    validations:
+      required: true
+  - type: input
+    id: reviewer
+    attributes:
+      label: Reviewer sugerido
+      description: Username de otra persona desarrolladora o "Pendiente de kickoff".
+      placeholder: '@usuario o Pendiente de kickoff'
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidencia y QA posterior al merge
+      description: Define qué evidencia comprobará la aceptación. Después del merge se deben añadir commit, despliegue de staging, pasos y resultado esperado/real.
+      placeholder: "- Evidencia esperada: ...\n- Snapshot de staging: pendiente hasta el merge\n- QA de Sebastián: pendiente"
+    validations:
+      required: true
