@@ -29,7 +29,7 @@ La plataforma deberá mostrar categorías y reglamentos, recibir registros de eq
 
 ## Estado técnico: no inventar decisiones
 
-La fundación técnica F0–F5 está aprobada y documentada en `docs/architecture/decisions/0001-stack-y-fundacion.md`. El flujo operativo F6–F7, CI y staging están aprobados en `docs/architecture/decisions/0002-flujo-ci-y-staging.md` y se describen en `docs/workflow.md`. La aplicación usa Astro 6, React 19 sólo para islas interactivas, Tailwind CSS 4, TypeScript estricto, pnpm, ESLint, Prettier y Vitest. El adaptador de Vercel y la CLI fijada están preparados, pero los recursos remotos, secretos, Project, protección de rama y asignaciones requieren configuración administrativa.
+La fundación técnica F0–F5 está aprobada y documentada en `docs/architecture/decisions/0001-stack-y-fundacion.md`. El flujo operativo F6–F7, CI y staging están aprobados en `docs/architecture/decisions/0002-flujo-ci-y-staging.md` y se describen en `docs/workflow.md`. La aplicación usa Astro 6, React 19 sólo para islas interactivas, Tailwind CSS 4, TypeScript estricto, pnpm, ESLint, Prettier y Vitest. GitHub Project, protección de `main`, CI y staging central ya están operativos; las asignaciones personales y los recursos de Google Workspace continúan pendientes del kickoff y de las decisiones de CROFI.
 
 Google Sheets y Drive continúan como destino solicitado sujeto al spike del Sprint 1. No implementes credenciales, carga de archivos ni contrato del formulario hasta resolver sus dependencias documentadas.
 
