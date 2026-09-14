@@ -56,14 +56,26 @@ Consulta los [ADR aceptados](docs/architecture/decisions/) para conocer decision
 
 ## Desarrollo local
 
-Requisitos: Node.js 22 y pnpm 11.
+El proyecto fija Node.js 22.23.2 y pnpm 11.3.0. Con [nvm](https://github.com/nvm-sh/nvm) y Corepack, el arranque recomendado desde cero es:
 
 ```bash
-pnpm install
+git clone https://github.com/Hello-World-UNAM/copa-ollin-web.git
+cd copa-ollin-web
+nvm install
+nvm use
+corepack enable
+corepack prepare pnpm@11.3.0 --activate
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-La aplicación estará disponible normalmente en `http://localhost:4321`. Antes de solicitar revisión ejecuta:
+La aplicación estará disponible normalmente en `http://localhost:4321`. Confirma el entorno con `node --version` y `pnpm --version`; deben mostrar `v22.23.2` y `11.3.0`. Si una instalación anterior quedó incompleta, repárala después de seleccionar Node 22:
+
+```bash
+pnpm install --force --frozen-lockfile
+```
+
+No instales `node-addon-api` para corregir un error de `sharp`: ese mensaje indica que `sharp` intentó compilar contra el `libvips` del sistema y no que falte una dependencia del proyecto. Actualiza el repositorio, selecciona Node 22 y reinstala. Antes de solicitar revisión ejecuta:
 
 ```bash
 pnpm format:check

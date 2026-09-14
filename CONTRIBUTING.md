@@ -4,12 +4,20 @@ Gracias por colaborar. El repositorio contiene la fuente documental y la fundaci
 
 ## Preparar el entorno
 
-Usa Node.js 22 y pnpm 11:
+El repositorio fija Node.js 22.23.2 y pnpm 11.3.0. Prepara el entorno con nvm y Corepack antes de instalar:
 
 ```bash
-pnpm install
+nvm install
+nvm use
+corepack enable
+corepack prepare pnpm@11.3.0 --activate
+node --version
+pnpm --version
+pnpm install --frozen-lockfile
 pnpm dev
 ```
+
+Las versiones esperadas son `v22.23.2` y `11.3.0`. pnpm conserva además un runtime local de Node para ejecutar scripts con la versión correcta, aunque el host tenga otra versión. Si un intento anterior dejó `node_modules` incompleto, selecciona primero Node 22 y ejecuta `pnpm install --force --frozen-lockfile`. No agregues `node-addon-api` ante un error de `sharp`: ese mensaje indica un intento de compilación contra el `libvips` del sistema; actualiza el repositorio y reinstala.
 
 Antes de abrir un pull request ejecuta `pnpm format:check`, `pnpm lint`, `pnpm check`, `pnpm test` y `pnpm build`. CI repite exactamente estos comandos en el check `quality`.
 
