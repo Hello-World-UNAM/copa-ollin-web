@@ -44,7 +44,7 @@ jobs:
       - name: Configurar pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 11
+          version: 11.3.0
           run_install: false
 
       - name: Configurar Node.js
