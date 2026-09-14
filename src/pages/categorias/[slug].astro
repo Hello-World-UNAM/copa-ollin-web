@@ -1,0 +1,58 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { Image } from 'astro:assets';
+
+import Button from '../../components/ui/Button.astro';
+import Container from '../../components/ui/Container.astro';
+import { categories, type CategoryDefinition } from '../../data/categories';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export const getStaticPaths = (() =>
+  categories.map((category) => ({
+    params: { slug: category.slug },
+    props: { category },
+  }))) satisfies GetStaticPaths;
+
+interface Props {
+  category: CategoryDefinition;
+}
+
+const { category } = Astro.props;
+---
+
+<BaseLayout
+  title={`${category.workingName} — Copa Ollin`}
+  description={`Cascarón de la categoría ${category.workingName} para Copa Ollin.`}
+>
+  <Container>
+    <article class="category-placeholder">
+      <div>
+        <p class="eyebrow">Categoría en preparación</p>
+        <h1>{category.workingName}</h1>
+        {category.nameStatus === 'pending-confirmation' && (
+          <p>
+            El nombre público definitivo de esta categoría sigue pendiente de
+            confirmación.
+          </p>
+        )}
+        <p>
+          El contenido legible y la descarga pública del reglamento se
+          integrarán durante el primer sprint. El PDF fuente permanece como
+          referencia normativa en el repositorio.
+        </p>
+        <Button href="/#categorias" variant="secondary">
+          Volver a categorías
+        </Button>
+      </div>
+
+      <div class="category-placeholder__media">
+        <Image
+          src={category.image}
+          alt={category.imageAlt}
+          widths={[480, 720, 960]}
+          sizes="(min-width: 768px) 45vw, 100vw"
+        />
+      </div>
+    </article>
+  </Container>
+</BaseLayout>

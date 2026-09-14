@@ -1,0 +1,23 @@
+---
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import Container from '../components/ui/Container.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Página no encontrada — Copa Ollin"
+  description="La ruta solicitada no existe."
+>
+  <Container>
+    <Card>
+      <p class="eyebrow">Error 404</p>
+      <h1>Página no encontrada</h1>
+      <p>
+        La dirección puede ser incorrecta o el contenido todavía no está
+        disponible.
+      </p>
+      <Button href="/">Volver al inicio</Button>
+    </Card>
+  </Container>
+</BaseLayout>

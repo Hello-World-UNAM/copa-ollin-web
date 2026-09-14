@@ -1,0 +1,17 @@
+---
+interface Props {
+  as?: 'article' | 'section' | 'div';
+  muted?: boolean;
+  class?: string;
+}
+
+const {
+  as: Tag = 'article',
+  muted = false,
+  class: className,
+}: Props = Astro.props;
+---
+
+<Tag class:list={['card', { 'card--muted': muted }, className]}>
+  <slot />
+</Tag>

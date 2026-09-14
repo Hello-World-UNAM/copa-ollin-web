@@ -1,0 +1,26 @@
+---
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import Container from '../components/ui/Container.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Registro en preparación — Copa Ollin"
+  description="Estado de preparación del registro para Copa Ollin."
+>
+  <Container>
+    <Card>
+      <p class="eyebrow">Ruta preparada</p>
+      <h1>Registro en preparación</h1>
+      <p>
+        El formulario todavía no está habilitado y esta página no recibe datos
+        personales ni archivos. Su implementación depende de las decisiones
+        pendientes de CROFI.
+      </p>
+      <Button href="/" variant="secondary">
+        Volver al inicio
+      </Button>
+    </Card>
+  </Container>
+</BaseLayout>

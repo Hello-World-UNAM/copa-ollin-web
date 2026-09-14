@@ -1,0 +1,32 @@
+---
+import { Image } from 'astro:assets';
+
+import crofiLogo from '../../../assets/brand/crofi-fondo-blanco.png';
+import Container from '../ui/Container.astro';
+---
+
+<header class="site-header">
+  <Container class="site-header__inner">
+    <a class="site-header__brand" href="/" aria-label="Copa Ollin, inicio">
+      <Image
+        class="site-header__logo"
+        src={crofiLogo}
+        alt="CROFI"
+        height={40}
+        widths={[120, 180]}
+        sizes="120px"
+      />
+    </a>
+
+    <nav class="site-nav" aria-label="Navegación principal">
+      <ul>
+        <li>
+          <a href="/#categorias">Categorías</a>
+        </li>
+        <li>
+          <a href="/registro">Registro</a>
+        </li>
+      </ul>
+    </nav>
+  </Container>
+</header>

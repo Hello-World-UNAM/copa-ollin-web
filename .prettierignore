@@ -1,0 +1,11 @@
+.astro/
+.github/
+.private/
+.vercel/
+coverage/
+dist/
+node_modules/
+pnpm-lock.yaml
+docs/sources/
+assets/
+**/*.md

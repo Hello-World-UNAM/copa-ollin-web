@@ -1,6 +1,17 @@
 # Contribuir a Copa Ollin
 
-Gracias por colaborar. Durante esta etapa el repositorio es la fuente de verdad documental del proyecto; todavía no representa una arquitectura aprobada.
+Gracias por colaborar. El repositorio contiene la fuente documental y la fundación técnica aprobada del proyecto.
+
+## Preparar el entorno
+
+Usa Node.js 22 y pnpm 11:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Antes de abrir un pull request ejecuta `pnpm format:check`, `pnpm lint`, `pnpm check`, `pnpm test` y `pnpm build`.
 
 ## Flujo de trabajo
 

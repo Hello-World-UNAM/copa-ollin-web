@@ -29,9 +29,9 @@ La plataforma deberá mostrar categorías y reglamentos, recibir registros de eq
 
 ## Estado técnico: no inventar decisiones
 
-Todavía no existe aplicación, `package.json`, stack, arquitectura, modelo de datos, proveedor de despliegue ni suite de pruebas. No agregues un framework, backend, base de datos, servicio externo, CI o estructura de aplicación salvo que una tarea aprobada lo solicite explícitamente.
+La fundación técnica F0–F5 está aprobada y documentada en `docs/architecture/decisions/0001-stack-y-fundacion.md`. La aplicación usa Astro 6, React 19 sólo para islas interactivas, Tailwind CSS 4, TypeScript estricto, pnpm, ESLint, Prettier y Vitest. El adaptador de Vercel está instalado, pero la configuración remota, CI, previews e issues del Sprint 1 siguen fuera de alcance hasta aprobar F6 y F7.
 
-Las menciones de Google Sheets, Google Drive, Apps Script, webhooks, CDN, hosting estático y ausencia de SQL provienen de documentos iniciales. Son requisitos o propuestas por validar, no decisiones arquitectónicas definitivas.
+Google Sheets y Drive continúan como destino solicitado sujeto al spike del Sprint 1. No implementes credenciales, carga de archivos ni contrato del formulario hasta resolver sus dependencias documentadas.
 
 Antes de diseñar o implementar funcionalidad, revisa `docs/requirements/preguntas-abiertas.md`. Si una tarea depende de una respuesta pendiente:
 
@@ -60,6 +60,9 @@ Si una transcripción Markdown contradice su PDF, el PDF conserva precedencia ha
 - `docs/requirements/`: SRS normalizado, kit sanitizado y decisiones pendientes.
 - `docs/regulations/`: seis reglamentos en Markdown.
 - `docs/sources/`: PDF originales aptos para publicación.
+- `docs/architecture/`: decisiones técnicas y contratos internos aprobados.
+- `src/`: aplicación Astro, componentes, layouts, estilos, datos y rutas.
+- `public/`: recursos públicos propios de la aplicación.
 - `assets/brand/`: identidad institucional entregada.
 - `assets/categories/`: una imagen por categoría.
 - `.github/`: plantillas de issues y pull requests.
@@ -110,9 +113,17 @@ Preserva cambios existentes que no pertenezcan a tu tarea. Antes de editar, ejec
 
 ## Validación actual
 
-Todavía no hay comandos de build, lint o tests. No inventes ni declares que ejecutaste validaciones inexistentes.
+Instala dependencias con `pnpm install`. Para cambios de aplicación ejecuta, como mínimo:
 
-Para cambios documentales ejecuta, como mínimo:
+```bash
+pnpm format:check
+pnpm lint
+pnpm check
+pnpm test
+pnpm build
+```
+
+Para cambios exclusivamente documentales ejecuta, como mínimo:
 
 ```bash
 git diff --check
@@ -127,7 +138,7 @@ Además:
 - comprueba que cada categoría conserve imagen, Markdown y PDF si cambias el inventario;
 - revisa el diff completo por cambios semánticos accidentales.
 
-Cuando exista una aplicación, sustituye esta sección por los comandos exactos de instalación, desarrollo, lint, typecheck, pruebas y build definidos en el proyecto.
+No declares una validación como exitosa si no ejecutaste el comando correspondiente. Playwright y los comandos E2E se añadirán durante el Sprint 1.
 
 ## Definición de terminado
 

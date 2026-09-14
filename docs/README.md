@@ -2,6 +2,8 @@
 
 Este directorio contiene la transcripción normalizada de los materiales entregados por CROFI y conserva las fuentes publicables para consulta.
 
+Las decisiones técnicas aprobadas y los contratos internos de la aplicación se documentan en [arquitectura](architecture/README.md).
+
 ## Requisitos
 
 - [Documento de especificaciones técnicas](requirements/especificaciones-tecnicas.md)

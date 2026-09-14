@@ -11,16 +11,16 @@
 
   <p>Base documental para la plataforma web del torneo de robótica organizado por CROFI, en colaboración con Club Hello World.</p>
 
-  <p><strong>Estado:</strong> pre-planeación · <strong>Evento:</strong> 5–7 de noviembre de 2026 · Ciudad Universitaria, CDMX</p>
+  <p><strong>Estado:</strong> fundación técnica · <strong>Evento:</strong> 5–7 de noviembre de 2026 · Ciudad Universitaria, CDMX</p>
 </div>
 
 ---
 
 ## Propósito
 
-Este repositorio concentra los requisitos, reglamentos y recursos visuales entregados para preparar el desarrollo de la plataforma de Copa Ollin. Su objetivo actual es ofrecer una fuente de verdad revisable para la mesa directiva y el futuro equipo de trabajo.
+Este repositorio reúne los requisitos, reglamentos, recursos visuales y aplicación web de Copa Ollin. Su objetivo es ofrecer una fuente de verdad revisable para CROFI, la mesa directiva y el equipo de desarrollo.
 
-Todavía **no se ha elegido stack, arquitectura, proveedor de despliegue ni metodología de trabajo por Sprints**. Las opciones técnicas mencionadas en los documentos fuente son propuestas que deberán validarse antes de comenzar la implementación.
+La fundación técnica utiliza Astro, React para islas interactivas, Tailwind CSS y TypeScript. La decisión completa, sus límites y los asuntos diferidos están en el [ADR del stack inicial](docs/architecture/decisions/0001-stack-y-fundacion.md).
 
 ## Alcance conocido
 
@@ -64,6 +64,7 @@ Estos campos representan requisitos iniciales, no un contrato de API ni un esque
 ## Documentación y recursos
 
 - [Sistema de diseño](DESIGN.md)
+- [Arquitectura](docs/architecture/README.md)
 - [Índice documental](docs/README.md)
 - [Especificaciones técnicas](docs/requirements/especificaciones-tecnicas.md)
 - [Kit de inicio](docs/requirements/kit-de-inicio.md)
@@ -72,6 +73,27 @@ Estos campos representan requisitos iniciales, no un contrato de API ni un esque
 - [Política de seguridad](SECURITY.md)
 - [Recursos de marca](assets/README.md)
 - [Instrucciones para agentes de IA](AGENTS.md) y [adaptador para Claude Code](CLAUDE.md)
+
+## Desarrollo local
+
+Requisitos: Node.js 22 y pnpm 11.
+
+```bash
+pnpm install
+pnpm dev
+```
+
+La aplicación se sirve normalmente en `http://localhost:4321`. Antes de solicitar revisión ejecuta:
+
+```bash
+pnpm format:check
+pnpm lint
+pnpm check
+pnpm test
+pnpm build
+```
+
+La landing, categorías y registro actuales son cascarones de fundación con `noindex`; no representan el contenido final del producto.
 
 ## Colaborar
 

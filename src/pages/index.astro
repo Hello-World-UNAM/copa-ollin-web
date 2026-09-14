@@ -1,0 +1,49 @@
+---
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import Container from '../components/ui/Container.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { categories } from '../data/categories';
+---
+
+<BaseLayout
+  title="Copa Ollin — Sitio en preparación"
+  description="Base técnica de la plataforma informativa y de registro de Copa Ollin."
+>
+  <Container>
+    <div class="stack">
+      <section aria-labelledby="titulo-inicio">
+        <p class="eyebrow">Fundación técnica</p>
+        <h1 id="titulo-inicio">Copa Ollin</h1>
+        <p>
+          La estructura de la plataforma está lista. El contenido final de la
+          landing y el registro se desarrollarán durante los sprints del
+          proyecto.
+        </p>
+        <div class="cluster">
+          <Button href="/registro">Ver estado del registro</Button>
+          <Button href="#categorias" variant="secondary">
+            Consultar rutas de categorías
+          </Button>
+        </div>
+      </section>
+
+      <section id="categorias" aria-labelledby="titulo-categorias">
+        <p class="eyebrow">Rutas preparadas</p>
+        <h2 id="titulo-categorias">Categorías</h2>
+        <ul class="route-list">
+          {categories.map((category) => (
+            <li>
+              <Card muted>
+                <h3>{category.workingName}</h3>
+                <a href={`/categorias/${category.slug}`}>
+                  Abrir cascarón de categoría
+                </a>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  </Container>
+</BaseLayout>
