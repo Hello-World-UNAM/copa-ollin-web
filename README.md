@@ -9,71 +9,50 @@
 
   <h1>Copa Ollin</h1>
 
-  <p>Base documental para la plataforma web del torneo de robótica organizado por CROFI, en colaboración con Club Hello World.</p>
+  <p>Plataforma web informativa y de registro para el torneo de robótica de CROFI, desarrollada en colaboración con Club Hello World.</p>
 
-  <p><strong>Estado:</strong> fundación técnica · <strong>Evento:</strong> 5–7 de noviembre de 2026 · Ciudad Universitaria, CDMX</p>
+  <p><strong>Evento:</strong> 5–7 de noviembre de 2026 · Ciudad Universitaria, CDMX</p>
+  <p><strong>Desarrollo:</strong> 14 de septiembre–11 de octubre de 2026 · F0–F7 operativas</p>
+
+  <p>
+    <a href="https://github.com/Hello-World-UNAM/copa-ollin-web/actions/workflows/quality.yml"><img src="https://github.com/Hello-World-UNAM/copa-ollin-web/actions/workflows/quality.yml/badge.svg?branch=main" alt="Estado de quality" /></a>
+    <a href="https://github.com/Hello-World-UNAM/copa-ollin-web/actions/workflows/staging.yml"><img src="https://github.com/Hello-World-UNAM/copa-ollin-web/actions/workflows/staging.yml/badge.svg?branch=main" alt="Estado de staging" /></a>
+  </p>
 </div>
 
----
+## Accesos rápidos
 
-## Propósito
+- [Staging](https://copa-ollin-web.vercel.app): snapshot integrado de `main`, todavía con `noindex` y sólo datos ficticios.
+- [Tablero de desarrollo](https://github.com/orgs/Hello-World-UNAM/projects/1): backlog, sprint actual y estado de cada tarea.
+- [Requisitos](docs/requirements/especificaciones-tecnicas.md) y [decisiones pendientes](docs/requirements/preguntas-abiertas.md).
+- [Sistema de diseño](DESIGN.md), [arquitectura](docs/architecture/README.md) y [flujo de trabajo](docs/workflow.md).
 
-Este repositorio reúne los requisitos, reglamentos, recursos visuales y aplicación web de Copa Ollin. Su objetivo es ofrecer una fuente de verdad revisable para CROFI, la mesa directiva y el equipo de desarrollo.
+## Objetivo y alcance
 
-La fundación técnica utiliza Astro, React para islas interactivas, Tailwind CSS y TypeScript. La decisión completa, sus límites y los asuntos diferidos están en el [ADR del stack inicial](docs/architecture/decisions/0001-stack-y-fundacion.md).
+El objetivo es entregar un sitio mobile-first con información del evento, seis categorías, reglamentos descargables y un registro seguro conectado a Google Sheets y Drive.
 
-## Alcance conocido
+La salida es **condicionada**: el sitio informativo puede publicarse, pero el registro sólo se habilitará cuando CROFI cierre las decisiones P0–P3, apruebe contenido y privacidad, y se superen las pruebas de integración, seguridad y QA. No forman parte de estas cuatro semanas un panel administrativo, pagos en línea, aplicación móvil, analítica ni automatizaciones de correo no confirmadas.
 
-La plataforma deberá contemplar, como mínimo:
+## Plan de cuatro semanas
 
-- Una landing page informativa, rápida y mobile-first.
-- Presentación visual de las seis categorías y acceso a sus reglamentos.
-- Una sección de premiación actualizable, inicialmente por confirmar.
-- Registro de equipos, capitanes, integrantes y robots.
-- Carga de comprobante de pago, identificación del capitán y carta responsiva.
-- Aceptación de reglamentos, restricciones técnicas y uso de material audiovisual.
-- Envío de datos y archivos a herramientas de Google Workspace, sujeto a validación técnica y de privacidad.
-- Capacidad objetivo de hasta 500 usuarios concurrentes.
+| Sprint | Fechas | Incremento verificable |
+|---|---|---|
+| 1 | 14–20 sep. | Landing y categorías navegables, reglamentos, CI/E2E base y spike restringido de Google con datos ficticios. |
+| 2 | 21–27 sep. | Registro completo en sandbox, validación cliente/servidor y persistencia sin duplicados. |
+| 3 | 28 sep.–4 oct. | Release candidate accesible, resiliente y con controles de privacidad, archivos e idempotencia. |
+| 4 | 5–11 oct. | Regresión, prueba de carga, runbook, UAT y decisión formal de salida. |
 
-Consulta el [SRS normalizado](docs/requirements/especificaciones-tecnicas.md), el [kit de inicio sanitizado](docs/requirements/kit-de-inicio.md) y las [decisiones pendientes](docs/requirements/preguntas-abiertas.md).
+Si el registro no supera el gate de lanzamiento, se publica únicamente la parte informativa. El éxito se mide por incrementos aceptados y evidencia real, no por cantidad de issues cerrados.
 
-## Categorías
+## Base técnica y operativa
 
-| Categoría | Imagen | Reglamento | PDF original |
-|---|---|---|---|
-| Carrera de insectos | [PNG](assets/categories/carrera-de-insectos.png) | [Markdown](docs/regulations/carrera-de-insectos.md) | [PDF](docs/sources/regulations/carrera-de-insectos.pdf) |
-| Micromouse amateur | [PNG](assets/categories/micromouse-amateur.png) | [Markdown](docs/regulations/micromouse-amateur.md) | [PDF](docs/sources/regulations/micromouse-amateur.pdf) |
-| Minisumo amateur | [PNG](assets/categories/minisumo-amateur.png) | [Markdown](docs/regulations/minisumo-amateur.md) | [PDF](docs/sources/regulations/minisumo-amateur.pdf) |
-| Minisumo profesional | [PNG](assets/categories/minisumo-profesional.png) | [Markdown](docs/regulations/minisumo-profesional.md) | [PDF](docs/sources/regulations/minisumo-profesional.pdf) |
-| Seguidor de línea amateur | [PNG](assets/categories/seguidor-de-linea-amateur.png) | [Markdown](docs/regulations/seguidor-de-linea-amateur.md) | [PDF](docs/sources/regulations/seguidor-de-linea-amateur.pdf) |
-| Seguidor de línea profesional | [PNG](assets/categories/seguidor-de-linea-profesional.png) | [Markdown](docs/regulations/seguidor-de-linea-profesional.md) | [PDF](docs/sources/regulations/seguidor-de-linea-profesional.pdf) |
+- **F0–F5 · Aplicación:** Astro 6, TypeScript estricto, React 19 sólo para islas interactivas y Tailwind CSS 4; Node.js 22 y pnpm 11 fijados.
+- **F6–F7 · Entrega:** GitHub Projects, rama `main` protegida, revisión cruzada, check único `quality`, squash merge y QA posterior al merge.
+- **Staging:** Vercel central administrado por Hello World; se despliega automáticamente después de un `quality` verde en `main`.
+- **Calidad:** Prettier, ESLint, Astro Check, Vitest y build. Playwright se incorpora en el Sprint 1.
+- **Datos:** Google Sheets y Drive son una propuesta sujeta al spike, permisos institucionales, privacidad y límites de carga.
 
-## Registro solicitado
-
-El kit entregado por CROFI solicita los siguientes grupos de datos:
-
-- **Equipo:** nombre, categoría, institución y estado o ciudad de procedencia.
-- **Capitán:** nombre completo, correo, teléfono e identificador institucional opcional.
-- **Integrantes:** cantidad, nombres y correos opcionales.
-- **Robot:** nombre y descripción de hasta 300 palabras.
-- **Consentimientos:** reglamento, uso de imagen y cumplimiento de restricciones.
-- **Archivos:** comprobante de pago, identificación del capitán y carta responsiva firmada.
-
-Estos campos representan requisitos iniciales, no un contrato de API ni un esquema de almacenamiento aprobado. Antes de implementarlos deben resolverse las obligaciones de privacidad, acceso y retención documentadas en [preguntas abiertas](docs/requirements/preguntas-abiertas.md).
-
-## Documentación y recursos
-
-- [Sistema de diseño](DESIGN.md)
-- [Arquitectura](docs/architecture/README.md)
-- [Flujo de trabajo](docs/workflow.md)
-- [Índice documental](docs/README.md)
-- [Especificaciones técnicas](docs/requirements/especificaciones-tecnicas.md)
-- [Kit de inicio](docs/requirements/kit-de-inicio.md)
-- [Preguntas abiertas](docs/requirements/preguntas-abiertas.md)
-- [Guía de contribución](CONTRIBUTING.md)
-- [Política de seguridad](SECURITY.md)
-- [Recursos de marca](assets/README.md)
-- [Instrucciones para agentes de IA](AGENTS.md) y [adaptador para Claude Code](CLAUDE.md)
+Consulta los [ADR aceptados](docs/architecture/decisions/) para conocer decisiones, consecuencias y asuntos diferidos.
 
 ## Desarrollo local
 
@@ -84,7 +63,7 @@ pnpm install
 pnpm dev
 ```
 
-La aplicación se sirve normalmente en `http://localhost:4321`. Antes de solicitar revisión ejecuta:
+La aplicación estará disponible normalmente en `http://localhost:4321`. Antes de solicitar revisión ejecuta:
 
 ```bash
 pnpm format:check
@@ -94,19 +73,27 @@ pnpm test
 pnpm build
 ```
 
-La landing, categorías y registro actuales son cascarones de fundación con `noindex`; no representan el contenido final del producto.
+## Cómo colaborar
 
-## Colaborar
+Cada cambio sigue `issue → rama corta → PR → revisión → squash merge → QA en staging`. El issue permanece abierto después del merge y sólo se cierra cuando Sebastián registra la aceptación del snapshot integrado.
 
-El proyecto utiliza un GitHub Flow ligero: cada cambio parte de un issue acotado, se desarrolla en una rama corta y llega a `main` mediante pull request con al menos una revisión. Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de participar.
+Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de trabajar y [AGENTS.md](AGENTS.md) si utilizas un agente de IA. No publiques secretos, enlaces operativos ni datos reales de participantes; fixtures, pruebas y demostraciones deben ser completamente ficticios.
 
-La operación semanal, el tablero, el CI, el staging central y el QA posterior al merge están resumidos en la [guía de flujo](docs/workflow.md).
+## Mapa del repositorio
 
-No publiques credenciales, identificaciones, teléfonos, datos de participantes ni enlaces operativos de Google Workspace en commits, issues o pull requests.
+| Ruta | Contenido |
+|---|---|
+| [`src/`](src/) | Aplicación Astro, componentes, datos y rutas. |
+| [`docs/requirements/`](docs/requirements/) | Alcance, requisitos y preguntas P0–P4. |
+| [`docs/regulations/`](docs/regulations/) | Reglamentos legibles de las seis categorías. |
+| [`docs/sources/`](docs/sources/) | PDF originales; prevalecen ante discrepancias. |
+| [`docs/architecture/`](docs/architecture/) | ADR, contratos y decisiones técnicas. |
+| [`assets/`](assets/) | Marca e imágenes de categorías. |
+| [`.github/`](.github/) | Plantillas, CI y despliegue de staging. |
 
 ## Licencia y derechos
 
-El código fuente que se incorpore al proyecto se ofrece bajo la [licencia MIT](LICENSE). Los logotipos, imágenes, reglamentos, textos institucionales y demás materiales documentales quedan excluidos de esa licencia; consulta [NOTICE.md](NOTICE.md).
+El código fuente se distribuye bajo la [licencia MIT](LICENSE). Logotipos, imágenes, reglamentos y textos institucionales están excluidos; consulta [NOTICE.md](NOTICE.md).
 
 ---
 
