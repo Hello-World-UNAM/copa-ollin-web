@@ -12,8 +12,8 @@ El repositorio ya contiene requisitos, reglamentos, recursos y un [sistema de di
 
 ## Decisión
 
-- **Runtime:** Node.js 22, fijado mediante `.nvmrc` y `engines`.
-- **Paquetes:** pnpm 11 con lockfile versionado.
+- **Runtime:** Node.js 22.23.2, fijado mediante `.nvmrc`, `engines` y `devEngines.runtime`; pnpm descarga este runtime para los scripts del proyecto si el host usa otra versión.
+- **Paquetes:** pnpm 11.3.0, fijado mediante `packageManager`, con lockfile versionado e instalación reproducible mediante `--frozen-lockfile`.
 - **Framework:** Astro 6.4.8 y TypeScript 5.9 en modo estricto.
 - **Interactividad:** React 19 únicamente para islas que justifiquen estado complejo; el contenido permanece en Astro y HTML.
 - **Estilos:** Tailwind CSS 4 mediante su plugin oficial de PostCSS, junto con los tokens de `DESIGN.md` en CSS global. Se usa PostCSS por compatibilidad con la cadena de build actual de Astro 6.
@@ -21,6 +21,7 @@ El repositorio ya contiene requisitos, reglamentos, recursos y un [sistema de di
 - **Despliegue previsto:** Vercel. El adaptador queda instalado, pero la conexión remota, previews y CI pertenecen a F6.
 - **Render inicial:** estático. Cuando exista el endpoint de registro se habilitará render bajo demanda sólo donde sea necesario.
 - **Calidad:** Astro Check, ESLint, Prettier y Vitest. Playwright y los escenarios E2E se incorporarán durante el Sprint 1.
+- **Dependencias nativas:** se impide el script de instalación de `sharp` y se usan sus binarios opcionales precompilados fijados en el lockfile; así un `libvips` global no fuerza una compilación distinta por máquina.
 - **Datos:** `src/data/categories.ts` es el registro tipado de categorías; los documentos de `docs/` conservan precedencia.
 
 Las versiones exactas quedan registradas en `package.json` y `pnpm-lock.yaml`. No se actualizan durante los cuatro sprints salvo corrección crítica aprobada.

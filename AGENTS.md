@@ -124,7 +124,7 @@ Los agentes no hacen commit, push, merge, release ni cambios de configuración r
 
 ## Validación actual
 
-Instala dependencias con `pnpm install`. Para cambios de aplicación ejecuta, como mínimo:
+Comprueba que `node --version` sea `v22.23.2` y que `pnpm --version` sea `11.3.0`; selecciona la versión declarada en `.nvmrc` antes de diagnosticar errores de dependencias. Instala con `pnpm install --frozen-lockfile`. Para cambios de aplicación ejecuta, como mínimo:
 
 ```bash
 pnpm format:check
