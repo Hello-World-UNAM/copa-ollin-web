@@ -24,7 +24,7 @@ Los originales permanecen en `assets/categories/`. Astro los importa desde su ub
 
 - El Markdown legible permanece en `docs/regulations/`.
 - El PDF original permanece en `docs/sources/regulations/` y conserva precedencia normativa.
-- Los PDF se importan con `?url` para que Vite emita una URL pública durante el build sin mantener una segunda copia manual.
+- Los PDF se sirven mediante rutas estables `/regulations/<slug>.pdf` desde `src/pages/regulations/[slug].pdf.ts`, leyendo los originales de `docs/sources/regulations/`.
 - La presentación completa del Markdown y los enlaces de descarga pertenecen al Sprint 1.
 
 Si la estrategia de build cambia, debe conservarse esta relación y añadirse una verificación automática que garantice una imagen, un Markdown y un PDF para cada categoría.

@@ -7,18 +7,22 @@ import { categories } from '../data/categories';
 ---
 
 <BaseLayout
-  title="Copa Ollin — Sitio en preparación"
-  description="Base técnica de la plataforma informativa y de registro de Copa Ollin."
+  title="Copa Ollin 2026 — Información del torneo"
+  description="Información oficial en preparación del torneo Copa Ollin 2026."
 >
   <Container>
     <div class="stack">
       <section aria-labelledby="titulo-inicio">
-        <p class="eyebrow">Fundación técnica</p>
+        <p class="eyebrow">Evento 2026</p>
         <h1 id="titulo-inicio">Copa Ollin</h1>
         <p>
-          La estructura de la plataforma está lista. El contenido final de la
-          landing y el registro se desarrollarán durante los sprints del
-          proyecto.
+          Del 5 al 7 de noviembre de 2026 en el Edificio X del Anexo de
+          Ingeniería, Ciudad Universitaria, Ciudad de México.
+        </p>
+        <p>
+          Copa Ollin es una competencia de robótica organizada por CROFI en
+          colaboración con Club Hello World para impulsar el trabajo en equipo,
+          la innovación y la aplicación práctica de la ingeniería.
         </p>
         <div class="cluster">
           <Button href="/registro">Ver estado del registro</Button>
@@ -26,6 +30,36 @@ import { categories } from '../data/categories';
             Consultar rutas de categorías
           </Button>
         </div>
+      </section>
+
+      <section aria-labelledby="titulo-p0-03">
+        <Card muted>
+          <p class="eyebrow">Dependencia activa</p>
+          <h2 id="titulo-p0-03">Estado de autorización de contenido</h2>
+          <p>
+            La publicación de fecha, sede, categorías y marcas depende de la
+            respuesta oficial a <strong>P0-03</strong> en
+            <code>docs/requirements/preguntas-abiertas.md</code>.
+          </p>
+          <ul>
+            <li>Minisumo mantiene nombre público provisional.</li>
+            <li>
+              La sección de premiación permanecerá en estado “Por confirmar”.
+            </li>
+          </ul>
+        </Card>
+      </section>
+
+      <section aria-labelledby="titulo-premiacion">
+        <Card muted>
+          <p class="eyebrow">Premiación</p>
+          <h2 id="titulo-premiacion">Estado actual</h2>
+          <p>
+            La información de premiación continúa en estado
+            <strong>Por confirmar</strong> hasta contar con aprobación oficial
+            de CROFI.
+          </p>
+        </Card>
       </section>
 
       <section id="categorias" aria-labelledby="titulo-categorias">
@@ -36,9 +70,16 @@ import { categories } from '../data/categories';
             <li>
               <Card muted>
                 <h3>{category.workingName}</h3>
-                <a href={`/categorias/${category.slug}`}>
-                  Abrir cascarón de categoría
-                </a>
+                <p>
+                  <a href={`/categorias/${category.slug}`}>
+                    Abrir cascarón de categoría
+                  </a>
+                </p>
+                <p>
+                  <a href={category.regulationPdfUrl}>
+                    Ver reglamento PDF
+                  </a>
+                </p>
               </Card>
             </li>
           ))}

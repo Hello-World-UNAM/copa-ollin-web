@@ -40,9 +40,17 @@ const { category } = Astro.props;
           integrarán durante el primer sprint. El PDF fuente permanece como
           referencia normativa en el repositorio.
         </p>
-        <Button href="/#categorias" variant="secondary">
-          Volver a categorías
-        </Button>
+        <div class="cluster">
+          <Button href={category.regulationPdfUrl}>
+            Ver reglamento PDF
+          </Button>
+          <Button href="/registro" variant="dark">
+            Ir a registro en preparación
+          </Button>
+          <Button href="/#categorias" variant="secondary">
+            Volver a categorías
+          </Button>
+        </div>
       </div>
 
       <div class="category-placeholder__media">
