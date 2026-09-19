@@ -1,6 +1,7 @@
 ---
 import type { GetStaticPaths } from 'astro';
 import { Image } from 'astro:assets';
+import { getEntry, render } from 'astro:content';
 
 import Button from '../../components/ui/Button.astro';
 import Container from '../../components/ui/Container.astro';
@@ -18,31 +19,56 @@ interface Props {
 }
 
 const { category } = Astro.props;
+
+const regulationEntry = await getEntry('regulations', category.slug);
+
+if (!regulationEntry) {
+  throw new Error(
+    `No se encontró "docs/regulations/${category.slug}.md" para renderizar la categoría "${category.workingName}". Revisa docs/architecture/contenido-y-recursos.md.`,
+  );
+}
+
+const { Content } = await render(regulationEntry);
+
+const pdfLinkLabel = `Descargar reglamento de ${category.workingName} (PDF)`;
 ---
 
 <BaseLayout
-  title={`${category.workingName} — Copa Ollin`}
-  description={`Cascarón de la categoría ${category.workingName} para Copa Ollin.`}
+  title={`Reglamento de ${category.workingName} — Copa Ollin`}
+  description={`Reglamento técnico y de competencia de la categoría ${category.workingName} en Copa Ollin, con enlace al PDF original.`}
 >
   <Container>
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a href="/#categorias">Categorías</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{category.workingName}</span>
+    </nav>
+
     <article class="category-placeholder">
       <div>
-        <p class="eyebrow">Categoría en preparación</p>
+        <p class="eyebrow">Reglamento de competencia</p>
         <h1>{category.workingName}</h1>
+
         {category.nameStatus === 'pending-confirmation' && (
           <p>
             El nombre público definitivo de esta categoría sigue pendiente de
-            confirmación.
+            confirmación por parte de CROFI. Se muestra el nombre de trabajo
+            usado en los reglamentos.
           </p>
         )}
+
         <p>
-          El contenido legible y la descarga pública del reglamento se
-          integrarán durante el primer sprint. El PDF fuente permanece como
-          referencia normativa en el repositorio.
+          Esta página presenta la transcripción normalizada del reglamento.
+          El PDF original conserva precedencia normativa ante cualquier
+          discrepancia.
         </p>
-        <Button href="/#categorias" variant="secondary">
-          Volver a categorías
-        </Button>
+
+        <div class="cluster">
+          <Button href={category.regulationPdfUrl}>{pdfLinkLabel}</Button>
+          <Button href="/#categorias" variant="secondary">
+            Volver a categorías
+          </Button>
+        </div>
       </div>
 
       <div class="category-placeholder__media">
@@ -53,6 +79,13 @@ const { category } = Astro.props;
           sizes="(min-width: 768px) 45vw, 100vw"
         />
       </div>
+    </article>
+
+    <article
+      class="regulation-content"
+      aria-label={`Texto del reglamento de ${category.workingName}`}
+    >
+      <Content />
     </article>
   </Container>
 </BaseLayout>
