@@ -1,60 +1,61 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Copa Ollin - Smoke Tests', () => {
-  // Configuración global de la suite
-  test.use({ baseURL: 'http://localhost:4321' });
+const categorias = [
+  'carrera-de-insectos',
+  'micromouse-amateur',
+  'minisumo-amateur',
+  'minisumo-profesional',
+  'seguidor-de-linea-amateur',
+  'seguidor-de-linea-profesional',
+];
 
-  test('La landing page carga y tiene etiqueta noindex', async ({ page }) => {
-    await page.goto('/');
+const rutasAProbar = [
+  '/',
+  '/registro',
+  ...categorias.map((c) => `/categorias/${c}`),
+];
 
-    // Validar título y carga
-    await expect(page).toHaveTitle(/Copa Ollin/i);
-
-    // Validar comportamiento noindex estricto
-    const robotsMeta = page.locator('meta[name="robots"]');
-    await expect(robotsMeta).toHaveAttribute('content', 'noindex, nofollow');
+test.describe('Copa Ollin - Smoke Tests y Casos Negativos', () => {
+  test('Todas las rutas tienen etiqueta noindex estricta', async ({ page }) => {
+    for (const ruta of rutasAProbar) {
+      await page.goto(ruta);
+      const robotsMeta = page.locator('meta[name="robots"]');
+      await expect(robotsMeta).toHaveAttribute('content', 'noindex, nofollow');
+    }
   });
 
-  test('Las 6 rutas de categorías están accesibles', async ({ page }) => {
-    const categorias = [
-      'carrera-de-insectos',
-      'micromouse-amateur',
-      'minisumo-amateur',
-      'minisumo-profesional',
-      'seguidor-de-linea-amateur',
-      'seguidor-de-linea-profesional',
-    ];
-
+  test('Las 6 rutas de categorías están accesibles (Status 200)', async ({
+    page,
+  }) => {
     for (const ruta of categorias) {
       const response = await page.goto(`/categorias/${ruta}`);
       expect(response?.status()).toBe(200);
     }
   });
 
-  test('La ruta de registro mockea servicios externos y muestra "en preparación"', async ({
+  test('La ruta de registro no muestra formularios activos ni inputs', async ({
     page,
   }) => {
-    // Interceptar llamadas de red (Criterio: Las fronteras se mockean)
-    await page.route('**/*', async (route) => {
-      const request = route.request();
-      if (
-        request.url().includes('google.com') ||
-        request.url().includes('vercel.app')
-      ) {
-        await route.fulfill({
-          status: 403,
-          body: JSON.stringify({
-            error: 'Acceso bloqueado en entorno de pruebas',
-          }),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
     await page.goto('/registro');
 
-    // Verificar que el registro no está activo
+    // Verificar que no hay campos de entrada que puedan recolectar datos
+    await expect(page.locator('form')).toHaveCount(0);
+    await expect(page.locator('input')).toHaveCount(0);
+
+    // Verificar el mensaje de estado
     await expect(page.locator('body')).toContainText(/en preparación/i);
+  });
+
+  test('Simulación de fallo de red en recursos estáticos (Resiliencia)', async ({
+    page,
+  }) => {
+    // Interceptar y abortar peticiones de imágenes o scripts para simular fallo
+    await page.route('**/*.{png,jpg,jpeg,js,css}', (route) => route.abort());
+
+    const response = await page.goto('/');
+
+    // La página debe soportar la caída y cargar el HTML principal correctamente
+    expect(response?.status()).toBe(200);
+    await expect(page).toHaveTitle(/Copa Ollin/i);
   });
 });
