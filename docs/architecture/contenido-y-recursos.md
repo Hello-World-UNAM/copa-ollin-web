@@ -29,6 +29,6 @@ Los originales permanecen en `assets/categories/`. Astro los importa desde su ub
 
 Si la estrategia de build cambia, debe conservarse esta relación y añadirse una verificación automática que garantice una imagen, un Markdown y un PDF para cada categoría.
 
-## Nombres pendientes
+## Nombres confirmados
 
-Los nombres de Minisumo están marcados como `pending-confirmation` porque el kit utiliza “Minisumo autónomo” y los reglamentos usan “Minisumo”. No se debe eliminar esa marca hasta registrar la respuesta de CROFI en los requisitos.
+El nombre público confirmado es “Minisumo Autónomo”. Las divisiones se muestran como “Minisumo Autónomo amateur” y “Minisumo Autónomo profesional”; el registro tipado conserva esa decisión en `src/data/categories.ts`.

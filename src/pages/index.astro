@@ -20,6 +20,10 @@ import { categories } from '../data/categories';
           Ingeniería, Ciudad Universitaria, Ciudad de México.
         </p>
         <p>
+          El sitio abrirá el 15 de octubre a las 8:00 a.m. y las inscripciones
+          cerrarán el 30 de octubre a las 23:59, en horario de Ciudad de México.
+        </p>
+        <p>
           Copa Ollin es una competencia de robótica organizada por CROFI en
           colaboración con Club Hello World para impulsar el trabajo en equipo,
           la innovación y la aplicación práctica de la ingeniería.
@@ -37,16 +41,13 @@ import { categories } from '../data/categories';
           <p class="eyebrow">Dependencia activa</p>
           <h2 id="titulo-p0-03">Estado de autorización de contenido</h2>
           <p>
-            La publicación de fecha, sede, categorías y marcas depende de la
-            respuesta oficial a <strong>P0-03</strong> en
-            <code>docs/requirements/preguntas-abiertas.md</code>.
+            La publicación de fecha, sede y categorías ya cuenta con los datos
+            recibidos para esta etapa. El sitio conserva <code>noindex</code>
+            mientras continúa la pre-planeación.
           </p>
-          <ul>
-            <li>Minisumo mantiene nombre público provisional.</li>
-            <li>
-              La sección de premiación permanecerá en estado “Por confirmar”.
-            </li>
-          </ul>
+          <p>
+            El nombre oficial confirmado es <strong>Minisumo Autónomo</strong>.
+          </p>
         </Card>
       </section>
 
@@ -68,19 +69,15 @@ import { categories } from '../data/categories';
         <ul class="route-list">
           {categories.map((category) => (
             <li>
-              <Card muted>
-                <h3>{category.workingName}</h3>
-                <p>
-                  <a href={`/categorias/${category.slug}`}>
-                    Abrir cascarón de categoría
-                  </a>
-                </p>
-                <p>
-                  <a href={category.regulationPdfUrl}>
-                    Ver reglamento PDF
-                  </a>
-                </p>
-              </Card>
+              <a
+                class="category-link"
+                href={`/categorias/${category.slug}`}
+                aria-label={`Ver categoría ${category.workingName}`}
+              >
+                <Card muted>
+                  <h3>{category.workingName}</h3>
+                </Card>
+              </a>
             </li>
           ))}
         </ul>
