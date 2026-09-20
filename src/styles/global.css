@@ -276,7 +276,7 @@ p {
 
 .category-link:hover,
 .category-link:focus-visible {
-  translate: 0 -4px;
+  translate: 0 -2px;
 }
 
 .category-link:hover .card,

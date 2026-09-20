@@ -16,8 +16,8 @@ import { categories } from '../data/categories';
         <p class="eyebrow">Evento 2026</p>
         <h1 id="titulo-inicio">Copa Ollin</h1>
         <p>
-          Del 5 al 7 de noviembre de 2026 en el Edificio X del Anexo de
-          Ingeniería, Ciudad Universitaria, Ciudad de México.
+          Del 5 al 7 de noviembre de 2026. La sede está por confirmar y se
+          publicará cuando la Facultad emita su aprobación oficial.
         </p>
         <p>
           El sitio abrirá el 15 de octubre a las 8:00 a.m. y las inscripciones
@@ -34,21 +34,6 @@ import { categories } from '../data/categories';
             Consultar rutas de categorías
           </Button>
         </div>
-      </section>
-
-      <section aria-labelledby="titulo-p0-03">
-        <Card muted>
-          <p class="eyebrow">Dependencia activa</p>
-          <h2 id="titulo-p0-03">Estado de autorización de contenido</h2>
-          <p>
-            La publicación de fecha, sede y categorías ya cuenta con los datos
-            recibidos para esta etapa. El sitio conserva <code>noindex</code>
-            mientras continúa la pre-planeación.
-          </p>
-          <p>
-            El nombre oficial confirmado es <strong>Minisumo Autónomo</strong>.
-          </p>
-        </Card>
       </section>
 
       <section aria-labelledby="titulo-premiacion">
@@ -81,6 +66,24 @@ import { categories } from '../data/categories';
             </li>
           ))}
         </ul>
+      </section>
+
+      <section aria-labelledby="titulo-reglamentos-registro">
+        <Card>
+          <p class="eyebrow">Participación</p>
+          <h2 id="titulo-reglamentos-registro">Reglamentos y registro</h2>
+          <p>
+            Consulta el reglamento de cada categoría antes de preparar tu
+            participación. El formulario de registro todavía se encuentra en
+            preparación.
+          </p>
+          <div class="cluster">
+            <Button href="#categorias" variant="secondary">
+              Consultar reglamentos
+            </Button>
+            <Button href="/registro">Ver estado del registro</Button>
+          </div>
+        </Card>
       </section>
     </div>
   </Container>
