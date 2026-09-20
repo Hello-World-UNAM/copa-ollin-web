@@ -11,3 +11,4 @@ Este directorio registra decisiones técnicas aprobadas y contratos internos de 
 ## Contratos internos
 
 - [Estrategia de contenido y recursos](contenido-y-recursos.md)
+- [Contrato provisional de registro](contrato-registro-provisional.md)
