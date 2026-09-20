@@ -14,9 +14,9 @@ El repositorio ya contiene requisitos, reglamentos, recursos y un [sistema de di
 
 - **Runtime:** Node.js 22.23.2, fijado mediante `.nvmrc`, `engines` y `devEngines.runtime`; pnpm descarga este runtime para los scripts del proyecto si el host usa otra versión.
 - **Paquetes:** pnpm 11.3.0, fijado mediante `packageManager`, con lockfile versionado e instalación reproducible mediante `--frozen-lockfile`.
-- **Framework:** Astro 6.4.8 y TypeScript 5.9 en modo estricto.
+- **Framework:** Astro 7.2.8 y TypeScript 5.9 en modo estricto.
 - **Interactividad:** React 19 únicamente para islas que justifiquen estado complejo; el contenido permanece en Astro y HTML.
-- **Estilos:** Tailwind CSS 4 mediante su plugin oficial de PostCSS, junto con los tokens de `DESIGN.md` en CSS global. Se usa PostCSS por compatibilidad con la cadena de build actual de Astro 6.
+- **Estilos:** Tailwind CSS 4 mediante su plugin oficial de Vite (`@tailwindcss/vite`), junto con los tokens de `DESIGN.md` en CSS global.
 - **Tipografía pública provisional:** Orbitron autohospedada mediante Fontsource, con licencia OFL-1.1. Robotic no se sirve mientras no exista autorización de redistribución.
 - **Despliegue previsto:** Vercel. El adaptador queda instalado, pero la conexión remota, previews y CI pertenecen a F6.
 - **Render inicial:** estático. Cuando exista el endpoint de registro se habilitará render bajo demanda sólo donde sea necesario.
