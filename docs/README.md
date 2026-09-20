@@ -15,8 +15,8 @@ Las decisiones técnicas aprobadas y los contratos internos de la aplicación se
 
 - [Carrera de insectos](regulations/carrera-de-insectos.md)
 - [Micromouse amateur](regulations/micromouse-amateur.md)
-- [Minisumo amateur](regulations/minisumo-amateur.md)
-- [Minisumo profesional](regulations/minisumo-profesional.md)
+- [Minisumo Autónomo amateur](regulations/minisumo-amateur.md)
+- [Minisumo Autónomo profesional](regulations/minisumo-profesional.md)
 - [Seguidor de línea amateur](regulations/seguidor-de-linea-amateur.md)
 - [Seguidor de línea profesional](regulations/seguidor-de-linea-profesional.md)
 

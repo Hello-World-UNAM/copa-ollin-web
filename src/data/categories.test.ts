@@ -24,12 +24,20 @@ describe('registro de categorías', () => {
     ]);
   });
 
-  it('conserva visible la confirmación pendiente de los nombres de Minisumo', () => {
-    const pendingNames = categories
-      .filter(({ nameStatus }) => nameStatus === 'pending-confirmation')
-      .map(({ slug }) => slug);
+  it('usa el nombre oficial confirmado para las categorías de Minisumo', () => {
+    const minisumoCategories = categories.filter(({ slug }) =>
+      slug.startsWith('minisumo-'),
+    );
 
-    expect(pendingNames).toEqual(['minisumo-amateur', 'minisumo-profesional']);
+    expect(
+      minisumoCategories.map(({ workingName, nameStatus }) => [
+        workingName,
+        nameStatus,
+      ]),
+    ).toEqual([
+      ['Minisumo Autónomo amateur', 'confirmed'],
+      ['Minisumo Autónomo profesional', 'confirmed'],
+    ]);
   });
 
   it('resuelve una categoría conocida y rechaza una desconocida', () => {

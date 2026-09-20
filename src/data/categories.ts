@@ -6,12 +6,6 @@ import minisumoAmateurImage from '../../assets/categories/minisumo-amateur.png';
 import minisumoProfesionalImage from '../../assets/categories/minisumo-profesional.png';
 import seguidorAmateurImage from '../../assets/categories/seguidor-de-linea-amateur.png';
 import seguidorProfesionalImage from '../../assets/categories/seguidor-de-linea-profesional.png';
-import carreraDeInsectosPdf from '../../docs/sources/regulations/carrera-de-insectos.pdf?url';
-import micromouseAmateurPdf from '../../docs/sources/regulations/micromouse-amateur.pdf?url';
-import minisumoAmateurPdf from '../../docs/sources/regulations/minisumo-amateur.pdf?url';
-import minisumoProfesionalPdf from '../../docs/sources/regulations/minisumo-profesional.pdf?url';
-import seguidorAmateurPdf from '../../docs/sources/regulations/seguidor-de-linea-amateur.pdf?url';
-import seguidorProfesionalPdf from '../../docs/sources/regulations/seguidor-de-linea-profesional.pdf?url';
 
 export type CategoryNameStatus = 'confirmed' | 'pending-confirmation';
 
@@ -33,7 +27,7 @@ export const categories: readonly CategoryDefinition[] = [
     image: carreraDeInsectosImage,
     imageAlt: 'Robot articulado para la categoría Carrera de insectos',
     regulationMarkdownPath: 'docs/regulations/carrera-de-insectos.md',
-    regulationPdfUrl: carreraDeInsectosPdf,
+    regulationPdfUrl: '/regulations/carrera-de-insectos.pdf',
   },
   {
     slug: 'micromouse-amateur',
@@ -42,25 +36,25 @@ export const categories: readonly CategoryDefinition[] = [
     image: micromouseAmateurImage,
     imageAlt: 'Robot móvil para la categoría Micromouse amateur',
     regulationMarkdownPath: 'docs/regulations/micromouse-amateur.md',
-    regulationPdfUrl: micromouseAmateurPdf,
+    regulationPdfUrl: '/regulations/micromouse-amateur.pdf',
   },
   {
     slug: 'minisumo-amateur',
-    workingName: 'Minisumo amateur',
-    nameStatus: 'pending-confirmation',
+    workingName: 'Minisumo Autónomo amateur',
+    nameStatus: 'confirmed',
     image: minisumoAmateurImage,
-    imageAlt: 'Robot de la categoría Minisumo amateur',
+    imageAlt: 'Robot de la categoría Minisumo Autónomo amateur',
     regulationMarkdownPath: 'docs/regulations/minisumo-amateur.md',
-    regulationPdfUrl: minisumoAmateurPdf,
+    regulationPdfUrl: '/regulations/minisumo-amateur.pdf',
   },
   {
     slug: 'minisumo-profesional',
-    workingName: 'Minisumo profesional',
-    nameStatus: 'pending-confirmation',
+    workingName: 'Minisumo Autónomo profesional',
+    nameStatus: 'confirmed',
     image: minisumoProfesionalImage,
-    imageAlt: 'Robot de la categoría Minisumo profesional',
+    imageAlt: 'Robot de la categoría Minisumo Autónomo profesional',
     regulationMarkdownPath: 'docs/regulations/minisumo-profesional.md',
-    regulationPdfUrl: minisumoProfesionalPdf,
+    regulationPdfUrl: '/regulations/minisumo-profesional.pdf',
   },
   {
     slug: 'seguidor-de-linea-amateur',
@@ -69,7 +63,7 @@ export const categories: readonly CategoryDefinition[] = [
     image: seguidorAmateurImage,
     imageAlt: 'Robot de la categoría Seguidor de línea amateur',
     regulationMarkdownPath: 'docs/regulations/seguidor-de-linea-amateur.md',
-    regulationPdfUrl: seguidorAmateurPdf,
+    regulationPdfUrl: '/regulations/seguidor-de-linea-amateur.pdf',
   },
   {
     slug: 'seguidor-de-linea-profesional',
@@ -78,7 +72,7 @@ export const categories: readonly CategoryDefinition[] = [
     image: seguidorProfesionalImage,
     imageAlt: 'Robot de la categoría Seguidor de línea profesional',
     regulationMarkdownPath: 'docs/regulations/seguidor-de-linea-profesional.md',
-    regulationPdfUrl: seguidorProfesionalPdf,
+    regulationPdfUrl: '/regulations/seguidor-de-linea-profesional.pdf',
   },
 ];
 

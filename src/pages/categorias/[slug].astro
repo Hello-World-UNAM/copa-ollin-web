@@ -62,9 +62,11 @@ const pdfLinkLabel = `Descargar reglamento de ${category.workingName} (PDF)`;
           El PDF original conserva precedencia normativa ante cualquier
           discrepancia.
         </p>
-
         <div class="cluster">
           <Button href={category.regulationPdfUrl}>{pdfLinkLabel}</Button>
+          <Button href="/registro" variant="dark">
+            Ir a registro en preparación
+          </Button>
           <Button href="/#categorias" variant="secondary">
             Volver a categorías
           </Button>
