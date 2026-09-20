@@ -33,6 +33,58 @@ test.describe('Copa Ollin - Smoke Tests y Casos Negativos', () => {
     }
   });
 
+  test('La landing publica imagen, detalle y PDF para las 6 categorías', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    const tarjetas = page.locator('#categorias .category-card');
+    await expect(tarjetas).toHaveCount(6);
+    await expect(tarjetas.locator('.category-card__media img')).toHaveCount(6);
+
+    for (const categoria of categorias) {
+      await expect(
+        page.locator(`#categorias a[href="/categorias/${categoria}"]`),
+      ).toHaveCount(1);
+      await expect(
+        page.locator(`#categorias a[href="/regulations/${categoria}.pdf"]`),
+      ).toHaveCount(1);
+    }
+  });
+
+  test('La cuadrícula de categorías responde sin desbordamiento', async ({
+    page,
+  }) => {
+    const viewports = [
+      { width: 320, height: 800, columns: 1 },
+      { width: 768, height: 900, columns: 2 },
+      { width: 1280, height: 900, columns: 3 },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+
+      const firstRowCount = await page
+        .locator('#categorias .category-card')
+        .evaluateAll((cards) => {
+          const firstTop = cards[0]?.getBoundingClientRect().top;
+
+          return cards.filter(
+            (card) =>
+              Math.abs(card.getBoundingClientRect().top - (firstTop ?? 0)) < 1,
+          ).length;
+        });
+
+      expect(firstRowCount).toBe(viewport.columns);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+    }
+  });
+
   test('La ruta de registro no muestra formularios activos ni inputs', async ({
     page,
   }) => {

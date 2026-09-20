@@ -1,6 +1,7 @@
 ---
 import Button from '../components/ui/Button.astro';
 import Card from '../components/ui/Card.astro';
+import CategoryCard from '../components/categories/CategoryCard.astro';
 import Container from '../components/ui/Container.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { categories } from '../data/categories';
@@ -54,15 +55,7 @@ import { categories } from '../data/categories';
         <ul class="route-list">
           {categories.map((category) => (
             <li>
-              <a
-                class="category-link"
-                href={`/categorias/${category.slug}`}
-                aria-label={`Ver categoría ${category.workingName}`}
-              >
-                <Card muted>
-                  <h3>{category.workingName}</h3>
-                </Card>
-              </a>
+              <CategoryCard category={category} />
             </li>
           ))}
         </ul>
