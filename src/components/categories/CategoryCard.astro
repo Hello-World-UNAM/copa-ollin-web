@@ -34,7 +34,11 @@ const { category } = Astro.props;
       <a href={`/categorias/${category.slug}`}>
         Leer reglamento de {category.workingName}
       </a>
-      <a href={category.regulationPdfUrl} target="_blank" rel="noopener noreferrer">
+      <a
+        href={category.regulationPdfUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Descargar reglamento de {category.workingName} (PDF)
       </a>
     </div>

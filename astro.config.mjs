@@ -65,4 +65,7 @@ function stripTranscriptionNotice() {
 export default defineConfig({
   adapter: vercel(),
   integrations: [react()],
+  markdown: {
+    rehypePlugins: [shiftMarkdownHeadings, stripTranscriptionNotice],
+  },
 });
