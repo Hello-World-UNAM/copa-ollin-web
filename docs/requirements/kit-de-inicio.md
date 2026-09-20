@@ -36,6 +36,8 @@ Se entregaron una imagen y un reglamento para cada categoria.
 
 - **Fecha:** del 5 al 7 de noviembre de 2026.
 - **Lugar:** Edificio X del Anexo de Ingeniería, Ciudad Universitaria, Ciudad de México.
+- **Apertura del sitio:** 15 de octubre de 2026 a las 8:00 a.m., hora de Ciudad de México.
+- **Cierre de inscripciones:** 30 de octubre de 2026 a las 23:59, hora de Ciudad de México.
 
 ### Texto de bienvenida
 

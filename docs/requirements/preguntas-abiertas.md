@@ -20,6 +20,12 @@ Las fechas corresponden al plan interno de cuatro sprints. Si cambia el calendar
 
 Los siguientes puntos ya aparecen en los documentos entregados. No es necesario volver a preguntar por ellos, salvo las confirmaciones expresamente indicadas más adelante.
 
+### Decisiones recibidas el 18 de septiembre de 2026
+
+- **Publicación del sitio:** 15 de octubre de 2026 a las 8:00 a.m., hora de Ciudad de México.
+- **Cierre de inscripciones:** 30 de octubre de 2026 a las 23:59, hora de Ciudad de México.
+- **Nombre oficial:** la categoría se publica como **Minisumo Autónomo**; sus divisiones se muestran como Minisumo Autónomo amateur y Minisumo Autónomo profesional.
+
 ### Evento y contenido
 
 - El evento está previsto del **5 al 7 de noviembre de 2026** en el **Edificio X del Anexo de Ingeniería, Ciudad Universitaria, Ciudad de México** ([kit de inicio](kit-de-inicio.md#fecha-y-lugar)).
@@ -58,9 +64,8 @@ Estos puntos aparecen de forma distinta entre documentos y necesitan una respues
 1. **Pago frente a inscripción:** el kit solicita un "comprobante de pago", pero el SRS sólo menciona como ejemplo un "comprobante de inscripción". Ningún documento incluye monto, cuenta, método o proceso de validación.
 2. **Identificación opcional frente a archivo obligatorio:** el número de identificación institucional se marca como opcional para universitarios, pero el archivo de identificación del capitán aparece como obligatorio para todos.
 3. **Evidencias adicionales:** el SRS menciona bitácoras y fotografías del robot como ejemplos de archivos obligatorios o condicionales; el kit sólo enumera comprobante, identificación y carta responsiva.
-4. **Nombre público de Minisumo:** el kit utiliza "Minisumo autónomo amateur/profesional", mientras los títulos de los reglamentos utilizan "Minisumo amateur/profesional". Los reglamentos sí describen robots autónomos.
-5. **Fecha y sede frente a autorización de publicación:** el kit proporciona fecha y lugar, pero no identifica si ya cuentan con aprobación final para anunciarse públicamente.
-6. **Acceso actual a Google Workspace:** de acuerdo con la información proporcionada por Hello World, los recursos compartidos actualmente son accesibles mediante enlace. Esa configuración no es adecuada cuando contengan datos o documentos reales y debe sustituirse por acceso restringido antes de producción.
+4. **Reglamentos fuente frente a nombre público:** la decisión recibida fija el nombre público como “Minisumo Autónomo”, pero los PDF fuente todavía titulan las divisiones como “Minisumo Amateur” y “Minisumo Profesional”. El PDF conserva precedencia hasta que CROFI entregue una versión actualizada o confirme que el nombre público puede diferir del título normativo.
+5. **Acceso actual a Google Workspace:** de acuerdo con la información proporcionada por Hello World, los recursos compartidos actualmente son accesibles mediante enlace. Esa configuración no es adecuada cuando contengan datos o documentos reales y debe sustituirse por acceso restringido antes de producción.
 
 ## P0 — Preguntas para la reunión inicial
 
@@ -69,8 +74,8 @@ Estas siete respuestas son las únicas que se necesitan para distribuir el traba
 | ID | Pregunta para CROFI | Decisión que habilita esta semana |
 |---|---|---|
 | P0-01 | ¿El enlace oficial ya designado será el **Product Owner** facultado para priorizar requisitos y aprobar entregables en nombre de CROFI? ¿Quién lo sustituirá si no está disponible? | Establecer una sola autoridad de producto y el proceso de aceptación. |
-| P0-02 | ¿Cuál es la fecha y hora límite real para publicar el sitio y cuál es la fecha y hora de apertura del registro, en horario de Ciudad de México? | Ordenar el backlog y medir el margen entre desarrollo, aceptación y apertura. |
-| P0-03 | ¿CROFI autoriza publicar desde el primer prototipo la fecha, sede, nombres de categorías y recursos de marca entregados? Confirmen además el nombre público de Minisumo —con o sin "autónomo"— y cualquier restricción de uso de logotipos. | Construir la landing y las categorías sin publicar información provisional ni usar indebidamente las marcas. |
+| P0-02 | ¿Cuál es la fecha y hora límite real para publicar el sitio y cuál es la fecha y hora de apertura del registro, en horario de Ciudad de México? | Resuelta parcialmente: el sitio abrirá el 15 de octubre a las 8:00 a.m. y las inscripciones cerrarán el 30 de octubre a las 23:59. |
+| P0-03 | ¿CROFI autoriza publicar desde el primer prototipo la fecha, sede, nombres de categorías y recursos de marca entregados? Confirmen además el nombre público de Minisumo —con o sin "autónomo"— y cualquier restricción de uso de logotipos. | Resuelta en el nombre público y los datos entregados: se usará **Minisumo Autónomo**. La autorización de marcas continúa pendiente si no existe confirmación específica. |
 | P0-04 | ¿La cuenta propietaria de Sheets y Drive es institucional y puede proporcionar recursos **separados y restringidos** para pruebas y producción? ¿Dispone de una Unidad compartida o qué mecanismo autoriza para que la integración escriba sin hacer públicos los recursos? | Probar durante el Sprint 1 autenticación, propiedad, permisos y continuidad de Google Workspace. |
 | P0-05 | ¿Qué documentos se pedirán realmente: comprobante de pago o de inscripción, identificación, carta responsiva, bitácora y/o fotografías? Si existe pago, indiquen concepto, unidad de cobro, monto, medio, referencia y responsable de validarlo. | Definir el alcance real de datos y cargas, y resolver las contradicciones entre el kit y el SRS. |
 | P0-06 | Para cada documento confirmado, ¿cuántos archivos se admitirán y cuáles serán sus formatos y tamaño máximo? ¿Se aceptarán PDF protegidos con contraseña? | Elegir y probar una estrategia de carga compatible con el hosting y con Drive. |
@@ -127,7 +132,7 @@ Fecha objetivo: **4 de octubre de 2026**, antes de la aceptación y preparación
 
 | ID | Pregunta para CROFI | Por qué se necesita |
 |---|---|---|
-| P3-01 | ¿Cuál es la fecha y hora exactas de cierre del registro, en horario de Ciudad de México? | Permite comunicar y aplicar el periodo completo. |
+| P3-01 | ¿Cuál es la fecha y hora exactas de cierre del registro, en horario de Ciudad de México? | Resuelta: las inscripciones cerrarán el 30 de octubre de 2026 a las 23:59, hora de Ciudad de México. |
 | P3-02 | ¿Quién operará el registro, atenderá dudas y decidirá ante una caída o inscripción incompleta? Indiquen un canal público de soporte y uno privado para incidentes. | Hace operable el sistema una vez lanzado. |
 | P3-03 | ¿Quién puede actualizar fechas, premios, reglamentos y demás contenido, y quién aprueba cada cambio? | Define el flujo editorial. |
 | P3-04 | ¿Se requiere respaldo periódico adicional a Sheets y Drive? ¿Qué información mínima debe poder recuperarse después de una falla? | Permite acordar recuperación y continuidad. |

@@ -1,0 +1,46 @@
+---
+import { Image } from 'astro:assets';
+
+import type { CategoryDefinition } from '../../data/categories';
+import Card from '../ui/Card.astro';
+
+interface Props {
+  category: CategoryDefinition;
+}
+
+const { category } = Astro.props;
+---
+
+<Card muted class="category-card">
+  <div class="category-card__media">
+    <Image
+      src={category.image}
+      alt={category.imageAlt}
+      widths={[320, 480, 640]}
+      sizes="(min-width: 768px) 30vw, 90vw"
+    />
+  </div>
+
+  <div class="category-card__body">
+    <h3>{category.workingName}</h3>
+
+    {category.nameStatus === 'pending-confirmation' && (
+      <p class="category-card__pending">
+        Nombre público pendiente de confirmación por CROFI.
+      </p>
+    )}
+
+    <div class="category-card__links">
+      <a href={`/categorias/${category.slug}`}>
+        Leer reglamento de {category.workingName}
+      </a>
+      <a
+        href={category.regulationPdfUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Descargar reglamento de {category.workingName} (PDF)
+      </a>
+    </div>
+  </div>
+</Card>
