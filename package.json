@@ -24,7 +24,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@astrojs/react": "5.0.7",
@@ -37,6 +38,7 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "22.20.2",
     "@types/react": "19.3.0",
