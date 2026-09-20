@@ -1,6 +1,6 @@
 # ADR-0003: spike de Google Sheets y Drive como destino provisional
 
-- **Estado:** Spike ejecutado; decisión productiva pendiente
+- **Estado:** Protocolo documentado; ejecución pendiente de verificación; decisión productiva pendiente
 - **Fecha:** 17 de septiembre de 2026
 
 ## Contexto
@@ -9,15 +9,21 @@ La plataforma de Copa Ollin requiere registrar equipos y manejar evidencias docu
 
 Se requiere validar la viabilidad técnica y operativa del uso de Google Sheets y Drive en un entorno aislado, usando únicamente recursos de prueba y datos ficticios. La decisión no habilita el formulario ni compromete una arquitectura final.
 
+## Dependencias vigentes
+
+- **P0-04:** CROFI confirmó que administra sus recursos desde una cuenta oficial no institucional y solicitó que Hello World proponga los recursos y la estructura del ambiente de prueba. Esa coordinación sigue pendiente.
+- **P0-06:** los formatos y tamaños máximos de archivo continúan pendientes. No puede aceptarse una prueba de carga como autorizada hasta resolver esta dependencia.
+- Los resultados descritos en este ADR provienen de la contribución original y deben verificarse con evidencia sanitizada antes de considerar ejecutado el spike.
+
 ## Decisión
 
-Se ejecutó un spike restringido de validación técnica y operativa después de confirmar P0-04 y, para la prueba de archivos, P0-06. Se usaron recursos separados de cualquier entorno productivo, permisos mínimos y datos ficticios, sin información real ni enlaces públicos.
+Se documenta un protocolo restringido de validación técnica y operativa y se conservan los resultados reportados por la contribución original. El repositorio no contiene todavía evidencia sanitizada ni constancia de autorización suficiente para aceptar esos resultados como verificados.
 
 No se implementará el contrato final del registro ni la integración productiva. El objetivo es evaluar viabilidad, riesgos, permisos, límites, reintentos, idempotencia y limpieza del entorno de prueba antes de tomar una decisión productiva.
 
 ## Alcance del spike
 
-El spike incluye:
+El protocolo del spike contempla:
 
 - creación de un recurso de prueba separado
 - prueba de escritura y lectura de una hoja de cálculo
@@ -38,15 +44,15 @@ El spike excluye:
 
 ## Recursos de prueba
 
-Se utilizarán recursos de prueba aislados, sin relación con producción y con acceso restringido.
+Los recursos que se utilicen deberán estar aislados, sin relación con producción y con acceso restringido.
 
-### Recursos utilizados
+### Recursos previstos y resultados reportados
 
-- Hoja de prueba: recurso separado de producción; su nombre e identificador se omiten del repositorio.
-- Carpeta de prueba: recurso separado de producción; su nombre e identificador se omiten del repositorio.
+- Hoja de prueba: el ADR original reporta un recurso separado de producción; su nombre e identificador se omiten del repositorio.
+- Carpeta de prueba: el ADR original reporta un recurso separado de producción; su nombre e identificador se omiten del repositorio.
 - Propietario: debe conservarse en la cuenta autorizada; la identidad concreta se documenta sólo por canal privado.
 - Permisos durante la prueba: acceso restringido a las identidades autorizadas y sin enlaces públicos.
-- Estado posterior: el acceso de prueba fue revocado.
+- Estado posterior reportado: el acceso de prueba fue revocado; falta verificación por un reviewer.
 - Evidencia: matriz de permisos sin correos, identificadores, enlaces ni capturas sensibles.
 
 ### Datos ficticios de ejemplo
@@ -63,13 +69,13 @@ Todos los valores anteriores son ficticios y no corresponden a personas reales.
 
 ### Autenticación
 
-Se utilizó el mecanismo autorizado para la prueba. La evidencia pública sólo debe indicar el tipo de mecanismo y sus permisos, sin guardar tokens, secretos, credenciales ni identificadores operativos.
+El ADR original reporta el uso de un mecanismo autorizado, pero no identifica todavía su tipo ni los permisos empleados. Esta información debe documentarse y verificarse sin guardar tokens, secretos, credenciales ni identificadores operativos.
 
 ### Propiedad
 
 La propiedad y la continuidad institucional deben confirmarse para producción. Se documentará el rol propietario, el rol administrador y el procedimiento de transferencia sin publicar identidades ni enlaces.
 
-### Matriz de permisos mínimos
+### Matriz propuesta de permisos mínimos
 
 La matriz de la evidencia deberá usar roles, no datos personales:
 
@@ -84,15 +90,15 @@ La configuración real deberá verificarse en el recurso aislado y registrarse s
 
 ### Revocación de acceso
 
-Se documentará la retirada de la identidad de prueba, la revisión de accesos directos y heredados, y la confirmación de que el recurso continúa restringido. El mismo procedimiento deberá aplicarse cuando una persona salga del proyecto.
+Debe verificarse la retirada de la identidad de prueba, la revisión de accesos directos y heredados, y la confirmación de que el recurso continúa restringido. El mismo procedimiento deberá aplicarse cuando una persona salga del proyecto.
 
 ### Continuidad
 
-Se comprobará que exista un responsable institucional alterno y un procedimiento de transferencia. Una cuenta personal como único propietario será un bloqueo para producción.
+Debe comprobarse que exista un responsable institucional alterno y un procedimiento de transferencia. Una cuenta personal como único propietario será un bloqueo para producción.
 
-## Protocolo de pruebas autorizado
+## Protocolo y resultados reportados
 
-Las pruebas siguientes se ejecutaron con la autorización correspondiente y su evidencia se registra sin secretos.
+Los resultados siguientes provienen de la contribución original. Se conservan como reportados, no como verificados, hasta contar con autorización trazable, evidencia sanitizada y revisión de QA.
 
 ### 1. Creación de hoja de prueba
 
@@ -101,7 +107,7 @@ Crear una hoja aislada sólo después de confirmar P0-04. No registrar su URL, I
 Resultado esperado:
 - hoja creada sin utilizar producción
 
-Resultado real:
+Resultado reportado (pendiente de verificación):
 - Hoja creada correctamente en un recurso separado y restringido.
 
 ### 2. Escritura de fila ficticia
@@ -111,7 +117,7 @@ Insertar una fila con datos claramente inventados, usando un identificador de pr
 Resultado esperado:
 - escritura exitosa
 
-Resultado real:
+Resultado reportado (pendiente de verificación):
 - Fila ficticia escrita correctamente con el identificador `SPIKE-20260918-001`.
 
 ### 3. Lectura y validación
@@ -121,7 +127,7 @@ Verificar que la fila se pueda leer sin errores ni interrupciones.
 Resultado esperado:
 - información legible y consistente
 
-Resultado real:
+Resultado reportado (pendiente de verificación):
 - Lectura y persistencia verificadas después de recargar y reabrir la hoja.
 
 ### 4. Subida de archivo ficticio
@@ -131,7 +137,7 @@ Subir un archivo no personal únicamente si P0-06 autoriza el formato y tamaño 
 Resultado esperado:
 - archivo cargado con formato permitido y datos ficticios
 
-Resultado real:
+Resultado reportado (pendiente de verificación):
 - Archivo ficticio cargado correctamente en la carpeta restringida.
 
 ### 5. Eliminación de prueba
@@ -141,14 +147,14 @@ Se borró la fila de prueba y el archivo de ejemplo para dejar el entorno limpio
 Resultado esperado:
 - limpieza completa del entorno
 
-Resultado real:
+Resultado reportado (pendiente de verificación):
 - Archivo ficticio eliminado correctamente; la carpeta quedó sin ese residuo.
 
 ### 6. Errores, reintentos e idempotencia
 
-Se comprobó un reintento manual con el mismo identificador ficticio y se eliminó el duplicado generado. La prueba manual no demuestra idempotencia: confirma que una hoja permite duplicados si no existe una validación externa. La aplicación futura deberá verificar el identificador antes de insertar y definir reintentos sólo después de aprobar la arquitectura.
+El ADR original reporta un reintento manual con el mismo identificador ficticio y la eliminación del duplicado generado. Si se verifica, la prueba manual no demuestra idempotencia: confirma que una hoja permite duplicados si no existe una validación externa. La aplicación futura deberá verificar el identificador antes de insertar y definir reintentos sólo después de aprobar la arquitectura.
 
-## Resultados observados
+## Resultados reportados, pendientes de verificación
 
 - La hoja y la carpeta de prueba se crearon separadas de producción y con acceso restringido.
 - La escritura ficticia, lectura y persistencia de la fila funcionaron correctamente.
@@ -173,7 +179,7 @@ Se comprobó un reintento manual con el mismo identificador ficticio y se elimin
 
 ### Opción A: Sheets y Drive como destino directo
 
-Es la opción solicitada y la que se probó en este spike. Tiene bajo costo y permite una operación familiar para el equipo, pero requiere resolver privacidad, permisos, retención, eliminación, cuotas, reintentos e idempotencia antes de producción.
+Es la opción solicitada y la que el ADR original reporta como probada. Tiene bajo costo y permite una operación familiar para el equipo, pero requiere verificar el experimento y resolver privacidad, permisos, retención, eliminación, cuotas, reintentos e idempotencia antes de producción.
 
 ### Opción B: capa intermedia con validación y control de duplicados
 
@@ -187,7 +193,7 @@ Un backend y almacenamiento diseñados para registros y documentos podrían ofre
 
 Se recomienda conservar la Opción A como candidata para una prueba posterior y considerar la Opción B si el contrato de producción exige controles de idempotencia, reintentos o validación que Sheets y Drive no proporcionan por sí solos. La Opción C debe evaluarse sólo si las condiciones institucionales o de volumen descartan las anteriores.
 
-Ninguna opción queda aprobada para producción. El flujo básico probado debe mantenerse fuera de producción mientras se resuelven:
+Ninguna opción queda aprobada para producción. El flujo básico reportado debe mantenerse fuera de producción mientras se verifica y se resuelven:
 
 - privacidad
 - responsables
@@ -198,7 +204,7 @@ Ninguna opción queda aprobada para producción. El flujo básico probado debe m
 - continuidad operativa
 - límites de archivo y cuotas
 
-El spike valida la creación, escritura, lectura, carga y limpieza en el entorno de prueba. No valida por sí solo la idempotencia de una integración, las cuotas, la estrategia de reintentos ni las políticas productivas de privacidad, retención y eliminación.
+La evidencia disponible no permite aceptar todavía la ejecución del spike. El ADR original reporta creación, escritura, lectura, carga y limpieza en un entorno de prueba, pero no demuestra por sí solo autorización, idempotencia, cuotas, estrategia de reintentos ni políticas productivas de privacidad, retención y eliminación.
 
 ## Condiciones para producción
 
@@ -245,4 +251,4 @@ Antes de considerar Google Sheets/Drive como destino definitivo, deben resolvers
 
 ## Resultado
 
-El spike fue ejecutado con recursos restringidos y datos ficticios. El flujo básico resultó viable en el entorno de prueba, pero no se recomienda su uso productivo sin cerrar primero privacidad, permisos, retención, eliminación, continuidad operativa, cuotas, reintentos e idempotencia.
+El ADR original reporta una ejecución con recursos restringidos y datos ficticios. Hasta verificar autorización, evidencia y QA, el estado se mantiene como protocolo documentado y ejecución pendiente de verificación. No se recomienda ningún uso productivo sin cerrar primero privacidad, permisos, retención, eliminación, continuidad operativa, cuotas, reintentos e idempotencia.
