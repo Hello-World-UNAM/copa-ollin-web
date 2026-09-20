@@ -11,7 +11,7 @@ Se requiere validar la viabilidad técnica y operativa del uso de Google Sheets 
 
 ## Dependencias vigentes
 
-- **P0-04:** CROFI confirmó que administra sus recursos desde una cuenta oficial no institucional y solicitó que Hello World proponga los recursos y la estructura del ambiente de prueba. Esa coordinación sigue pendiente.
+- **P0-04:** resuelta para el Sprint 2. Hello World creará y administrará los recursos aislados de prueba; no se utilizarán los recursos operativos de CROFI. La propiedad y los permisos de producción siguen pendientes de P2-06.
 - **P0-06:** los formatos y tamaños máximos de archivo continúan pendientes. No puede aceptarse una prueba de carga como autorizada hasta resolver esta dependencia.
 - Los resultados descritos en este ADR provienen de la contribución original y deben verificarse con evidencia sanitizada antes de considerar ejecutado el spike.
 
@@ -19,7 +19,7 @@ Se requiere validar la viabilidad técnica y operativa del uso de Google Sheets 
 
 Se documenta un protocolo restringido de validación técnica y operativa y se conservan los resultados reportados por la contribución original. El repositorio no contiene todavía evidencia sanitizada ni constancia de autorización suficiente para aceptar esos resultados como verificados.
 
-No se implementará el contrato final del registro ni la integración productiva. El objetivo es evaluar viabilidad, riesgos, permisos, límites, reintentos, idempotencia y limpieza del entorno de prueba antes de tomar una decisión productiva.
+No se implementará todavía la integración productiva. Desde el Sprint 2 se autoriza construir y probar el contrato, el endpoint y la carga de archivos en un sandbox restringido con datos exclusivamente ficticios, mientras se evalúan viabilidad, riesgos, permisos, límites, reintentos, idempotencia y limpieza. El aviso de privacidad continúa siendo un gate obligatorio para habilitar el registro público o procesar datos reales.
 
 ## Alcance del spike
 
@@ -50,7 +50,7 @@ Los recursos que se utilicen deberán estar aislados, sin relación con producci
 
 - Hoja de prueba: el ADR original reporta un recurso separado de producción; su nombre e identificador se omiten del repositorio.
 - Carpeta de prueba: el ADR original reporta un recurso separado de producción; su nombre e identificador se omiten del repositorio.
-- Propietario: debe conservarse en la cuenta autorizada; la identidad concreta se documenta sólo por canal privado.
+- Propietario del sandbox: una cuenta de pruebas controlada por Hello World; la identidad concreta se documenta sólo por canal privado.
 - Permisos durante la prueba: acceso restringido a las identidades autorizadas y sin enlaces públicos.
 - Estado posterior reportado: el acceso de prueba fue revocado; falta verificación por un reviewer.
 - Evidencia: matriz de permisos sin correos, identificadores, enlaces ni capturas sensibles.
@@ -102,7 +102,7 @@ Los resultados siguientes provienen de la contribución original. Se conservan c
 
 ### 1. Creación de hoja de prueba
 
-Crear una hoja aislada sólo después de confirmar P0-04. No registrar su URL, ID ni nombre operativo en Git.
+Crear una hoja aislada administrada por Hello World. No registrar su URL, ID ni nombre operativo en Git.
 
 Resultado esperado:
 - hoja creada sin utilizar producción

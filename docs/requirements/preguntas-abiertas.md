@@ -16,6 +16,18 @@ Para que una respuesta se considere aprobada debe incluir, cuando corresponda, u
 
 Las fechas corresponden al plan interno de cuatro sprints. Si cambia el calendario, debe conservarse la relación entre cada pregunta y el sprint que depende de ella.
 
+## Decisión operativa para el Sprint 2
+
+El 20 de septiembre de 2026, Hello World decidió continuar el desarrollo técnico del flujo completo de registro mientras CROFI prepara y aprueba el aviso de privacidad. Esta decisión permite construir y probar desde el Sprint 2 el formulario, el endpoint, la validación y la carga a recursos separados de Google Sheets y Drive, siempre que:
+
+- sólo se utilicen datos, documentos e identidades claramente ficticios;
+- el ambiente sea un sandbox restringido y esté separado de los recursos de producción;
+- no se habilite el formulario al público ni se procesen datos personales reales;
+- los textos y reglas todavía no confirmados se mantengan identificados como provisionales;
+- el registro permanezca sujeto a un **no-go** hasta que CROFI entregue y apruebe el aviso de privacidad, el responsable del tratamiento y el canal para ejercer derechos ARCO.
+
+Por tanto, [P2-04](#privacidad-y-conservación) ya no bloquea la construcción técnica en sandbox, pero continúa siendo un requisito obligatorio para publicar o entregar el registro productivo. Esta excepción no autoriza a inventar consentimientos, políticas de retención ni reglas de negocio pendientes.
+
 ## Información ya recibida
 
 Los siguientes puntos ya aparecen en los documentos entregados. No es necesario volver a preguntar por ellos, salvo las confirmaciones expresamente indicadas más adelante.
@@ -29,8 +41,9 @@ Los siguientes puntos ya aparecen en los documentos entregados. No es necesario 
 - **Sede:** continúa pendiente de confirmación por parte de la Facultad.
 - **Reglamentos y categorías:** CROFI está modificando los reglamentos y añadirá categorías. Se comprometió a entregar la información actualizada en un plazo máximo de dos semanas, a más tardar el 2 de octubre de 2026.
 - **Propiedad de Google Workspace:** los recursos se administran desde la cuenta oficial de correo de CROFI, aunque no es una cuenta institucional. CROFI solicita que Hello World especifique los recursos requeridos y la estructura del ambiente de pruebas antes de separar prueba y producción.
+- **Sandbox de Google:** Hello World creará y administrará los recursos aislados de prueba. No se requiere que CROFI prepare la hoja o carpeta del Sprint 2; esta decisión no define la propiedad ni los permisos de producción.
 - **Documentos del registro:** se confirman como obligatorios el comprobante de pago, la identificación y la carta responsiva.
-- **Pago:** $100 por robot mediante transferencia bancaria, con el concepto `CopaOlín_Equipo_Institución`. La Mesa Directiva será responsable de validarlo; CROFI todavía debe precisar la moneda.
+- **Pago:** $100 MXN por robot mediante transferencia bancaria, con el concepto `CopaOlín_Equipo_Institución`. La Mesa Directiva será responsable de validarlo.
 - **Capacidad del registro:** el sistema debe soportar 100 envíos concurrentes del formulario.
 
 ### Evento y contenido
@@ -61,7 +74,7 @@ El [kit de inicio](kit-de-inicio.md#especificaciones-del-registro) solicita:
 
 ### Pago confirmado
 
-- **Monto informado:** $100 por robot; la moneda todavía debe confirmarse.
+- **Monto confirmado:** $100 MXN por robot.
 - **Método:** transferencia bancaria.
 - **Concepto:** `CopaOlín_Equipo_Institución`.
 - **Responsable de validación:** Mesa Directiva de CROFI.
@@ -95,10 +108,23 @@ Estas siete respuestas son las únicas que se necesitan para distribuir el traba
 | P0-01 | ¿El enlace oficial ya designado será el **Product Owner** facultado para priorizar requisitos y aprobar entregables en nombre de CROFI? ¿Quién lo sustituirá si no está disponible? | Establecer una sola autoridad de producto y el proceso de aceptación. |
 | P0-02 | ¿La apertura del registro coincide con la publicación del sitio el 15 de octubre de 2026 a las 8:00 a.m., hora de Ciudad de México? | CROFI confirmó la publicación del sitio y el cierre de inscripciones del 30 de octubre a las 23:59, pero no indicó expresamente si el formulario abrirá al mismo tiempo que el sitio. |
 | P0-03 | ¿Cuál será la sede definitiva y cuándo la confirmará la Facultad? | La fecha, los nombres actuales de las categorías, los recursos de marca y el nombre **Minisumo Autónomo** están confirmados. Sólo la sede continúa pendiente en este punto. |
-| P0-04 | ¿Qué recursos, permisos y separación entre prueba y producción implementará el equipo técnico en Google Workspace? | La cuenta propietaria es el correo oficial no institucional de CROFI. Hello World debe proponer la estructura del ambiente de pruebas para coordinar con CROFI los recursos separados. |
-| P0-05 | **Resuelta parcialmente:** CROFI confirmó comprobante de pago, identificación y carta responsiva. El pago será de $100 por robot mediante transferencia, con concepto `CopaOlín_Equipo_Institución`, y lo validará la Mesa Directiva. Falta confirmar la moneda. | Cierra el inventario inicial de documentos y la regla básica de pago; formatos, límites, minimización de la identificación y operación de incidencias se resuelven en preguntas posteriores. |
+| P0-04 | **Resuelta para el sandbox del Sprint 2:** Hello World creará y administrará una hoja y una carpeta aisladas para pruebas ficticias. Los recursos, responsables y permisos de producción se resolverán con P2-06. | Permite desarrollar y verificar la integración sin pedir a CROFI que prepare el ambiente de pruebas. |
+| P0-05 | **Resuelta:** CROFI confirmó comprobante de pago, identificación y carta responsiva. El pago será de $100 MXN por robot mediante transferencia, con concepto `CopaOlín_Equipo_Institución`, y lo validará la Mesa Directiva. | Cierra el inventario inicial de documentos y la regla básica de pago; formatos, límites, minimización de la identificación y operación de incidencias se resuelven en preguntas posteriores. |
 | P0-06 | Para cada documento confirmado, ¿cuántos archivos se admitirán y cuáles serán sus formatos y tamaño máximo? ¿Se aceptarán PDF protegidos con contraseña? | Elegir y probar una estrategia de carga compatible con el hosting y con Drive. |
 | P0-07 | ¿Cuántos equipos totales se esperan y durante cuánto tiempo debe sostenerse el pico? | Resuelta parcialmente: CROFI requiere soportar **100 envíos concurrentes** del formulario. Falta precisar volumen total y duración del pico para completar el escenario de carga. |
+
+### Decisión de ambiente para P0-04
+
+Hello World preparará y administrará para el Sprint 2:
+
+- una hoja exclusiva de sandbox para registros ficticios;
+- una carpeta exclusiva de Drive para documentos ficticios;
+- propiedad de ambos recursos bajo una cuenta de pruebas controlada por Hello World, cuya identidad concreta se conserva fuera del repositorio;
+- acceso únicamente para las identidades técnicas mínimas necesarias, sin enlaces públicos;
+- secretos e identificadores operativos sólo en los entornos protegidos correspondientes, nunca en el repositorio o el cliente;
+- revisión de permisos, limpieza de filas y archivos, y revocación al terminar las pruebas.
+
+Hello World documentará por roles la creación, los accesos, la limpieza y la revocación sin publicar IDs, enlaces ni credenciales. La prueba no utilizará datos ni documentos reales y no convierte estos recursos en producción. CROFI deberá definir posteriormente los responsables y accesos de producción mediante P2-06.
 
 ## P1 — Resolver durante el Sprint 1
 
@@ -152,7 +178,7 @@ Fecha objetivo: **4 de octubre de 2026**, antes de la aceptación y preparación
 | ID | Pregunta para CROFI | Por qué se necesita |
 |---|---|---|
 | P3-01 | ¿Cuál es la fecha y hora exactas de cierre del registro, en horario de Ciudad de México? | Resuelta: las inscripciones cerrarán el 30 de octubre de 2026 a las 23:59, hora de Ciudad de México. |
-| P3-02 | ¿Quién operará el registro, atenderá dudas y decidirá ante una caída o inscripción incompleta? Indiquen un canal público de soporte y uno privado para incidentes. | Hace operable el sistema una vez lanzado. |
+| P3-02 | **Adelantar al Sprint 2:** ¿Quién operará el registro, atenderá dudas y decidirá ante una caída o inscripción incompleta? Indiquen un canal público de soporte para mostrar en el footer y uno privado para incidentes. | Permite completar el footer sin inventar contactos y hace operable el sistema una vez lanzado. |
 | P3-03 | ¿Quién puede actualizar fechas, premios, reglamentos y demás contenido, y quién aprueba cada cambio? | Define el flujo editorial. |
 | P3-04 | ¿Se requiere respaldo periódico adicional a Sheets y Drive? ¿Qué información mínima debe poder recuperarse después de una falla? | Permite acordar recuperación y continuidad. |
 | P3-05 | ¿Qué dominio o subdominio utilizará el sitio, quién controla el DNS y cuándo dará acceso al equipo? | Evita un bloqueo administrativo de lanzamiento. |

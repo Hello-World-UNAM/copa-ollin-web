@@ -14,7 +14,7 @@ Copa Ollin es un torneo de robótica organizado por el Club de Robótica de la F
 - Sede prevista: Edificio X del Anexo de Ingeniería, Ciudad Universitaria, CDMX.
 - Estado actual: pre-planeación y consolidación de requisitos.
 - Audiencia del repositorio: mesa directiva, futuro equipo de desarrollo y colaboradores técnicos.
-- Repositorio público: `Hello-World-UNAM/copa-ollin-web`.
+- Repositorio privado: `Hello-World-UNAM/copa-ollin-web`.
 
 El producto previsto es una plataforma web informativa y de registro para seis categorías:
 
@@ -29,9 +29,9 @@ La plataforma deberá mostrar categorías y reglamentos, recibir registros de eq
 
 ## Estado técnico: no inventar decisiones
 
-La fundación técnica F0–F5 está aprobada y documentada en `docs/architecture/decisions/0001-stack-y-fundacion.md`. El flujo operativo F6–F7, CI y staging están aprobados en `docs/architecture/decisions/0002-flujo-ci-y-staging.md` y se describen en `docs/workflow.md`. La aplicación usa Astro 6, React 19 sólo para islas interactivas, Tailwind CSS 4, TypeScript estricto, pnpm, ESLint, Prettier y Vitest. GitHub Project, protección de `main`, CI y staging central ya están operativos; las asignaciones personales y los recursos de Google Workspace continúan pendientes del kickoff y de las decisiones de CROFI.
+La fundación técnica F0–F5 está aprobada y documentada en `docs/architecture/decisions/0001-stack-y-fundacion.md`. El flujo operativo F6–F7, CI y staging están aprobados en `docs/architecture/decisions/0002-flujo-ci-y-staging.md` y se describen en `docs/workflow.md`. La aplicación usa Astro 6, React 19 sólo para islas interactivas, Tailwind CSS 4, TypeScript estricto, pnpm, ESLint, Prettier y Vitest. GitHub Project, CI y staging central están operativos. Desde que el repositorio es privado, el plan actual de GitHub no permite aplicar técnicamente la protección de `main`; el flujo mediante PR continúa siendo obligatorio por política del equipo. Hello World administrará los recursos aislados de Google Workspace para las pruebas del Sprint 2; los recursos y permisos de producción continúan sujetos a las decisiones operativas de CROFI.
 
-Google Sheets y Drive continúan como destino solicitado sujeto al spike del Sprint 1. No implementes credenciales, carga de archivos ni contrato del formulario hasta resolver sus dependencias documentadas.
+Google Sheets y Drive continúan como destino solicitado sujeto a la verificación del spike del Sprint 1. Durante el Sprint 2 se autoriza construir el contrato, endpoint y carga de archivos únicamente en un sandbox restringido, separado de producción y con datos ficticios. No habilites el registro al público, no proceses datos reales ni presentes la integración como productiva hasta resolver las dependencias documentadas y contar con el aviso de privacidad aprobado por CROFI.
 
 Antes de diseñar o implementar funcionalidad, revisa `docs/requirements/preguntas-abiertas.md`. Si una tarea depende de una respuesta pendiente:
 
@@ -61,6 +61,7 @@ Si una transcripción Markdown contradice su PDF, el PDF conserva precedencia ha
 - `docs/regulations/`: seis reglamentos en Markdown.
 - `docs/sources/`: PDF originales aptos para publicación.
 - `docs/architecture/`: decisiones técnicas y contratos internos aprobados.
+- `docs/reviews/`: revisiones históricas de sprints; no sustituyen issues ni QA vigente.
 - `docs/workflow.md`: flujo de issues, PR, CI, staging y QA.
 - `src/`: aplicación Astro, componentes, layouts, estilos, datos y rutas.
 - `public/`: recursos públicos propios de la aplicación.

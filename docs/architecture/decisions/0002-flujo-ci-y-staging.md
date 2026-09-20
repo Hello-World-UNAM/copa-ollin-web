@@ -55,11 +55,14 @@ operativo: el proyecto es staging hasta el lanzamiento.
 
 ### Rama principal
 
-Una vez comprobado el primer CI verde, se protege `main` con PR obligatorio,
-una aprobación distinta del autor, aprobación posterior al último cambio
-revisable, `quality` obligatorio, conversaciones resueltas, sin force-push ni
-eliminación, sólo squash merge y borrado automático de ramas. No se exige que
-las ramas se actualicen después de cada merge.
+La política del equipo exige PR, una aprobación distinta del autor, `quality`
+verde, conversaciones resueltas, squash merge y borrado automático de ramas.
+Estas reglas estuvieron protegidas técnicamente mientras el repositorio fue
+público. Desde el 20 de septiembre de 2026 el repositorio es privado y el plan
+actual de GitHub de la organización no habilita protección de ramas privadas;
+por ello, GitHub no las aplica automáticamente. Para recuperar esa garantía se
+debe actualizar el plan o volver a una visibilidad compatible. No se autoriza
+push directo a `main` durante este periodo.
 
 ## Consecuencias
 
@@ -76,6 +79,8 @@ las ramas se actualicen después de cada merge.
 
 - La creación del Project, la protección de rama, el Environment y los secrets
   no se puede verificar sólo desde Git y requiere una cuenta administrativa.
+- En la visibilidad privada actual, el plan de GitHub no aplica protección de
+  rama; el flujo depende temporalmente del cumplimiento operativo del equipo.
 - El workflow de staging no autoriza por sí mismo a usar datos reales ni
   resuelve autenticación, privacidad, retención o carga de archivos.
 - Las vistas e iteraciones de GitHub deben mantenerse manualmente durante el

@@ -42,12 +42,12 @@ Estos nombres describen información conocida, no un API productiva ni una autor
 
 ## Restricciones y bloqueos
 
-- **Documentos y pago:** CROFI confirmó comprobante de pago, identificación y carta responsiva; el monto, el formato operativo, los límites y el flujo de validación permanecen condicionados por [P0-05 y P0-06](../requirements/preguntas-abiertas.md).
+- **Documentos y pago:** CROFI confirmó comprobante de pago, identificación y carta responsiva, así como un pago de $100 MXN por robot mediante transferencia. El formato operativo, los límites y el flujo de validación permanecen condicionados por [P0-06](../requirements/preguntas-abiertas.md).
 - **Archivos adjuntos:** no deben definirse tamaños ni formatos productivos hasta resolver [P1-05 a P1-07](../requirements/preguntas-abiertas.md).
 - **Consentimientos:** no deben suponerse alcance, firmante ni tratamiento para menores; dependen de [P1-08](../requirements/preguntas-abiertas.md).
-- **Datos personales y sensibles:** está prohibido recolectar comprobantes, identificaciones o cartas responsivas hasta aprobar el aviso de privacidad ([P2-04](../requirements/preguntas-abiertas.md)).
+- **Datos personales y sensibles:** el flujo técnico puede construirse y probarse en un sandbox restringido únicamente con datos y documentos claramente ficticios. Está prohibido habilitarlo al público o recolectar información real hasta aprobar el aviso de privacidad y sus responsables ([P2-04](../requirements/preguntas-abiertas.md)).
 - **Estados e idempotencia:** no definir estados de inscripción, folios, duplicados, correcciones o cancelaciones hasta resolver [P2-01 a P2-03](../requirements/preguntas-abiertas.md).
 - **Retención y acceso:** no definir conservación, eliminación ni permisos operativos hasta resolver [P2-05 y P2-06](../requirements/preguntas-abiertas.md).
 - **Validaciones:** no suponer validaciones de montos, formatos de archivos ni consentimientos.
 
-La ruta `/registro` permanecerá "en preparación" y no procesará estos datos ni habilitará campos de entrada hasta resolver las dependencias mencionadas.
+La ruta pública `/registro` permanecerá "en preparación" hasta resolver las dependencias mencionadas. El equipo puede desarrollar el recorrido completo detrás de una separación inequívoca de sandbox, sin datos reales y sin presentarlo como registro productivo. La habilitación pública conserva como gate obligatorio el aviso de privacidad aprobado por CROFI.

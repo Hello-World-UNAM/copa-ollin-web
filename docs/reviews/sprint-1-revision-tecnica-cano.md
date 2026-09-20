@@ -1,5 +1,7 @@
 # Revisión Técnica del Sprint 1 y Retroalimentación para el Equipo
 
+> **Contexto histórico:** Enrique Cano (`@kno4`) preparó esta revisión antes de la integración definitiva del Sprint 1. Conserva el diagnóstico de las ramas en ese momento; no representa por sí sola el estado actual de `main` ni sustituye el QA posterior al merge. Algunos hallazgos fueron corregidos durante la integración y la revisión final del sprint.
+
 Este documento consolida la auditoría técnica exhaustiva de las cuatro ramas de trabajo correspondientes a los issues abiertos del **Sprint 1** en el repositorio `copa-ollin-web`.
 
 Cada sección incluye el balance de cumplimiento respecto a los criterios de aceptación, los resultados de los comandos de validación obligatorios (`pnpm format:check`, `pnpm lint`, `pnpm check`, `pnpm test`, `pnpm build`, `pnpm test:e2e`) y un mensaje de **retroalimentación listo para copiar y enviar** a cada integrante.

@@ -22,6 +22,12 @@ Las decisiones técnicas aprobadas y los contratos internos de la aplicación se
 
 Los PDF originales de los reglamentos se encuentran en [`sources/regulations`](sources/regulations/).
 
+## Revisiones históricas
+
+- [Revisión técnica y retroalimentación del Sprint 1 por Cano](reviews/sprint-1-revision-tecnica-cano.md)
+
+Estas revisiones registran el estado observado en un momento concreto. No sustituyen los issues, las decisiones vigentes ni la evidencia de QA posterior al merge.
+
 ## Criterio editorial
 
 Las versiones Markdown corrigen únicamente artefactos de extracción —saltos de línea, guiones de fin de renglón, jerarquía y listas— sin cambiar el significado técnico. En caso de discrepancia, debe consultarse el PDF fuente y abrirse un issue de aclaración antes de modificar el requisito.

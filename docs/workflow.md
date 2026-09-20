@@ -205,10 +205,18 @@ El repositorio nunca contiene sus valores. El proyecto usa únicamente datos
 ficticios y no se implementa ninguna credencial, carga de archivos o contrato
 definitivo del formulario como parte de este bootstrap.
 
-## Protección de `main`
+## Política de `main` y protección técnica
 
-Después de la primera ejecución verde de `quality`, una persona con permisos
-administrativos configura una regla para `main` con:
+**Estado desde el 20 de septiembre de 2026:** el repositorio es privado. El
+plan actual de GitHub de la organización no habilita protección de ramas para
+este repositorio, por lo que las reglas siguientes no están siendo aplicadas
+automáticamente. El uso de issue, rama, PR, revisión, `quality`, squash merge y
+QA continúa siendo obligatorio como política del equipo. Para recuperar la
+aplicación técnica será necesario actualizar el plan de GitHub o volver a una
+visibilidad compatible.
+
+Cuando el plan lo permita, una persona con permisos administrativos configura
+una regla para `main` con:
 
 - pull request obligatorio;
 - una aprobación de una persona distinta del autor;
@@ -230,8 +238,8 @@ para la vista de la iteración actual.
 ## Bootstrap único y límites
 
 El bootstrap inicial puede integrar la fundación F0–F5 y este flujo en dos
-commits, hacer un push fast-forward a `main`, comprobar CI/staging y activar
-después las protecciones. Una vez protegida la rama, todo cambio sigue:
+commits y hacer un push fast-forward a `main`. Después del bootstrap, todo
+cambio sigue, exista o no aplicación técnica de la protección:
 
 `issue → rama → PR → revisión → squash merge → QA`.
 
