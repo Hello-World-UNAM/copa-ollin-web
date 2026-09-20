@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { categories, getCategoryBySlug } from './categories';
@@ -34,5 +37,20 @@ describe('registro de categorías', () => {
       'Micromouse amateur',
     );
     expect(getCategoryBySlug('categoria-inexistente')).toBeUndefined();
+  });
+});
+
+describe('activos por categoría', () => {
+  // src/data/categories.test.ts -> src/data/ -> src/ -> raíz del repositorio
+  const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+
+  it('conserva un Markdown en docs/regulations/ y un PDF fuente en docs/sources/regulations/ para cada categoría', () => {
+    for (const category of categories) {
+      const markdownPath = `${repoRoot}${category.regulationMarkdownPath}`;
+      const pdfSourcePath = `${repoRoot}docs/sources/regulations/${category.slug}.pdf`;
+
+      expect(existsSync(markdownPath), markdownPath).toBe(true);
+      expect(existsSync(pdfSourcePath), pdfSourcePath).toBe(true);
+    }
   });
 });

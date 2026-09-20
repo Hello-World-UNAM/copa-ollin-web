@@ -313,12 +313,25 @@ p {
 
 .route-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
+
+@media(min-width: 30rem){
+  .route-list{
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(min-width: 64rem){
+  .route-list{
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 
 .category-placeholder {
   display: grid;
