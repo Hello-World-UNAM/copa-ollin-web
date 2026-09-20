@@ -6,6 +6,7 @@ Este directorio registra decisiones técnicas aprobadas y contratos internos de 
 
 - [ADR-0001: stack y fundación inicial](decisions/0001-stack-y-fundacion.md)
 - [ADR-0002: flujo operativo, CI y staging](decisions/0002-flujo-ci-y-staging.md)
+- [ADR-0003: spike de Google Sheets y Drive](decisions/0003-google-sheets-drive-spike.md)
 
 ## Contratos internos
 
