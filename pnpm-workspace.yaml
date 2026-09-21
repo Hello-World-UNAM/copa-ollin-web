@@ -1,6 +1,9 @@
 packages:
   - .
 
+overrides:
+  tar: 7.5.22
+
 allowBuilds:
   esbuild: true
   sharp: false

@@ -46,7 +46,7 @@ Si el registro no supera el gate de lanzamiento, se publica únicamente la parte
 
 ## Base técnica y operativa
 
-- **F0–F5 · Aplicación:** Astro 6, TypeScript estricto, React 19 sólo para islas interactivas y Tailwind CSS 4; Node.js 22 y pnpm 11 fijados.
+- **F0–F5 · Aplicación:** Astro 7, TypeScript estricto, React 19 sólo para islas interactivas y Tailwind CSS 4; Node.js 22 y pnpm 11 fijados.
 - **F6–F7 · Entrega:** GitHub Projects, flujo obligatorio mediante PR, revisión cruzada, check único `quality`, squash merge y QA posterior al merge. El repositorio es privado y el plan actual de GitHub no permite aplicar técnicamente la protección de `main`; la regla se mantiene como política operativa.
 - **Staging:** Vercel central administrado por Hello World; se despliega automáticamente después de un `quality` verde en `main`.
 - **Calidad:** Prettier, ESLint, Astro Check, Vitest y build. Playwright se incorpora en el Sprint 1.
