@@ -12,3 +12,7 @@ Este directorio registra decisiones técnicas aprobadas y contratos internos de 
 
 - [Estrategia de contenido y recursos](contenido-y-recursos.md)
 - [Contrato provisional de registro](contrato-registro-provisional.md)
+
+## Pruebas
+
+- [Guía de pruebas restringidas de Google Sandbox](pruebas-sandbox-google.md)
