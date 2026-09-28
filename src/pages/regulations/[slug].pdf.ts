@@ -21,7 +21,7 @@ export async function GET({ params }: APIContext): Promise<Response> {
   }
 
   const pdfUrl = new URL(
-    `../../../docs/sources/regulations/${slug}.pdf`,
+    `../../../../docs/sources/regulations/${slug}.pdf`,
     import.meta.url,
   );
 

@@ -25,6 +25,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:google-sandbox": "vitest run src/lib/google/real.integration.test.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -35,8 +36,10 @@
     "@lucide/astro": "^1.48.0",
     "@tailwindcss/vite": "4.3.3",
     "astro": "7.2.8",
+    "googleapis": "182.0.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
@@ -45,6 +48,7 @@
     "@types/node": "22.20.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "dotenv": "^18.0.3",
     "eslint": "10.10.0",
     "eslint-plugin-astro": "3.1.0",
     "globals": "17.12.0",
