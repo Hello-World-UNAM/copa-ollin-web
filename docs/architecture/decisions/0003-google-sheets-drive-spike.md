@@ -1,7 +1,7 @@
 # ADR-0003: spike de Google Sheets y Drive como destino provisional
 
-- **Estado:** Protocolo documentado; ejecución pendiente de verificación; decisión productiva pendiente
-- **Fecha:** 17 de septiembre de 2026
+- **Estado:** Implementación local y pruebas con servicios simulados verificadas; integración remota bloqueada por ubicación/permisos del recurso Drive y pendiente de QA.
+- **Fecha:** 21 de septiembre de 2026
 
 ## Contexto
 
@@ -12,7 +12,7 @@ Se requiere validar la viabilidad técnica y operativa del uso de Google Sheets 
 ## Dependencias vigentes
 
 - **P0-04:** resuelta para el Sprint 2. Hello World creará y administrará los recursos aislados de prueba; no se utilizarán los recursos operativos de CROFI. La propiedad y los permisos de producción siguen pendientes de P2-06.
-- **P0-06:** los formatos y tamaños máximos de archivo continúan pendientes. No puede aceptarse una prueba de carga como autorizada hasta resolver esta dependencia.
+- **P0-06:** los formatos, cantidades y tamaños máximos productivos continúan pendientes. La persona responsable del issue autorizó un intento diagnóstico con tres PDFs ficticios de hasta 5 MiB; esa autorización no se registra como resolución formal de P0-06 ni convierte esos límites en requisitos productivos.
 - Los resultados descritos en este ADR provienen de la contribución original y deben verificarse con evidencia sanitizada antes de considerar ejecutado el spike.
 
 ## Decisión
@@ -68,30 +68,24 @@ Todos los valores anteriores son ficticios y no corresponden a personas reales.
 ## Autenticación, permisos y continuidad
 
 ### Autenticación
+El adapter se implementó para usar autenticación de servidor a servidor mediante una **Google Service Account (Cuenta de Servicio)**. La autenticación contra una cuenta y recursos reales de sandbox está pendiente. Ningún token, credencial, ID de carpeta o URL debe exponerse en el código del cliente (navegador) ni en repositorios públicos.
 
-El ADR original reporta el uso de un mecanismo autorizado, pero no identifica todavía su tipo ni los permisos empleados. Esta información debe documentarse y verificarse sin guardar tokens, secretos, credenciales ni identificadores operativos.
+### Propiedad y continuidad institucional
+- **Propietario del Sandbox:** debe ser un recurso de prueba aislado administrado por Hello World; la cuenta concreta y su propiedad están pendientes de verificar por canal privado.
+- **Propietario de Producción (Pendiente):** debe definirse con CROFI mediante P2-06; no se ha aprobado ninguna cuenta productiva.
+- **Procedimiento de Transferencia:** la rotación de credenciales debe definirla el administrador responsable antes de producción; no se ha probado.
 
-### Propiedad
+### Matriz de permisos mínimos requerida (pendiente de verificación)
+La siguiente matriz describe los permisos esperados; no demuestra la configuración efectiva de recursos externos:
 
-La propiedad y la continuidad institucional deben confirmarse para producción. Se documentará el rol propietario, el rol administrador y el procedimiento de transferencia sin publicar identidades ni enlaces.
-
-### Matriz propuesta de permisos mínimos
-
-La matriz de la evidencia deberá usar roles, no datos personales:
-
-| Rol | Hoja | Carpeta | Administración | Necesidad |
+| Rol | Hoja (Sandbox) | Carpeta (Sandbox) | Administración | Necesidad |
 |---|---|---|---|---|
-| Identidad de prueba autorizada | lectura/escritura durante el spike | carga/eliminación durante el spike | no | ejecutar la prueba |
-| Responsable institucional | lectura/escritura | lectura/escritura | sí | operar y recuperar el recurso |
-| Reviewer | lectura temporal, si se autoriza | lectura temporal, si se autoriza | no | revisar evidencia |
-| Público | sin acceso | sin acceso | no | no aplica |
-
-La configuración real deberá verificarse en el recurso aislado y registrarse sin incluir correos, IDs ni enlaces.
+| Service Account de pruebas (Servidor) | Editor | Editor | No | Escribir filas y guardar PDFs ficticios |
+| Desarrolladores Autorizados | Lector, si se aprueba | Lector, si se aprueba | No | Revisar resultados de prueba |
+| Público / Cliente | Sin acceso | Sin acceso | No | No aplica |
 
 ### Revocación de acceso
-
-Debe verificarse la retirada de la identidad de prueba, la revisión de accesos directos y heredados, y la confirmación de que el recurso continúa restringido. El mismo procedimiento deberá aplicarse cuando una persona salga del proyecto.
-
+Antes de cerrar el spike se deberá verificar y registrar por canal privado la revocación de los accesos temporales. No se afirma que esta verificación ya ocurrió. La cuenta de pruebas debe ser independiente de cuentas personales.
 ### Continuidad
 
 Debe comprobarse que exista un responsable institucional alterno y un procedimiento de transferencia. Una cuenta personal como único propietario será un bloqueo para producción.
@@ -162,6 +156,31 @@ El ADR original reporta un reintento manual con el mismo identificador ficticio 
 - El archivo ficticio se cargó y eliminó correctamente.
 - La fila original y el duplicado fueron eliminados, y el acceso de prueba fue revocado.
 - No se midieron cuotas, límites de frecuencia ni errores de servicio.
+
+## Implementación local y estado de las pruebas
+
+### Verificado localmente
+
+- El endpoint se habilita solo con la variable de sandbox en el servidor y pasa por validación Zod.
+- El harness local valida tres documentos PDF ficticios, una instancia por campo, de hasta 5 MiB cada uno. Son límites técnicos provisionales para la prueba, no una decisión productiva de CROFI.
+- Las pruebas del adapter con servicios Google simulados verifican una fila, tres archivos asociados, omisión de un reintento secuencial y limpieza ante fallo de escritura; también verifican la respuesta recuperable cuando falla la limpieza.
+- El mock permite probar el endpoint sin credenciales ni acceso a Google.
+
+### Pendiente de verificación contra Google Sandbox
+
+- La autenticación de la Service Account funciona. Los preflights remotos no son consistentes: una lectura de la hoja tuvo éxito, pero otra devolvió HTTP 403; Drive permitió una consulta de lista, mientras las consultas del folder devolvieron HTTP 404 con el scope `drive.file`.
+- Una consulta de solo lectura con `drive.metadata.readonly` confirmó que el ID inspeccionado era una carpeta, pero no pertenecía a una Unidad compartida (`driveId` ausente); corresponde a Mi unidad.
+- No se han verificado la propiedad, permisos efectivos, ausencia de enlaces públicos, cuotas ni revocación de recursos externos.
+- El chequeo de duplicados en Sheets cubre reintentos secuenciales; no garantiza exclusión distribuida ante dos solicitudes simultáneas.
+- La prueba remota opt-in está descrita en [la guía de QA](../pruebas-sandbox-google.md) y requiere autorización escrita de P0-06 antes de cargar PDFs.
+
+### Intentos autorizados del 25 de septiembre de 2026
+
+- Un preflight permitió leer la hoja y enumerar la carpeta configurada; las lecturas posteriores de hoja y carpeta mostraron respectivamente HTTP 403 y HTTP 404.
+- La creación del primer archivo en Drive respondió HTTP 403; no se alcanzó la escritura de la fila.
+- Una consulta de metadatos de solo lectura confirmó que el ID de carpeta inspeccionado pertenecía a Mi unidad, no a una Unidad compartida.
+- Las comprobaciones posteriores encontraron cero filas y cero archivos con el prefijo de QA del harness.
+- No se declara verificada la carga real. La siguiente prueba requiere confirmar una carpeta de sandbox en una Unidad compartida, acceso efectivo de la Service Account a la hoja y permisos de creación/eliminación; alternativamente, debe aprobarse otro mecanismo de autenticación.
 
 ## Riesgos
 

@@ -1,8 +1,11 @@
 ---
 import { Image } from 'astro:assets';
+import { Menu } from '@lucide/astro';
 
 import crofiLogo from '../../../assets/brand/crofi-fondo-blanco.png';
 import Container from '../ui/Container.astro';
+
+const currentPath = Astro.url.pathname;
 ---
 
 <header class="site-header">
@@ -18,15 +21,72 @@ import Container from '../ui/Container.astro';
       />
     </a>
 
-    <nav class="site-nav" aria-label="Navegación principal">
+    <button
+      class="site-nav__toggle"
+      type="button"
+      aria-controls="site-nav"
+      aria-expanded="false"
+    >
+      <Menu size={20} aria-hidden="true" />
+      Menú
+    </button>
+
+    <nav
+      id="site-nav"
+      class="site-nav"
+      aria-label="Navegación principal"
+      hidden
+    >
       <ul>
         <li>
-          <a href="/#categorias">Categorías</a>
+          <a
+            href="/#categorias"
+            aria-current={currentPath === '/' ? 'page' : undefined}
+          >
+            Categorías
+          </a>
         </li>
         <li>
-          <a href="/registro">Registro</a>
+          <a
+            href="/registro"
+            aria-current={currentPath === '/registro' ? 'page' : undefined}
+          >
+            Registro
+          </a>
         </li>
       </ul>
     </nav>
   </Container>
 </header>
+
+<script>
+  const menuButton =
+    document.querySelector<HTMLButtonElement>('.site-nav__toggle');
+  const navigation = document.querySelector<HTMLElement>('#site-nav');
+
+  if (menuButton && navigation) {
+    const setMenuState = (isOpen: boolean) => {
+      menuButton.setAttribute('aria-expanded', String(isOpen));
+      navigation.hidden = !isOpen;
+
+      if (isOpen) {
+        navigation.querySelector<HTMLAnchorElement>('a')?.focus();
+      } else {
+        menuButton.focus();
+      }
+    };
+
+    menuButton.addEventListener('click', () => {
+      setMenuState(menuButton.getAttribute('aria-expanded') !== 'true');
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (
+        event.key === 'Escape' &&
+        menuButton.getAttribute('aria-expanded') === 'true'
+      ) {
+        setMenuState(false);
+      }
+    });
+  }
+</script>

@@ -14,3 +14,7 @@ La licencia MIT **no** se extiende a los materiales ubicados en `assets/` y `doc
 - nombres, marcas y emblemas de CROFI, Club Hello World, la Facultad de Ingeniería y la Universidad Nacional Autónoma de México.
 
 Estos materiales conservan los derechos de sus respectivos titulares. Su presencia en este repositorio permite colaborar en Copa Ollin y no concede permiso general para reutilizarlos, modificarlos o redistribuirlos fuera del proyecto.
+
+## Dependencias de interfaz
+
+Los iconos de interfaz de `@lucide/astro` se distribuyen bajo la licencia ISC. La dependencia se utiliza únicamente para iconografía lineal de la interfaz.
