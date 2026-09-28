@@ -3,24 +3,48 @@ import Button from '../components/ui/Button.astro';
 import Card from '../components/ui/Card.astro';
 import Container from '../components/ui/Container.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import RegistroForm from '../components/registro/RegistroForm';
+
+const sandboxHabilitado = import.meta.env.REGISTRO_SANDBOX_MODE === 'true';
 ---
 
 <BaseLayout
-  title="Registro en preparación — Copa Ollin"
-  description="Estado de preparación del registro para Copa Ollin."
+  title={
+    sandboxHabilitado
+      ? 'Registro — Copa Ollin'
+      : 'Registro — Copa Ollin'
+  }
+  description="Estado del registro para Copa Ollin."
 >
   <Container>
-    <Card>
-      <p class="eyebrow">Ruta preparada</p>
-      <h1>Registro en preparación</h1>
-      <p>
-        El formulario todavía no está habilitado y esta página no recibe datos
-        personales ni archivos. Su implementación depende de las decisiones
-        pendientes de CROFI.
-      </p>
-      <Button href="/" variant="secondary">
-        Volver al inicio
-      </Button>
-    </Card>
+    {
+      sandboxHabilitado ? (
+        <>
+          <Card>
+            <p class="eyebrow">Sandbox de prueba</p>
+            <h1>Registro (datos ficticios únicamente)</h1>
+            <p>
+              Esta versión del formulario es exclusivamente de prueba. No
+              envíes datos reales de participantes: ningún documento ni dato
+              aquí capturado se conserva como inscripción productiva.
+            </p>
+          </Card>
+          <RegistroForm client:load />
+        </>
+      ) : (
+        <Card>
+          <p class="eyebrow">Ruta preparada</p>
+          <h1>Registro en preparación</h1>
+          <p>
+            El formulario todavía no está habilitado y esta página no recibe
+            datos personales ni archivos. Su implementación depende de las
+            decisiones pendientes de CROFI.
+          </p>
+          <Button href="/" variant="secondary">
+            Volver al inicio
+          </Button>
+        </Card>
+      )
+    }
   </Container>
 </BaseLayout>
