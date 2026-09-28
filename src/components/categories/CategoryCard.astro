@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import { BookOpen, FileDown } from '@lucide/astro';
 
 import type { CategoryDefinition } from '../../data/categories';
 import Card from '../ui/Card.astro';
@@ -13,13 +14,20 @@ const { category } = Astro.props;
 
 <Card muted class="category-card">
   <div class="category-card__media">
-    <Image
-      src={category.image}
-      alt={category.imageAlt}
-      widths={[320, 480, 640]}
-      sizes="(min-width: 768px) 30vw, 90vw"
-      loading="lazy"
-    />
+    <div
+      class:list={[
+        'category-card__media-frame',
+        `category-card__media-frame--${category.slug}`,
+      ]}
+    >
+      <Image
+        src={category.image}
+        alt={category.imageAlt}
+        widths={[320, 480, 640]}
+        sizes="(min-width: 768px) 30vw, 90vw"
+        loading="lazy"
+      />
+    </div>
   </div>
 
   <div class="category-card__body">
@@ -32,15 +40,21 @@ const { category } = Astro.props;
     )}
 
     <div class="category-card__links">
-      <a href={`/categorias/${category.slug}`}>
-        Leer reglamento de {category.workingName}
+      <a
+        href={`/categorias/${category.slug}`}
+        aria-label={`Ver reglamento de ${category.workingName}`}
+      >
+        <BookOpen size={20} aria-hidden="true" />
+        Ver reglamento
       </a>
       <a
         href={category.regulationPdfUrl}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label={`Descargar reglamento de ${category.workingName} en formato PDF (abre en una nueva pestaña)`}
       >
-        Descargar reglamento de {category.workingName} (PDF)
+        <FileDown size={20} aria-hidden="true" />
+        Descargar PDF
       </a>
     </div>
   </div>

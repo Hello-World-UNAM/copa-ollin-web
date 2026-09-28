@@ -23,6 +23,9 @@ importers:
       '@fontsource-variable/orbitron':
         specifier: 5.3.0
         version: 5.3.0
+      '@lucide/astro':
+        specifier: ^1.48.0
+        version: 1.48.0(astro@7.2.8(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.20.2)(@vercel/blob@2.8.0)(@vercel/functions@3.9.7(ws@8.21.3))(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1))
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@8.3.0(@types/node@22.20.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1))
@@ -1166,6 +1169,11 @@ packages:
 
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
+
+  '@lucide/astro@1.48.0':
+    resolution: {integrity: sha512-BL+7lLGjjSTfdYEBd9pAB0ixhJ7M84OVzxHoY3oG3M92kX/q1UG2+znp+pqH3waxpIHF1l8Hd1QZxytqv5WH8A==}
+    peerDependencies:
+      astro: ^4 || ^5 || ^6 || ^7
 
   '@mapbox/node-pre-gyp@2.0.3':
     resolution: {integrity: sha512-uwPAhccfFJlsfCxMYTwOdVfOz3xqyj8xYL3zJj8f0pb30tLohnnFPhLuqp4/qoEz8sNxe4SESZedcBojRefIzg==}
@@ -5742,6 +5750,10 @@ snapshots:
       keyv: 5.6.0
 
   '@keyv/serialize@1.1.1': {}
+
+  '@lucide/astro@1.48.0(astro@7.2.8(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.20.2)(@vercel/blob@2.8.0)(@vercel/functions@3.9.7(ws@8.21.3))(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1))':
+    dependencies:
+      astro: 7.2.8(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.20.2)(@vercel/blob@2.8.0)(@vercel/functions@3.9.7(ws@8.21.3))(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1)
 
   '@mapbox/node-pre-gyp@2.0.3':
     dependencies:
