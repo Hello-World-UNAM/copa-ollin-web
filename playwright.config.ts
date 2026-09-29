@@ -5,10 +5,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:4321',
+    baseURL: 'http://127.0.0.1:4337',
     trace: 'on-first-retry',
   },
   projects: [
@@ -22,9 +22,18 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm build && pnpm preview',
-    url: 'http://localhost:4321',
-    reuseExistingServer: !process.env.CI,
+    // @astrojs/vercel no admite `astro preview`. En CI sólo se ejercita el
+    // formulario ficticio; el endpoint y Google permanecen deshabilitados.
+    command: 'pnpm dev --host 127.0.0.1 --port 4337',
+    env: {
+      // Astro 7 se pone en segundo plano al detectar agentes; Playwright
+      // necesita conservar este proceso en primer plano durante la suite.
+      ASTRO_DEV_BACKGROUND: '0',
+      REGISTRO_SANDBOX_MODE: 'true',
+      ENABLE_SANDBOX_REGISTRATION: 'false',
+    },
+    url: 'http://127.0.0.1:4337',
+    reuseExistingServer: false,
     timeout: 120 * 1000,
   },
 });
