@@ -46,6 +46,8 @@ jobs:
 
       - name: Comprobar Astro y TypeScript
         run: pnpm check
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Ejecutar pruebas
         run: pnpm test

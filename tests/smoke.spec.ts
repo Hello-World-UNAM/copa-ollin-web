@@ -85,17 +85,18 @@ test.describe('Copa Ollin - Smoke Tests y Casos Negativos', () => {
     }
   });
 
-  test('La ruta de registro no muestra formularios activos ni inputs', async ({
+  test('La ruta de registro sólo muestra el formulario ficticio de sandbox', async ({
     page,
   }) => {
     await page.goto('/registro');
-
-    // Verificar que no hay campos de entrada que puedan recolectar datos
-    await expect(page.locator('form')).toHaveCount(0);
-    await expect(page.locator('input')).toHaveCount(0);
-
-    // Verificar el mensaje de estado
-    await expect(page.locator('body')).toContainText(/en preparación/i);
+    await expect(
+      page.locator('astro-island:not([ssr]) form.registro-form'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /datos ficticios únicamente/i }),
+    ).toBeVisible();
+    await expect(page.locator('form.registro-form')).toHaveCount(1);
+    await expect(page.locator('body')).toContainText(/no envíes datos reales/i);
   });
 
   test('Simulación de fallo de red en recursos estáticos (Resiliencia)', async ({
