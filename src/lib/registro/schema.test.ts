@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { categories } from '../../data/categories';
 import { registroSchema } from './schema';
 
-const[primeraCategoria]= categories;
+const [primeraCategoria] = categories;
 if (!primeraCategoria) {
-  throw new Error('El catálogo de categorías está vacío, no se puede ejecutar la prueba.');
+  throw new Error(
+    'El catálogo de categorías está vacío, no se puede ejecutar la prueba.',
+  );
 }
-
 
 // Todos los valores son ficticios; ninguno corresponde a una persona real.
 const payloadFicticio = {

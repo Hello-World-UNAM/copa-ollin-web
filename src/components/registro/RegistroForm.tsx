@@ -1,10 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState } from 'react';
-import {
-  useFieldArray,
-  useForm,
-  type SubmitHandler,
-} from 'react-hook-form';
+import { useFieldArray, useForm, type SubmitHandler } from 'react-hook-form';
 
 import { categories } from '../../data/categories';
 import {
@@ -29,7 +25,12 @@ type PasoId = (typeof pasos)[number]['id'];
 
 // Campos que se validan al intentar avanzar desde cada paso.
 const camposPorPaso: Record<PasoId, (keyof RegistroPayload)[]> = {
-  equipo: ['nombreEquipo', 'categoria', 'institucion', 'estadoCiudadProcedencia'],
+  equipo: [
+    'nombreEquipo',
+    'categoria',
+    'institucion',
+    'estadoCiudadProcedencia',
+  ],
   capitan: [
     'nombreCapitan',
     'correoCapitan',
@@ -51,7 +52,6 @@ type EstadoEnvio =
   | { estado: 'enviando' }
   | { estado: 'exito'; resultado: RegistroSandboxMockResult }
   | { estado: 'error'; mensaje: string };
-
 
 function combinarRefs<T>(
   refRegistro: (instancia: T | null) => void,
@@ -142,9 +142,9 @@ export default function RegistroForm() {
         <h2>Recibimos tu registro ficticio para prueba</h2>
         <p>
           Folio de sandbox: <strong>{envio.resultado.folioSandbox}</strong>.
-          Este folio es exclusivamente de prueba: <strong>no representa
-          una inscripción aceptada</strong> ni un lugar confirmado en Copa
-          Ollin.
+          Este folio es exclusivamente de prueba:{' '}
+          <strong>no representa una inscripción aceptada</strong> ni un lugar
+          confirmado en Copa Ollin.
         </p>
       </div>
     );
@@ -188,7 +188,9 @@ export default function RegistroForm() {
             ref={combinarRefs(nombreEquipoRef, primerCampoRef)}
             {...nombreEquipoRegistro}
           />
-          {errors.nombreEquipo && <p role="alert">{errors.nombreEquipo.message}</p>}
+          {errors.nombreEquipo && (
+            <p role="alert">{errors.nombreEquipo.message}</p>
+          )}
 
           <label htmlFor="categoria">Categoría</label>
           <select id="categoria" {...register('categoria')}>
@@ -206,7 +208,9 @@ export default function RegistroForm() {
             aria-invalid={Boolean(errors.institucion)}
             {...register('institucion')}
           />
-          {errors.institucion && <p role="alert">{errors.institucion.message}</p>}
+          {errors.institucion && (
+            <p role="alert">{errors.institucion.message}</p>
+          )}
 
           <label htmlFor="estadoCiudadProcedencia">
             Estado o ciudad de procedencia
@@ -235,7 +239,9 @@ export default function RegistroForm() {
             ref={combinarRefs(nombreCapitanRef, primerCampoRef)}
             {...nombreCapitanRegistro}
           />
-          {errors.nombreCapitan && <p role="alert">{errors.nombreCapitan.message}</p>}
+          {errors.nombreCapitan && (
+            <p role="alert">{errors.nombreCapitan.message}</p>
+          )}
 
           <label htmlFor="correoCapitan">Correo electrónico</label>
           <input
@@ -245,7 +251,9 @@ export default function RegistroForm() {
             aria-invalid={Boolean(errors.correoCapitan)}
             {...register('correoCapitan')}
           />
-          {errors.correoCapitan && <p role="alert">{errors.correoCapitan.message}</p>}
+          {errors.correoCapitan && (
+            <p role="alert">{errors.correoCapitan.message}</p>
+          )}
 
           <label htmlFor="telefonoCapitan">Teléfono</label>
           <input
@@ -342,7 +350,9 @@ export default function RegistroForm() {
             ref={combinarRefs(nombreRobotRef, primerCampoRef)}
             {...nombreRobotRegistro}
           />
-          {errors.nombreRobot && <p role="alert">{errors.nombreRobot.message}</p>}
+          {errors.nombreRobot && (
+            <p role="alert">{errors.nombreRobot.message}</p>
+          )}
 
           <label htmlFor="descripcionRobot">
             Descripción del robot (máximo 300 palabras)
@@ -365,9 +375,8 @@ export default function RegistroForm() {
 
           <p>
             Los controles de archivo son de <strong>sandbox</strong>: no se
-            envía ni conserva ningún documento hasta que exista el endpoint
-            del Sprint 2 (issue #10). No se afirma que un archivo quedó
-            guardado.
+            envía ni conserva ningún documento hasta que exista el endpoint del
+            Sprint 2 (issue #10). No se afirma que un archivo quedó guardado.
           </p>
 
           {[
