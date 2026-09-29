@@ -24,6 +24,9 @@ test('El formulario ficticio conserva datos y no llama al endpoint', async ({
     .getByLabel('Estado o ciudad de procedencia')
     .fill('Ciudad Ficticia');
   await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(
+    page.getByRole('group', { name: 'Capitán e integrantes' }),
+  ).toBeVisible();
 
   await page
     .getByLabel(/Nombre completo del capitán/)
@@ -36,18 +39,29 @@ test('El formulario ficticio conserva datos y no llama al endpoint', async ({
     .getByLabel('Integrante 1: nombre completo')
     .fill(fixtureRegistro.integranteExtra.nombre);
   await page.getByRole('button', { name: 'Continuar' }).click();
-
-  await page.getByRole('button', { name: 'Volver' }).click();
-  await expect(page.getByLabel('Integrante 1: nombre completo')).toHaveValue(
-    fixtureRegistro.integranteExtra.nombre,
-  );
-  await page.getByRole('button', { name: 'Continuar' }).click();
-
+  await expect(page.getByRole('group', { name: 'Robot' })).toBeVisible();
   await page.getByLabel('Nombre del robot').fill(fixtureRegistro.robot.nombre);
   await page
     .getByLabel(/Descripción del robot/)
     .fill('Robot ficticio de prueba');
+
+  await page.getByRole('button', { name: 'Volver' }).click();
+  await expect(
+    page.getByRole('group', { name: 'Capitán e integrantes' }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Integrante 1: nombre completo')).toHaveValue(
+    fixtureRegistro.integranteExtra.nombre,
+  );
   await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(page.getByRole('group', { name: 'Robot' })).toBeVisible();
+
+  await expect(page.getByLabel('Nombre del robot')).toHaveValue(
+    fixtureRegistro.robot.nombre,
+  );
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(
+    page.getByRole('group', { name: 'Documentos y consentimientos' }),
+  ).toBeVisible();
 
   await expect(page.locator('input[type="file"]')).toHaveCount(3);
   await expect(page.locator('input[type="file"]:disabled')).toHaveCount(3);
@@ -55,6 +69,9 @@ test('El formulario ficticio conserva datos y no llama al endpoint', async ({
   await page.getByLabel(/Acepto el uso de fotografías/).check();
   await page.getByLabel(/Confirmo que el robot cumple/).check();
   await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(
+    page.getByRole('group', { name: 'Revisión antes de enviar' }),
+  ).toBeVisible();
 
   await page.getByRole('button', { name: 'Enviar registro de prueba' }).click();
   await expect(page.getByRole('status')).toContainText(
