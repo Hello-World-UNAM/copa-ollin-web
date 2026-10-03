@@ -252,6 +252,9 @@ p {
   font-family: var(--font-heading);
   font-size: 0.875rem;
   font-weight: 700;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 .site-nav a[aria-current='page'] {
@@ -264,7 +267,10 @@ p {
 .site-nav a:focus-visible,
 .site-footer__nav a:hover,
 .site-footer__nav a:focus-visible {
-  color: var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: var(--color-text);
+  text-decoration-color: currentColor;
 }
 
 .site-main {
@@ -303,7 +309,9 @@ p {
   display: inline-flex;
   min-height: 2.75rem;
   align-items: center;
-  transition: color 180ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 .stack {
@@ -471,13 +479,19 @@ p {
   min-height: 2.75rem;
   align-items: center;
   gap: var(--space-2);
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-control);
   overflow-wrap: anywhere;
-  transition: color 180ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 .category-card__links a:hover,
 .category-card__links a:focus-visible {
-  color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-text);
+  text-decoration-color: currentColor;
 }
 
 .category-actions-divider {

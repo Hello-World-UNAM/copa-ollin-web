@@ -69,6 +69,7 @@ export default function RegistroForm() {
 
   const anuncioRef = useRef<HTMLDivElement>(null);
   const primerCampoRef = useRef<HTMLInputElement>(null);
+  const primerConsentimientoRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -97,6 +98,8 @@ export default function RegistroForm() {
     register('nombreCapitan');
   const { ref: nombreRobotRef, ...nombreRobotRegistro } =
     register('nombreRobot');
+  const { ref: aceptaReglamentoRef, ...aceptaReglamentoRegistro } =
+    register('aceptaReglamento');
 
   // Anuncia el cambio de paso a lectores de pantalla y mueve el foco al
   // primer campo del paso nuevo, sin robar foco fuera de una navegación.
@@ -104,11 +107,19 @@ export default function RegistroForm() {
     if (anuncioRef.current && pasoInfo) {
       anuncioRef.current.textContent = `Paso ${indicePaso + 1} de ${pasos.length}: ${pasoInfo.titulo}.`;
     }
+
+    if (pasoActual === 'documentos') {
+      primerConsentimientoRef.current?.focus();
+      return;
+    }
+
     primerCampoRef.current?.focus();
   }, [pasoActual, indicePaso, pasoInfo]);
 
   async function irAlSiguientePaso() {
-    const camposValidos = await trigger(camposPorPaso[pasoActual]);
+    const camposValidos = await trigger(camposPorPaso[pasoActual], {
+      shouldFocus: true,
+    });
     if (!camposValidos) return;
 
     const siguiente = pasos[indicePaso + 1];
@@ -154,6 +165,17 @@ export default function RegistroForm() {
     <form
       className="registro-form"
       noValidate
+      onKeyDown={(event) => {
+        if (
+          event.key === 'Enter' &&
+          event.target instanceof HTMLInputElement &&
+          event.target.type !== 'checkbox' &&
+          event.target.type !== 'submit' &&
+          event.target.type !== 'button'
+        ) {
+          event.preventDefault();
+        }
+      }}
       onSubmit={(event) => {
         if (pasoActual !== 'revision') {
           event.preventDefault();
@@ -405,7 +427,11 @@ export default function RegistroForm() {
           ))}
 
           <label>
-            <input type="checkbox" {...register('aceptaReglamento')} />
+            <input
+              type="checkbox"
+              ref={combinarRefs(aceptaReglamentoRef, primerConsentimientoRef)}
+              {...aceptaReglamentoRegistro}
+            />
             Acepto el reglamento de la categoría seleccionada.
           </label>
           {errors.aceptaReglamento && (
