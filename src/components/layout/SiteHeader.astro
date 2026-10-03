@@ -28,7 +28,7 @@ const currentPath = Astro.url.pathname;
       aria-expanded="false"
     >
       <Menu size={20} aria-hidden="true" />
-      Menú
+      <span class="visually-hidden">Menú</span>
     </button>
 
     <nav
@@ -67,6 +67,10 @@ const currentPath = Astro.url.pathname;
   if (menuButton && navigation) {
     const setMenuState = (isOpen: boolean) => {
       menuButton.setAttribute('aria-expanded', String(isOpen));
+      menuButton.setAttribute(
+        'aria-label',
+        isOpen ? 'Cerrar menú' : 'Abrir menú',
+      );
       navigation.hidden = !isOpen;
 
       if (isOpen) {
