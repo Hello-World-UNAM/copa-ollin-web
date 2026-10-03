@@ -54,12 +54,16 @@ jobs:
 
       - name: Construir aplicación
         run: pnpm build
+        env:
+          REGISTRO_SANDBOX_MODE: 'true'
       
       - name: Instalar navegadores de Playwright
         run: pnpm exec playwright install --with-deps
 
       - name: Ejecutar pruebas E2E
         run: pnpm test:e2e
+        env:
+          REGISTRO_SANDBOX_MODE: 'true'
 
       - name: Subir reporte de Playwright en caso de fallo
         if: failure()
