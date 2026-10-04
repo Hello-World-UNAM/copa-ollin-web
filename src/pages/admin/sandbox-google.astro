@@ -1,0 +1,67 @@
+---
+import SandboxGooglePicker from '../../components/admin/SandboxGooglePicker';
+import Container from '../../components/ui/Container.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export const prerender = false;
+
+const isLocalDevelopment =
+  import.meta.env.DEV &&
+  ['localhost', '127.0.0.1'].includes(Astro.url.hostname);
+const pickerConfig = isLocalDevelopment
+  ? {
+      clientId:
+        import.meta.env.SANDBOX_GOOGLE_OAUTH_CLIENT_ID ??
+        process.env.SANDBOX_GOOGLE_OAUTH_CLIENT_ID ??
+        '',
+      apiKey:
+        import.meta.env.SANDBOX_GOOGLE_PICKER_API_KEY ??
+        process.env.SANDBOX_GOOGLE_PICKER_API_KEY ??
+        '',
+      projectNumber:
+        import.meta.env.SANDBOX_GOOGLE_PROJECT_NUMBER ??
+        process.env.SANDBOX_GOOGLE_PROJECT_NUMBER ??
+        '',
+    }
+  : null;
+const missingPickerConfig = pickerConfig
+  ? Object.entries(pickerConfig)
+      .filter(([, value]) => !value.trim())
+      .map(([name]) => name)
+  : [];
+---
+
+<BaseLayout
+  title="Herramientas locales del sandbox de Google"
+  description="Selección administrativa de recursos ficticios del sandbox."
+>
+  <Container>
+    <section class="stack">
+      {!isLocalDevelopment || pickerConfig === null ? (
+        <>
+          <p class="eyebrow">Herramienta local</p>
+          <h1>Selector no disponible</h1>
+          <p>
+            Esta herramienta sólo se puede usar desde localhost en desarrollo.
+          </p>
+        </>
+      ) : missingPickerConfig.length > 0 ? (
+        <>
+          <p class="eyebrow">Preparación del sandbox</p>
+          <h1>Falta configuración de Google Picker</h1>
+          <p>Completa localmente estas variables antes de abrir el selector:</p>
+          <ul>
+            {missingPickerConfig.map((name) => (
+              <li>
+                <code>{name}</code>
+              </li>
+            ))}
+          </ul>
+          <p>No pegues aquí sus valores ni los incluyas en capturas.</p>
+        </>
+      ) : (
+        <SandboxGooglePicker client:load {...pickerConfig} />
+      )}
+    </section>
+  </Container>
+</BaseLayout>

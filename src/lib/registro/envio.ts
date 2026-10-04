@@ -120,7 +120,7 @@ export function interpretarRespuesta(
   if (status === 502) {
     return { tipo: code === 'RECOVERY_REQUIRED' ? 'recuperacion' : 'temporal' };
   }
-  if (status === 503) return { tipo: 'configuracion' };
+  if (status === 401 || status === 503) return { tipo: 'configuracion' };
   return { tipo: 'interno' };
 }
 
@@ -152,7 +152,9 @@ export function generarTransactionId(): string {
 }
 
 /** El id se crea una vez y se reutiliza en cada reintento hasta `reiniciar()`. */
-export function crearSesionEnvio(generarId: () => string = generarTransactionId) {
+export function crearSesionEnvio(
+  generarId: () => string = generarTransactionId,
+) {
   let id: string | null = null;
   return {
     obtenerTransactionId(): string {

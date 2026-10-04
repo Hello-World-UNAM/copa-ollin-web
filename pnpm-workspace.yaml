@@ -6,4 +6,5 @@ overrides:
 
 allowBuilds:
   esbuild: true
+  protobufjs: false
   sharp: false

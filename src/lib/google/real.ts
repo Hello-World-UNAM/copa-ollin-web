@@ -1,5 +1,3 @@
-import { constants } from 'node:fs';
-import { access } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { google } from 'googleapis';
 import {
@@ -7,10 +5,20 @@ import {
   GoogleAdapterRecoveryError,
   GoogleAdapterTemporaryError,
 } from './errors';
-import type { GoogleAdapter, RegistrationData } from './types';
+import type {
+  GoogleAdapter,
+  RegistrationData,
+  RegistrationResult,
+} from './types';
+import {
+  getRuntimeRegistrationReservationStore,
+  type RegistrationReservationStore,
+} from './reservations';
 
 export interface GoogleSandboxConfig {
-  credentialsPath?: string;
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+  oauthRefreshToken?: string;
   spreadsheetId?: string;
   sheetRange?: string;
   driveFolderId?: string;
@@ -57,7 +65,9 @@ type GoogleServicesFactory = (
 ) => GoogleSandboxServices | Promise<GoogleSandboxServices>;
 
 const requiredConfigKeys = [
-  'credentialsPath',
+  'oauthClientId',
+  'oauthClientSecret',
+  'oauthRefreshToken',
   'spreadsheetId',
   'sheetRange',
   'driveFolderId',
@@ -71,7 +81,9 @@ function readRuntimeValue(name: string): string | undefined {
 
 function getRuntimeConfig(): GoogleSandboxConfig {
   return {
-    credentialsPath: readRuntimeValue('GOOGLE_APPLICATION_CREDENTIALS'),
+    oauthClientId: readRuntimeValue('SANDBOX_GOOGLE_OAUTH_CLIENT_ID'),
+    oauthClientSecret: readRuntimeValue('SANDBOX_GOOGLE_OAUTH_CLIENT_SECRET'),
+    oauthRefreshToken: readRuntimeValue('SANDBOX_GOOGLE_OAUTH_REFRESH_TOKEN'),
     spreadsheetId: readRuntimeValue('SANDBOX_GOOGLE_SPREADSHEET_ID'),
     sheetRange: readRuntimeValue('SANDBOX_GOOGLE_SHEET_RANGE'),
     driveFolderId: readRuntimeValue('SANDBOX_GOOGLE_DRIVE_FOLDER_ID'),
@@ -90,22 +102,11 @@ function validateConfig(
 async function createGoogleServices(
   config: Required<GoogleSandboxConfig>,
 ): Promise<GoogleSandboxServices> {
-  try {
-    await access(config.credentialsPath, constants.R_OK);
-  } catch (error) {
-    throw new GoogleAdapterConfigurationError(
-      'No se puede leer la credencial local de Google Sandbox.',
-      { cause: error },
-    );
-  }
-
-  const auth = new google.auth.GoogleAuth({
-    keyFile: config.credentialsPath,
-    scopes: [
-      'https://www.googleapis.com/auth/spreadsheets',
-      'https://www.googleapis.com/auth/drive.file',
-    ],
-  });
+  const auth = new google.auth.OAuth2(
+    config.oauthClientId,
+    config.oauthClientSecret,
+  );
+  auth.setCredentials({ refresh_token: config.oauthRefreshToken });
 
   return {
     sheets: google.sheets({
@@ -172,10 +173,163 @@ function getProviderHttpStatus(error: unknown): number | undefined {
   return undefined;
 }
 
+async function saveRegistrationToGoogle(
+  data: RegistrationData,
+  config: Required<GoogleSandboxConfig>,
+  services: GoogleSandboxServices,
+): Promise<RegistrationResult> {
+  let existingRows: unknown[][];
+  try {
+    const response = await services.sheets.spreadsheets.values.get({
+      spreadsheetId: config.spreadsheetId,
+      range: config.sheetRange,
+      majorDimension: 'ROWS',
+    });
+    existingRows = response.data.values ?? [];
+  } catch (error) {
+    throw new GoogleAdapterTemporaryError(undefined, { cause: error });
+  }
+
+  if (existingRows.some((row) => row[0] === data.transactionId)) {
+    return {
+      success: true,
+      message: 'Registro duplicado omitido en Google Sandbox',
+      isDuplicate: true,
+    };
+  }
+
+  const uploadedFiles: Array<{ id: string; webViewLink: string }> = [];
+  let appendAttempted = false;
+  let duplicateFoundAfterAppendError = false;
+  let driveUploadOutcomeUnknown = false;
+  let fileLinks: string[] = [];
+  try {
+    for (const [documentName, file] of getRegistrationFiles(data)) {
+      const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.pdf`;
+      driveUploadOutcomeUnknown = true;
+      const response = await services.drive.files.create({
+        supportsAllDrives: true,
+        requestBody: {
+          name: fileName,
+          mimeType: file.type,
+          parents: [config.driveFolderId],
+        },
+        media: {
+          mimeType: file.type,
+          body: Readable.from([Buffer.from(await file.arrayBuffer())]),
+        },
+        fields: 'id,webViewLink',
+      });
+
+      const id = response.data.id;
+      if (!id)
+        throw new Error('Google Drive no devolvió un ID para el archivo.');
+      uploadedFiles.push({
+        id,
+        webViewLink:
+          response.data.webViewLink ??
+          `https://drive.google.com/file/d/${id}/view`,
+      });
+      driveUploadOutcomeUnknown = false;
+    }
+
+    fileLinks = uploadedFiles.map(({ webViewLink }) => webViewLink);
+    appendAttempted = true;
+    await services.sheets.spreadsheets.values.append({
+      spreadsheetId: config.spreadsheetId,
+      range: config.sheetRange,
+      valueInputOption: 'RAW',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: {
+        values: [createSheetRow(data, fileLinks)],
+      },
+    });
+  } catch (error) {
+    if (appendAttempted) {
+      let rowsAfterAppendError: unknown[][];
+      try {
+        const response = await services.sheets.spreadsheets.values.get({
+          spreadsheetId: config.spreadsheetId,
+          range: config.sheetRange,
+          majorDimension: 'ROWS',
+        });
+        rowsAfterAppendError = (response.data.values ?? []).filter(
+          (row) => row[0] === data.transactionId,
+        );
+      } catch (verificationError) {
+        throw new GoogleAdapterRecoveryError(
+          'sheets-reconciliation-failed',
+          undefined,
+          { cause: verificationError },
+        );
+      }
+
+      const rowWithTheseFiles = rowsAfterAppendError.find(
+        (row) =>
+          JSON.stringify(row.slice(15, 18)) === JSON.stringify(fileLinks),
+      );
+      if (rowWithTheseFiles && rowsAfterAppendError.length === 1) {
+        return {
+          success: true,
+          message: 'Registro guardado en Google Sandbox',
+        };
+      }
+
+      if (rowWithTheseFiles || rowsAfterAppendError.length > 1) {
+        throw new GoogleAdapterRecoveryError(
+          'sheets-row-state-ambiguous',
+          undefined,
+          { cause: error },
+        );
+      }
+      duplicateFoundAfterAppendError = rowsAfterAppendError.length === 1;
+    }
+
+    const cleanupResults = await Promise.allSettled(
+      uploadedFiles.map(({ id }) =>
+        services.drive.files.delete({
+          fileId: id,
+          supportsAllDrives: true,
+        }),
+      ),
+    );
+
+    if (cleanupResults.some((result) => result.status === 'rejected')) {
+      throw new GoogleAdapterRecoveryError('drive-cleanup-failed', undefined, {
+        cause: error,
+      });
+    }
+
+    if (driveUploadOutcomeUnknown) {
+      throw new GoogleAdapterRecoveryError(
+        'drive-upload-outcome-unknown',
+        getProviderHttpStatus(error),
+        { cause: error },
+      );
+    }
+
+    if (duplicateFoundAfterAppendError) {
+      return {
+        success: true,
+        message: 'Registro duplicado omitido en Google Sandbox',
+        isDuplicate: true,
+      };
+    }
+
+    throw new GoogleAdapterTemporaryError(undefined, { cause: error });
+  }
+
+  return {
+    success: true,
+    message: 'Registro guardado en Google Sandbox',
+  };
+}
+
 export function createGoogleSandboxAdapter(
   options: {
     config?: GoogleSandboxConfig;
     createServices?: GoogleServicesFactory;
+    reservationStore?: RegistrationReservationStore;
   } = {},
 ): GoogleAdapter {
   return {
@@ -193,153 +347,83 @@ export function createGoogleSandboxAdapter(
         throw new GoogleAdapterTemporaryError(undefined, { cause: error });
       }
 
-      let existingRows: unknown[][];
+      let reservationStore: RegistrationReservationStore;
       try {
-        const response = await services.sheets.spreadsheets.values.get({
-          spreadsheetId: config.spreadsheetId,
-          range: config.sheetRange,
-          majorDimension: 'ROWS',
-        });
-        existingRows = response.data.values ?? [];
+        reservationStore =
+          options.reservationStore ?? getRuntimeRegistrationReservationStore();
+      } catch (error) {
+        if (error instanceof GoogleAdapterConfigurationError) throw error;
+        throw new GoogleAdapterTemporaryError(undefined, { cause: error });
+      }
+
+      let reservationState;
+      try {
+        reservationState = await reservationStore.reserve(data.transactionId);
       } catch (error) {
         throw new GoogleAdapterTemporaryError(undefined, { cause: error });
       }
 
-      if (existingRows.some((row) => row[0] === data.transactionId)) {
+      if (reservationState === 'completed') {
         return {
           success: true,
           message: 'Registro duplicado omitido en Google Sandbox',
           isDuplicate: true,
         };
       }
-
-      const uploadedFiles: Array<{ id: string; webViewLink: string }> = [];
-      let appendAttempted = false;
-      let duplicateFoundAfterAppendError = false;
-      let driveUploadOutcomeUnknown = false;
-      let fileLinks: string[] = [];
-      try {
-        for (const [documentName, file] of getRegistrationFiles(data)) {
-          const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.pdf`;
-          driveUploadOutcomeUnknown = true;
-          const response = await services.drive.files.create({
-            supportsAllDrives: true,
-            requestBody: {
-              name: fileName,
-              mimeType: file.type,
-              parents: [config.driveFolderId],
-            },
-            media: {
-              mimeType: file.type,
-              body: Readable.from([Buffer.from(await file.arrayBuffer())]),
-            },
-            fields: 'id,webViewLink',
-          });
-
-          const id = response.data.id;
-          if (!id)
-            throw new Error('Google Drive no devolvió un ID para el archivo.');
-          uploadedFiles.push({
-            id,
-            webViewLink:
-              response.data.webViewLink ??
-              `https://drive.google.com/file/d/${id}/view`,
-          });
-          driveUploadOutcomeUnknown = false;
-        }
-
-        fileLinks = uploadedFiles.map(({ webViewLink }) => webViewLink);
-        appendAttempted = true;
-        await services.sheets.spreadsheets.values.append({
-          spreadsheetId: config.spreadsheetId,
-          range: config.sheetRange,
-          valueInputOption: 'RAW',
-          insertDataOption: 'INSERT_ROWS',
-          requestBody: {
-            values: [createSheetRow(data, fileLinks)],
-          },
-        });
-      } catch (error) {
-        if (appendAttempted) {
-          let rowsAfterAppendError: unknown[][];
-          try {
-            const response = await services.sheets.spreadsheets.values.get({
-              spreadsheetId: config.spreadsheetId,
-              range: config.sheetRange,
-              majorDimension: 'ROWS',
-            });
-            rowsAfterAppendError = (response.data.values ?? []).filter(
-              (row) => row[0] === data.transactionId,
-            );
-          } catch (verificationError) {
-            throw new GoogleAdapterRecoveryError(
-              'sheets-reconciliation-failed',
-              undefined,
-              { cause: verificationError },
-            );
-          }
-
-          const rowWithTheseFiles = rowsAfterAppendError.find(
-            (row) =>
-              JSON.stringify(row.slice(15, 18)) === JSON.stringify(fileLinks),
-          );
-          if (rowWithTheseFiles && rowsAfterAppendError.length === 1) {
-            return {
-              success: true,
-              message: 'Registro guardado en Google Sandbox',
-            };
-          }
-
-          if (rowWithTheseFiles || rowsAfterAppendError.length > 1) {
-            throw new GoogleAdapterRecoveryError(
-              'sheets-row-state-ambiguous',
-              undefined,
-              { cause: error },
-            );
-          }
-          duplicateFoundAfterAppendError = rowsAfterAppendError.length === 1;
-        }
-
-        const cleanupResults = await Promise.allSettled(
-          uploadedFiles.map(({ id }) =>
-            services.drive.files.delete({
-              fileId: id,
-              supportsAllDrives: true,
-            }),
-          ),
+      if (reservationState === 'processing') {
+        throw new GoogleAdapterTemporaryError(
+          'Ya hay una solicitud con este identificador en proceso.',
         );
-
-        if (cleanupResults.some((result) => result.status === 'rejected')) {
-          throw new GoogleAdapterRecoveryError(
-            'drive-cleanup-failed',
-            undefined,
-            { cause: error },
-          );
-        }
-
-        if (driveUploadOutcomeUnknown) {
-          throw new GoogleAdapterRecoveryError(
-            'drive-upload-outcome-unknown',
-            getProviderHttpStatus(error),
-            { cause: error },
-          );
-        }
-
-        if (duplicateFoundAfterAppendError) {
-          return {
-            success: true,
-            message: 'Registro duplicado omitido en Google Sandbox',
-            isDuplicate: true,
-          };
-        }
-
-        throw new GoogleAdapterTemporaryError(undefined, { cause: error });
+      }
+      if (reservationState === 'recovery-required') {
+        throw new GoogleAdapterRecoveryError(
+          'idempotency-reservation-recovery-required',
+        );
       }
 
-      return {
-        success: true,
-        message: 'Registro guardado en Google Sandbox',
-      };
+      let result: RegistrationResult;
+      try {
+        result = await saveRegistrationToGoogle(data, config, services);
+      } catch (error) {
+        if (error instanceof GoogleAdapterRecoveryError) {
+          try {
+            await reservationStore.markRecoveryRequired(
+              data.transactionId,
+              error.recoveryStage,
+            );
+          } catch (reservationError) {
+            throw new GoogleAdapterRecoveryError(
+              'idempotency-reservation-state-unknown',
+              undefined,
+              { cause: reservationError },
+            );
+          }
+        } else {
+          try {
+            await reservationStore.release(data.transactionId);
+          } catch (reservationError) {
+            throw new GoogleAdapterRecoveryError(
+              'idempotency-reservation-state-unknown',
+              undefined,
+              { cause: reservationError },
+            );
+          }
+        }
+
+        throw error;
+      }
+
+      try {
+        await reservationStore.complete(data.transactionId);
+      } catch (error) {
+        throw new GoogleAdapterRecoveryError(
+          'idempotency-reservation-state-unknown',
+          undefined,
+          { cause: error },
+        );
+      }
+
+      return result;
     },
   };
 }

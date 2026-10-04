@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
-import { fixtureRegistro } from './fixtures/registro';
+import AxeBuilder from '@axe-core/playwright';
+import { fixtureRegistro, tokenSandboxE2e } from './fixtures/registro';
 
 const pdf = (name: string) => ({
   name,
@@ -70,6 +71,46 @@ const respuestaGuardada = {
   contentType: 'application/json',
   body: JSON.stringify({ code: 'SAVED', message: 'ok', isDuplicate: false }),
 };
+
+test('completa el envío al handler local autorizado con adapter mock', async ({
+  page,
+}) => {
+  await page.route('**/api/register', (route) =>
+    route.continue({
+      headers: {
+        ...route.request().headers(),
+        authorization: `Bearer ${tokenSandboxE2e}`,
+      },
+    }),
+  );
+  await llenarHastaDocumentos(page);
+  await completarDocumentosYRevisar(page);
+  const respuesta = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/register') &&
+      response.request().method() === 'POST',
+  );
+  await page.getByRole('button', { name: 'Enviar registro de prueba' }).click();
+  const recibida = await respuesta;
+  expect(recibida.status()).toBe(200);
+  expect(await recibida.json()).toMatchObject({ code: 'SAVED' });
+  await expect(page.getByRole('status')).toContainText(
+    /no representa una inscripción aceptada/i,
+  );
+});
+
+test('auditoría de accesibilidad y línea base de rendimiento', async ({
+  page,
+}) => {
+  const inicio = Date.now();
+  await page.goto('/registro');
+  expect(Date.now() - inicio).toBeLessThan(3000);
+  await expect(
+    page.locator('astro-island:not([ssr]) form.registro-form'),
+  ).toBeVisible();
+  const auditoria = await new AxeBuilder({ page }).analyze();
+  expect(auditoria.violations).toEqual([]);
+});
 
 test('un fallo de red conserva datos y archivos y el reintento usa el mismo identificador', async ({
   page,

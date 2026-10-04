@@ -1,6 +1,6 @@
 # ADR-0003: spike de Google Sheets y Drive como destino provisional
 
-- **Estado:** Implementación local y pruebas con servicios simulados verificadas; integración remota bloqueada por ubicación/permisos del recurso Drive y pendiente de QA.
+- **Estado:** Spike histórico; las pruebas remotas con Service Account no quedaron verificadas. El issue #10 define un flujo de sandbox posterior basado en OAuth, todavía pendiente de configuración y QA remoto.
 - **Fecha:** 21 de septiembre de 2026
 
 ## Contexto
@@ -12,7 +12,7 @@ Se requiere validar la viabilidad técnica y operativa del uso de Google Sheets 
 ## Dependencias vigentes
 
 - **P0-04:** resuelta para el Sprint 2. Hello World creará y administrará los recursos aislados de prueba; no se utilizarán los recursos operativos de CROFI. La propiedad y los permisos de producción siguen pendientes de P2-06.
-- **P0-06:** los formatos, cantidades y tamaños máximos productivos continúan pendientes. La persona responsable del issue autorizó un intento diagnóstico con tres PDFs ficticios de hasta 5 MiB; esa autorización no se registra como resolución formal de P0-06 ni convierte esos límites en requisitos productivos.
+- **P0-06:** los formatos, cantidades y tamaños productivos continúan pendientes. El issue #10 autoriza para su prueba aislada tres PDFs ficticios, de hasta 1 MiB cada uno y 3 MiB agregados; estos límites de sandbox no resuelven P0-06 para producción.
 - Los resultados descritos en este ADR provienen de la contribución original y deben verificarse con evidencia sanitizada antes de considerar ejecutado el spike.
 
 ## Decisión
@@ -20,6 +20,23 @@ Se requiere validar la viabilidad técnica y operativa del uso de Google Sheets 
 Se documenta un protocolo restringido de validación técnica y operativa y se conservan los resultados reportados por la contribución original. El repositorio no contiene todavía evidencia sanitizada ni constancia de autorización suficiente para aceptar esos resultados como verificados.
 
 No se implementará todavía la integración productiva. Desde el Sprint 2 se autoriza construir y probar el contrato, el endpoint y la carga de archivos en un sandbox restringido con datos exclusivamente ficticios, mientras se evalúan viabilidad, riesgos, permisos, límites, reintentos, idempotencia y limpieza. El aviso de privacidad continúa siendo un gate obligatorio para habilitar el registro público o procesar datos reales.
+
+### Actualización de alcance para el issue #10
+
+El issue #10, posterior a este spike, especifica para Sprint 3 OAuth de la cuenta propietaria del sandbox, el único scope `https://www.googleapis.com/auth/drive.file` y recursos nuevos de la cuenta personal autorizada de Sebastián. La hoja y carpeta deben seleccionarse mediante Google Picker o crearse con esa misma aplicación. Esta instrucción sustituye para el sandbox los planes previos de Service Account, Unidad compartida y 5 MiB; no cambia ningún requisito de producción.
+
+El código local actual ya prepara OAuth en el servidor mediante variables de entorno, pero todavía no implementa el flujo de autorización/callback, Google Picker ni creación/selección administrativa de recursos. Tampoco tiene exclusión persistente para solicitudes concurrentes. Por tanto, la integración remota y esos criterios del issue siguen pendientes de verificación.
+
+El 4 de octubre de 2026, la responsable de #10 autorizó evaluar Firestore como
+registro auxiliar de idempotencia únicamente para el sandbox, sin datos del
+formulario y sin habilitar facturación. La reserva se identifica mediante un
+hash de `transactionId` y guarda sólo estado y marcas de tiempo; OAuth
+`drive.file` sigue reservado para Drive/Sheets, mientras Firestore usa una
+service account separada de servidor con permiso de datos limitado al proyecto
+de pruebas. El uso debe permanecer dentro de la cuota gratuita; si la consola
+exige facturación o el consumo pudiera salir de esa cuota, se detendrá el spike
+y se pedirá aprobación. Esta aprobación no autoriza uso pagado ni define
+Firestore como arquitectura productiva.
 
 ## Alcance del spike
 
@@ -68,10 +85,10 @@ Todos los valores anteriores son ficticios y no corresponden a personas reales.
 ## Autenticación, permisos y continuidad
 
 ### Autenticación
-El adapter se implementó para usar autenticación de servidor a servidor mediante una **Google Service Account (Cuenta de Servicio)**. La autenticación contra una cuenta y recursos reales de sandbox está pendiente. Ningún token, credencial, ID de carpeta o URL debe exponerse en el código del cliente (navegador) ni en repositorios públicos.
+El primer adapter del spike se diseñó con una **Google Service Account (Cuenta de Servicio)**; esa propuesta es histórica y no corresponde al flujo requerido por el issue #10. El adapter local del Sprint 3 usa OAuth2 server-side y variables de entorno. Aún falta generar el refresh token con el scope único `drive.file`, seleccionar/crear los recursos con la misma aplicación y verificar el acceso remoto. Ningún token, client secret, ID de carpeta o URL debe exponerse en el cliente ni en el repositorio.
 
 ### Propiedad y continuidad institucional
-- **Propietario del Sandbox:** debe ser un recurso de prueba aislado administrado por Hello World; la cuenta concreta y su propiedad están pendientes de verificar por canal privado.
+- **Propietario del Sandbox:** para la prueba específica del issue #10 se permite la cuenta personal autorizada de Sebastián, sólo con recursos ficticios y aislados. No se convierte en cuenta productiva ni resuelve la propiedad de producción.
 - **Propietario de Producción (Pendiente):** debe definirse con CROFI mediante P2-06; no se ha aprobado ninguna cuenta productiva.
 - **Procedimiento de Transferencia:** la rotación de credenciales debe definirla el administrador responsable antes de producción; no se ha probado.
 
@@ -80,12 +97,12 @@ La siguiente matriz describe los permisos esperados; no demuestra la configuraci
 
 | Rol | Hoja (Sandbox) | Carpeta (Sandbox) | Administración | Necesidad |
 |---|---|---|---|---|
-| Service Account de pruebas (Servidor) | Editor | Editor | No | Escribir filas y guardar PDFs ficticios |
+| OAuth de cuenta propietaria (Servidor) | Archivos seleccionados por la app con `drive.file` | No | Escribir filas y guardar PDFs ficticios en los recursos autorizados |
 | Desarrolladores Autorizados | Lector, si se aprueba | Lector, si se aprueba | No | Revisar resultados de prueba |
 | Público / Cliente | Sin acceso | Sin acceso | No | No aplica |
 
 ### Revocación de acceso
-Antes de cerrar el spike se deberá verificar y registrar por canal privado la revocación de los accesos temporales. No se afirma que esta verificación ya ocurrió. La cuenta de pruebas debe ser independiente de cuentas personales.
+Antes de cerrar el spike se deberá verificar y registrar por canal privado la revocación de los accesos temporales. No se afirma que esta verificación ya ocurrió. La excepción de cuenta personal para #10 es exclusivamente temporal y de pruebas.
 ### Continuidad
 
 Debe comprobarse que exista un responsable institucional alterno y un procedimiento de transferencia. Una cuenta personal como único propietario será un bloqueo para producción.
@@ -162,17 +179,17 @@ El ADR original reporta un reintento manual con el mismo identificador ficticio 
 ### Verificado localmente
 
 - El endpoint se habilita solo con la variable de sandbox en el servidor y pasa por validación Zod.
-- El harness local valida tres documentos PDF ficticios, una instancia por campo, de hasta 5 MiB cada uno. Son límites técnicos provisionales para la prueba, no una decisión productiva de CROFI.
+- El harness inicial del spike usó tres documentos PDF ficticios de hasta 5 MiB cada uno. El código actual para el issue #10 valida hasta 1 MiB por PDF y 3 MiB agregados; ambos son límites de prueba, no requisitos productivos de CROFI.
 - Las pruebas del adapter con servicios Google simulados verifican una fila, tres archivos asociados, omisión de un reintento secuencial y limpieza ante fallo de escritura; también verifican la respuesta recuperable cuando falla la limpieza.
 - El mock permite probar el endpoint sin credenciales ni acceso a Google.
 
 ### Pendiente de verificación contra Google Sandbox
 
-- La autenticación de la Service Account funciona. Los preflights remotos no son consistentes: una lectura de la hoja tuvo éxito, pero otra devolvió HTTP 403; Drive permitió una consulta de lista, mientras las consultas del folder devolvieron HTTP 404 con el scope `drive.file`.
+- Históricamente, algunos preflights con Service Account permitieron leer la hoja o listar Drive, mientras otras peticiones devolvieron HTTP 403/404. Esto no verifica el flujo OAuth actual del issue #10.
 - Una consulta de solo lectura con `drive.metadata.readonly` confirmó que el ID inspeccionado era una carpeta, pero no pertenecía a una Unidad compartida (`driveId` ausente); corresponde a Mi unidad.
 - No se han verificado la propiedad, permisos efectivos, ausencia de enlaces públicos, cuotas ni revocación de recursos externos.
 - El chequeo de duplicados en Sheets cubre reintentos secuenciales; no garantiza exclusión distribuida ante dos solicitudes simultáneas.
-- La prueba remota opt-in está descrita en [la guía de QA](../pruebas-sandbox-google.md) y requiere autorización escrita de P0-06 antes de cargar PDFs.
+- La prueba remota opt-in del issue #10 está descrita en [la guía de QA](../pruebas-sandbox-google.md) y requiere autorización explícita de esa prueba, OAuth configurado y recursos seleccionados; P0-06 productivo permanece pendiente.
 
 ### Intentos autorizados del 25 de septiembre de 2026
 
@@ -180,7 +197,7 @@ El ADR original reporta un reintento manual con el mismo identificador ficticio 
 - La creación del primer archivo en Drive respondió HTTP 403; no se alcanzó la escritura de la fila.
 - Una consulta de metadatos de solo lectura confirmó que el ID de carpeta inspeccionado pertenecía a Mi unidad, no a una Unidad compartida.
 - Las comprobaciones posteriores encontraron cero filas y cero archivos con el prefijo de QA del harness.
-- No se declara verificada la carga real. La siguiente prueba requiere confirmar una carpeta de sandbox en una Unidad compartida, acceso efectivo de la Service Account a la hoja y permisos de creación/eliminación; alternativamente, debe aprobarse otro mecanismo de autenticación.
+- No se declara verificada la carga real. Estos intentos pertenecen al flujo histórico de Service Account. La prueba actual requiere completar OAuth de la cuenta propietaria y comprobar acceso a la hoja y carpeta seleccionadas, además de limpieza e idempotencia.
 
 ## Riesgos
 

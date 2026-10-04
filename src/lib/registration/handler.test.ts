@@ -10,12 +10,16 @@ import {
   resetMockRegistrationSnapshot,
 } from '../google/mock';
 import type { GoogleAdapter, RegistrationData } from '../google/types';
-import { MAX_SANDBOX_FILE_SIZE } from '../schemas/register';
+import {
+  MAX_SANDBOX_FILE_SIZE,
+  MAX_SANDBOX_REQUEST_BODY_SIZE,
+} from '../schemas/register';
 import { createRegistrationHandler } from './handler';
 
 const pdfBytes = new Uint8Array([
   37, 80, 68, 70, 45, 49, 46, 52, 10, 37, 37, 69, 79, 70,
 ]);
+const testSandboxAccessToken = 'fictitious-local-sandbox-token-for-unit-tests';
 
 function createPdf(name: string, type = 'application/pdf'): File {
   return new File([pdfBytes], name, { type });
@@ -59,7 +63,17 @@ function createFormData(data: RegistrationData = createTestData()): FormData {
 }
 
 function createHandler(adapter: GoogleAdapter = mockGoogleAdapter) {
-  return createRegistrationHandler({ adapter, sandboxEnabled: true });
+  const handler = createRegistrationHandler({
+    adapter,
+    sandboxEnabled: true,
+    sandboxAccessToken: testSandboxAccessToken,
+  });
+
+  return (request: Request) => {
+    const headers = new Headers(request.headers);
+    headers.set('authorization', `Bearer ${testSandboxAccessToken}`);
+    return handler(new Request(request, { headers }));
+  };
 }
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
@@ -85,6 +99,100 @@ describe('endpoint de registro sandbox con adapter mock', () => {
     expect(response.status).toBe(503);
     expect(await readJson(response)).toMatchObject({
       code: 'SANDBOX_DISABLED',
+    });
+    expect(saveRegistration).not.toHaveBeenCalled();
+  });
+
+  it('rechaza peticiones sin token o con un token incorrecto', async () => {
+    const saveRegistration = vi.fn();
+    const handler = createRegistrationHandler({
+      adapter: { saveRegistration },
+      sandboxEnabled: true,
+      sandboxAccessToken: testSandboxAccessToken,
+    });
+    const missingTokenResponse = await handler(
+      new Request('http://localhost/api/register', { method: 'POST' }),
+    );
+    const incorrectTokenResponse = await handler(
+      new Request('http://localhost/api/register', {
+        method: 'POST',
+        headers: { authorization: 'Bearer token-ficticio-incorrecto' },
+      }),
+    );
+
+    expect(missingTokenResponse.status).toBe(401);
+    expect(await readJson(missingTokenResponse)).toMatchObject({
+      code: 'SANDBOX_UNAUTHORIZED',
+    });
+    expect(incorrectTokenResponse.status).toBe(401);
+    expect(await readJson(incorrectTokenResponse)).toMatchObject({
+      code: 'SANDBOX_UNAUTHORIZED',
+    });
+    expect(saveRegistration).not.toHaveBeenCalled();
+  });
+
+  it('no habilita el sandbox si falta el token de acceso en el servidor', async () => {
+    const saveRegistration = vi.fn();
+    const handler = createRegistrationHandler({
+      adapter: { saveRegistration },
+      sandboxEnabled: true,
+    });
+    const response = await handler(
+      new Request('http://localhost/api/register', { method: 'POST' }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(await readJson(response)).toMatchObject({
+      code: 'SANDBOX_AUTH_NOT_CONFIGURED',
+    });
+    expect(saveRegistration).not.toHaveBeenCalled();
+  });
+
+  it('rechaza cuerpos demasiado grandes antes de guardar el registro', async () => {
+    const saveRegistration = vi.fn(async () => ({
+      success: true as const,
+      message: 'Guardado ficticio',
+    }));
+    const handler = createHandler({ saveRegistration });
+    const declaredOversizedRequest = new Request(
+      'http://localhost/api/register',
+      {
+        method: 'POST',
+        headers: {
+          'content-length': String(MAX_SANDBOX_REQUEST_BODY_SIZE + 1),
+        },
+        body: 'cuerpo ficticio',
+      },
+    );
+    const streamedBody = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(MAX_SANDBOX_REQUEST_BODY_SIZE + 1));
+        controller.close();
+      },
+    });
+    const streamedRequestInit = {
+      method: 'POST',
+      headers: {
+        'content-type': 'multipart/form-data; boundary=fictitious',
+      },
+      body: streamedBody,
+      duplex: 'half',
+    } as RequestInit & { duplex: 'half' };
+    const oversizedStreamRequest = new Request(
+      'http://localhost/api/register',
+      streamedRequestInit,
+    );
+
+    const declaredResponse = await handler(declaredOversizedRequest);
+    const streamedResponse = await handler(oversizedStreamRequest);
+
+    expect(declaredResponse.status).toBe(413);
+    expect(await readJson(declaredResponse)).toMatchObject({
+      code: 'PAYLOAD_TOO_LARGE',
+    });
+    expect(streamedResponse.status).toBe(413);
+    expect(await readJson(streamedResponse)).toMatchObject({
+      code: 'PAYLOAD_TOO_LARGE',
     });
     expect(saveRegistration).not.toHaveBeenCalled();
   });
@@ -135,6 +243,36 @@ describe('endpoint de registro sandbox con adapter mock', () => {
       code: 'DUPLICATE',
       isDuplicate: true,
     });
+    expect(getMockRegistrationSnapshot()).toHaveLength(1);
+  });
+
+  it('acepta una sola solicitud si dos envíos mock del mismo ID llegan simultáneamente', async () => {
+    const handler = createHandler();
+    const [firstResponse, secondResponse] = await Promise.all([
+      handler(
+        new Request('http://localhost/api/register', {
+          method: 'POST',
+          body: createFormData(),
+        }),
+      ),
+      handler(
+        new Request('http://localhost/api/register', {
+          method: 'POST',
+          body: createFormData(),
+        }),
+      ),
+    ]);
+    const results = await Promise.all([
+      readJson(firstResponse),
+      readJson(secondResponse),
+    ]);
+
+    expect(firstResponse.status).toBe(200);
+    expect(secondResponse.status).toBe(200);
+    expect(results.map((result) => result.code).sort()).toEqual([
+      'DUPLICATE',
+      'SAVED',
+    ]);
     expect(getMockRegistrationSnapshot()).toHaveLength(1);
   });
 
@@ -209,7 +347,7 @@ describe('endpoint de registro sandbox con adapter mock', () => {
     expect(getMockRegistrationSnapshot()).toHaveLength(0);
   });
 
-  it('rechaza PDFs mayores a 5 MiB y descripciones superiores a 300 palabras', async () => {
+  it('aplica el límite de 1 MiB por PDF y admite 3 MiB en total', async () => {
     const oversizedBytes = new Uint8Array(MAX_SANDBOX_FILE_SIZE + 1);
     oversizedBytes.set(pdfBytes.subarray(0, 5));
     const oversizedData = createFakeRegistrationData('test-oversized-pdf', {
@@ -227,6 +365,19 @@ describe('endpoint de registro sandbox con adapter mock', () => {
       () => 'ficticia',
     ).join(' ');
     const handler = createHandler();
+    const maximumSizePdf = new Uint8Array(MAX_SANDBOX_FILE_SIZE);
+    maximumSizePdf.set(pdfBytes.subarray(0, 5));
+    const maximumTotalData = createFakeRegistrationData('test-maximum-total', {
+      archivoIdentificacion: new File([maximumSizePdf], 'identificacion.pdf', {
+        type: 'application/pdf',
+      }),
+      comprobantePago: new File([maximumSizePdf], 'comprobante.pdf', {
+        type: 'application/pdf',
+      }),
+      cartaResponsiva: new File([maximumSizePdf], 'carta.pdf', {
+        type: 'application/pdf',
+      }),
+    });
 
     const oversizedResponse = await handler(
       new Request('http://localhost/api/register', {
@@ -240,10 +391,17 @@ describe('endpoint de registro sandbox con adapter mock', () => {
         body: createFormData(longDescriptionData),
       }),
     );
+    const maximumTotalResponse = await handler(
+      new Request('http://localhost/api/register', {
+        method: 'POST',
+        body: createFormData(maximumTotalData),
+      }),
+    );
 
     expect(oversizedResponse.status).toBe(400);
     expect(longDescriptionResponse.status).toBe(400);
-    expect(getMockRegistrationSnapshot()).toHaveLength(0);
+    expect(maximumTotalResponse.status).toBe(200);
+    expect(getMockRegistrationSnapshot()).toHaveLength(1);
   });
 
   it('devuelve errores de configuración/recuperación sin incluir datos de registro', async () => {

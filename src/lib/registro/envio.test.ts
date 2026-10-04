@@ -19,6 +19,7 @@ describe('interpretarRespuesta', () => {
     [400, { code: 'VALIDATION_ERROR', details: [] }, 'validacion'],
     [400, { code: 'UNEXPECTED_FIELD' }, 'solicitud'],
     [413, null, 'demasiado_grande'],
+    [401, { code: 'SANDBOX_UNAUTHORIZED' }, 'configuracion'],
     [502, { code: 'TEMPORARY_STORAGE_ERROR' }, 'temporal'],
     [502, { code: 'RECOVERY_REQUIRED' }, 'recuperacion'],
     [503, { code: 'SANDBOX_DISABLED' }, 'configuracion'],
@@ -37,7 +38,10 @@ describe('interpretarRespuesta', () => {
         { field: 'comprobantePago', message: 'x' },
       ],
     });
-    expect(resultado).toEqual({ tipo: 'validacion', campos: ['integrantes', 'comprobantePago'] });
+    expect(resultado).toEqual({
+      tipo: 'validacion',
+      campos: ['integrantes', 'comprobantePago'],
+    });
   });
 
   it('cada tipo tiene un título distinto', () => {
@@ -49,7 +53,9 @@ describe('interpretarRespuesta', () => {
 describe('enviarRegistro', () => {
   it('devuelve "red" si fetch falla, sin inventar éxito', async () => {
     const fetchFn = vi.fn().mockRejectedValue(new TypeError('offline'));
-    const resultado = await enviarRegistro(new FormData(), { fetchFn: fetchFn as unknown as typeof fetch });
+    const resultado = await enviarRegistro(new FormData(), {
+      fetchFn: fetchFn as unknown as typeof fetch,
+    });
     expect(resultado.tipo).toBe('red');
   });
 
@@ -69,8 +75,22 @@ describe('enviarRegistro', () => {
       });
     const opciones = { fetchFn: fetchFn as unknown as typeof fetch };
 
-    const primero = await enviarRegistro(construirFormData(payloadFicticio, archivos, sesion.obtenerTransactionId()), opciones);
-    const segundo = await enviarRegistro(construirFormData(payloadFicticio, archivos, sesion.obtenerTransactionId()), opciones);
+    const primero = await enviarRegistro(
+      construirFormData(
+        payloadFicticio,
+        archivos,
+        sesion.obtenerTransactionId(),
+      ),
+      opciones,
+    );
+    const segundo = await enviarRegistro(
+      construirFormData(
+        payloadFicticio,
+        archivos,
+        sesion.obtenerTransactionId(),
+      ),
+      opciones,
+    );
 
     expect(primero.tipo).toBe('temporal');
     expect(segundo.tipo).toBe('exito');

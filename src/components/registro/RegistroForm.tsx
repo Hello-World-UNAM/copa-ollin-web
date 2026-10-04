@@ -214,7 +214,9 @@ export default function RegistroForm() {
   // --- Navegación ---
 
   async function irAlSiguientePaso() {
-    let valido = await trigger(camposPorPaso[pasoActual]);
+    let valido = await trigger(camposPorPaso[pasoActual], {
+      shouldFocus: true,
+    });
     if (pasoActual === 'documentos') {
       valido = validarDocumentosRequeridos() !== null && valido;
     }
@@ -323,6 +325,17 @@ export default function RegistroForm() {
     <form
       className="registro-form"
       noValidate
+      onKeyDown={(event) => {
+        if (
+          event.key === 'Enter' &&
+          event.target instanceof HTMLInputElement &&
+          event.target.type !== 'checkbox' &&
+          event.target.type !== 'submit' &&
+          event.target.type !== 'button'
+        ) {
+          event.preventDefault();
+        }
+      }}
       onSubmit={(event) => {
         if (pasoActual !== 'revision') {
           event.preventDefault();
