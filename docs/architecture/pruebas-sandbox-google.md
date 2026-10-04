@@ -34,7 +34,7 @@ La suite prueba el handler de multipart y el adapter mock: endpoint deshabilitad
 
 ## 3. Prerrequisitos antes de tocar Google
 
-**No ejecutes la prueba remota mientras P0-06 siga sin aprobación.** El documento de preguntas abiertas indica que los formatos, cantidades y tamaños de archivos siguen pendientes y que no se debe aceptar una prueba de carga de archivos sin resolver esa decisión. Solicita que la persona autorizada confirme por escrito el experimento concreto: un PDF ficticio por documento y un máximo de 5 MiB por archivo. Esta condición es solo para el sandbox; no convierte esos límites en requisito productivo.
+Solicita que la persona autorizada confirme por escrito el experimento concreto: un PDF ficticio por documento, un máximo de 1 MiB por archivo y 3 MiB en total. Esta condición es solo para el sandbox; no convierte esos límites en requisito productivo.
 
 Una vez autorizada la prueba:
 
@@ -68,6 +68,8 @@ RUN_GOOGLE_SANDBOX_INTEGRATION=true SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true pnp
 El test genera un `transactionId` aleatorio y tres PDFs válidos. Envía dos veces el mismo payload; comprueba que Sheets contenga una sola fila y Drive los tres archivos asociados; después elimina la fila y archivos que creó y verifica que no quede ninguno. El test no imprime ni guarda IDs operativos, URLs de los recursos ni payloads.
 
 Si el test falla durante la limpieza, no repitas inmediatamente: inspecciona únicamente los recursos de sandbox autorizados, elimina cualquier fila o PDF que empiece con el prefijo `copa-ollin-qa-` de la corrida y deja constancia sanitizada de la incidencia. No borres elementos ajenos a la prueba.
+
+Los PDF generados pesan menos de 1 KiB, por lo que cumplen el límite provisional de 1 MiB por archivo y 3 MiB en total.
 
 ### Si el preflight o la carga devuelve 403/404
 

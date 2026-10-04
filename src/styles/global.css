@@ -623,6 +623,30 @@ p {
   color: var(--color-text-muted);
 }
 
+.registro-archivo,
+.registro-archivo__seleccionado {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.registro-form [role='alert'].registro-resultado {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 2px solid var(--color-black);
+  border-radius: var(--radius-control);
+  font-size: var(--text-ui);
+}
+
+.registro-form [role='alert'].registro-resultado--error {
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+}
+
+.registro-resultado ul {
+  margin: 0;
+  padding-left: var(--space-6);
+}
 .registro-progreso li[aria-current='step'] {
   color: var(--color-text);
   font-weight: 700;

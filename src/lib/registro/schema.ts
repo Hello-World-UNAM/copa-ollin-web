@@ -1,18 +1,15 @@
 import { z } from 'zod';
 
 import { categories } from '../../data/categories';
+import { MAX_PALABRAS_DESCRIPCION, contarPalabras } from './contract';
 
 const categorySlugs = categories.map((c) => c.slug) as [string, ...string[]];
-
-const contarPalabras = (texto: string) =>
-  texto.trim().length === 0 ? 0 : texto.trim().split(/\s+/).length;
 
 export const integranteSchema = z.object({
   nombre: z
     .string()
     .trim()
     .min(1, 'Escribe el nombre completo del integrante.'),
-  // Opcional según el kit de inicio.
   correo: z
     .string()
     .trim()
@@ -57,8 +54,8 @@ export const registroSchema = z.object({
     .string()
     .trim()
     .min(1, 'Describe brevemente el robot.')
-    .refine((texto) => contarPalabras(texto) <= 300, {
-      message: 'La descripción no debe superar 300 palabras.',
+    .refine((texto) => contarPalabras(texto) <= MAX_PALABRAS_DESCRIPCION, {
+      message: `La descripción no debe superar ${MAX_PALABRAS_DESCRIPCION} palabras.`,
     }),
 
   // Confirmaciones (alcance/firmante exacto pendiente: P1-08)

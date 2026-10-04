@@ -4,9 +4,25 @@ import { useFieldArray, useForm, type SubmitHandler } from 'react-hook-form';
 
 import { categories } from '../../data/categories';
 import {
-  submitRegistroSandboxMock,
-  type RegistroSandboxMockResult,
-} from '../../lib/registro/mockAdapter';
+  CAMPOS_ARCHIVO,
+  DOCUMENTOS,
+  MAX_ARCHIVO_BYTES,
+  MAX_TOTAL_ARCHIVOS_BYTES,
+  formatearBytes,
+  validarArchivoPdf,
+  validarTotalArchivos,
+  type CampoArchivo,
+} from '../../lib/registro/contract';
+import {
+  crearSesionEnvio,
+  enviarRegistro,
+  MENSAJES_ENVIO,
+  type ResultadoEnvio,
+} from '../../lib/registro/envio';
+import {
+  construirFormData,
+  type ArchivosRegistro,
+} from '../../lib/registro/formData';
 import {
   registroDefaultValues,
   registroSchema,
@@ -23,7 +39,6 @@ const pasos = [
 
 type PasoId = (typeof pasos)[number]['id'];
 
-// Campos que se validan al intentar avanzar desde cada paso.
 const camposPorPaso: Record<PasoId, (keyof RegistroPayload)[]> = {
   equipo: [
     'nombreEquipo',
@@ -47,11 +62,43 @@ const camposPorPaso: Record<PasoId, (keyof RegistroPayload)[]> = {
   revision: [],
 };
 
+const ETIQUETAS_CAMPOS: Record<string, string> = {
+  nombreEquipo: 'Nombre del equipo',
+  categoria: 'Categoría',
+  institucion: 'Institución educativa',
+  estadoCiudadProcedencia: 'Estado o ciudad de procedencia',
+  nombreCapitan: 'Nombre del capitán',
+  correoCapitan: 'Correo del capitán',
+  telefonoCapitan: 'Teléfono',
+  identificacionInstitucional: 'Identificación institucional',
+  integrantes: 'Integrantes',
+  nombreRobot: 'Nombre del robot',
+  descripcionRobot: 'Descripción del robot',
+  aceptaReglamento: 'Aceptación del reglamento',
+  aceptaUsoImagen: 'Uso de fotografías y material audiovisual',
+  confirmaRestriccionesCategoria: 'Restricciones de la categoría',
+  archivoIdentificacion: 'Identificación del capitán',
+  comprobantePago: 'Comprobante de pago',
+  cartaResponsiva: 'Carta responsiva',
+  archivos: 'Tamaño total de los archivos',
+};
+
+const esCampoArchivo = (campo: string): campo is CampoArchivo =>
+  (CAMPOS_ARCHIVO as readonly string[]).includes(campo);
+
+function pasoDeCampo(campo: string): PasoId | undefined {
+  if (esCampoArchivo(campo) || campo === 'archivos') return 'documentos';
+  return pasos.find((paso) =>
+    (camposPorPaso[paso.id] as string[]).includes(campo),
+  )?.id;
+}
+
+type ErroresArchivo = Partial<Record<CampoArchivo, string>>;
+
 type EstadoEnvio =
   | { estado: 'inactivo' }
   | { estado: 'enviando' }
-  | { estado: 'exito'; resultado: RegistroSandboxMockResult }
-  | { estado: 'error'; mensaje: string };
+  | { estado: 'resultado'; resultado: ResultadoEnvio; transactionId: string };
 
 function combinarRefs<T>(
   refRegistro: (instancia: T | null) => void,
@@ -66,10 +113,14 @@ function combinarRefs<T>(
 export default function RegistroForm() {
   const [pasoActual, setPasoActual] = useState<PasoId>('equipo');
   const [envio, setEnvio] = useState<EstadoEnvio>({ estado: 'inactivo' });
+  const [archivos, setArchivos] = useState<Partial<ArchivosRegistro>>({});
+  const [erroresArchivo, setErroresArchivo] = useState<ErroresArchivo>({});
+  const [errorTotal, setErrorTotal] = useState<string | null>(null);
+  const [sesion] = useState(() => crearSesionEnvio());
 
+  const enviandoRef = useRef(false);
   const anuncioRef = useRef<HTMLDivElement>(null);
   const primerCampoRef = useRef<HTMLInputElement>(null);
-  const primerConsentimientoRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -77,6 +128,8 @@ export default function RegistroForm() {
     handleSubmit,
     trigger,
     getValues,
+    reset,
+    setError,
     formState: { errors },
   } = useForm<RegistroPayload>({
     resolver: zodResolver(registroSchema),
@@ -98,30 +151,74 @@ export default function RegistroForm() {
     register('nombreCapitan');
   const { ref: nombreRobotRef, ...nombreRobotRegistro } =
     register('nombreRobot');
-  const { ref: aceptaReglamentoRef, ...aceptaReglamentoRegistro } =
-    register('aceptaReglamento');
 
-  // Anuncia el cambio de paso a lectores de pantalla y mueve el foco al
-  // primer campo del paso nuevo, sin robar foco fuera de una navegación.
+  function anunciar(texto: string) {
+    if (anuncioRef.current) anuncioRef.current.textContent = texto;
+  }
+
   useEffect(() => {
-    if (anuncioRef.current && pasoInfo) {
-      anuncioRef.current.textContent = `Paso ${indicePaso + 1} de ${pasos.length}: ${pasoInfo.titulo}.`;
+    if (pasoInfo) {
+      anunciar(
+        `Paso ${indicePaso + 1} de ${pasos.length}: ${pasoInfo.titulo}.`,
+      );
     }
-
-    if (pasoActual === 'documentos') {
-      primerConsentimientoRef.current?.focus();
-      return;
-    }
-
     primerCampoRef.current?.focus();
   }, [pasoActual, indicePaso, pasoInfo]);
 
-  async function irAlSiguientePaso() {
-    const camposValidos = await trigger(camposPorPaso[pasoActual], {
-      shouldFocus: true,
-    });
-    if (!camposValidos) return;
+  // --- Archivos (viven en estado: sobreviven al cambio de paso y a un fallo) ---
 
+  async function alSeleccionarArchivo(
+    campo: CampoArchivo,
+    archivo: File | undefined,
+  ) {
+    if (!archivo) return;
+    const error = await validarArchivoPdf(archivo);
+    setErroresArchivo((previos) => ({
+      ...previos,
+      [campo]: error ?? undefined,
+    }));
+    if (!error) setArchivos((previos) => ({ ...previos, [campo]: archivo }));
+  }
+
+  function quitarArchivo(campo: CampoArchivo) {
+    setArchivos((previos) => ({ ...previos, [campo]: undefined }));
+    setErroresArchivo((previos) => ({ ...previos, [campo]: undefined }));
+    requestAnimationFrame(() =>
+      document.getElementById(`documento-${campo}`)?.focus(),
+    );
+  }
+
+  function validarDocumentosRequeridos(): ArchivosRegistro | null {
+    const faltantes: ErroresArchivo = {};
+    for (const { campo } of DOCUMENTOS) {
+      if (!archivos[campo])
+        faltantes[campo] = 'Selecciona un PDF para este documento.';
+    }
+    setErroresArchivo(faltantes);
+
+    const { archivoIdentificacion, comprobantePago, cartaResponsiva } =
+      archivos;
+    if (!archivoIdentificacion || !comprobantePago || !cartaResponsiva)
+      return null;
+
+    const completos = {
+      archivoIdentificacion,
+      comprobantePago,
+      cartaResponsiva,
+    };
+    const total = validarTotalArchivos(Object.values(completos));
+    setErrorTotal(total);
+    return total ? null : completos;
+  }
+
+  // --- Navegación ---
+
+  async function irAlSiguientePaso() {
+    let valido = await trigger(camposPorPaso[pasoActual]);
+    if (pasoActual === 'documentos') {
+      valido = validarDocumentosRequeridos() !== null && valido;
+    }
+    if (!valido) return;
     const siguiente = pasos[indicePaso + 1];
     if (siguiente) setPasoActual(siguiente.id);
   }
@@ -131,32 +228,93 @@ export default function RegistroForm() {
     if (anterior) setPasoActual(anterior.id);
   }
 
+  // --- Envío ---
+
+  function aplicarErroresDelServidor(campos: string[]) {
+    const indices: number[] = [];
+    for (const campo of campos) {
+      const paso = pasoDeCampo(campo);
+      if (paso) indices.push(pasos.findIndex((p) => p.id === paso));
+      if (esCampoArchivo(campo)) {
+        setErroresArchivo((previos) => ({
+          ...previos,
+          [campo]:
+            'El servidor no aceptó este archivo. Reemplázalo por otro PDF.',
+        }));
+      } else if (campo in registroDefaultValues) {
+        setError(campo as keyof RegistroPayload, {
+          type: 'server',
+          message: 'El servidor no aceptó este dato. Revísalo.',
+        });
+      }
+    }
+    const primero = pasos[Math.min(...indices)];
+    if (primero) setPasoActual(primero.id);
+  }
+
   const onSubmit: SubmitHandler<RegistroPayload> = async (payload) => {
+    if (enviandoRef.current) return; // evita doble clic / doble Enter
+    const completos = validarDocumentosRequeridos();
+    if (!completos) {
+      setPasoActual('documentos');
+      return;
+    }
+
+    enviandoRef.current = true;
     setEnvio({ estado: 'enviando' });
+    anunciar('Enviando registro de prueba.');
+    const transactionId = sesion.obtenerTransactionId();
     try {
-      // TODO(#10): sustituir por el endpoint sandbox real en cuanto exista.
-      const resultado = await submitRegistroSandboxMock(payload);
-      setEnvio({ estado: 'exito', resultado });
+      const resultado = await enviarRegistro(
+        construirFormData(payload, completos, transactionId),
+      );
+      setEnvio({ estado: 'resultado', resultado, transactionId });
+      if (resultado.tipo === 'validacion')
+        aplicarErroresDelServidor(resultado.campos);
     } catch {
       setEnvio({
-        estado: 'error',
-        mensaje:
-          'No se pudo enviar el registro de prueba. Revisa tu conexión e inténtalo de nuevo.',
+        estado: 'resultado',
+        resultado: { tipo: 'interno' },
+        transactionId,
       });
+    } finally {
+      enviandoRef.current = false;
     }
   };
 
-  if (envio.estado === 'exito') {
+  function reiniciarFormulario() {
+    reset(registroDefaultValues);
+    setArchivos({});
+    setErroresArchivo({});
+    setErrorTotal(null);
+    sesion.reiniciar();
+    setEnvio({ estado: 'inactivo' });
+    setPasoActual('equipo');
+  }
+
+  const resultado = envio.estado === 'resultado' ? envio.resultado : null;
+
+  if (
+    envio.estado === 'resultado' &&
+    (resultado?.tipo === 'exito' || resultado?.tipo === 'duplicado')
+  ) {
+    const mensaje = MENSAJES_ENVIO[resultado.tipo];
     return (
       <div role="status" className="card registro-confirmacion">
-        <p className="eyebrow">Registro de prueba recibido</p>
-        <h2>Recibimos tu registro ficticio para prueba</h2>
+        <p className="eyebrow">Sandbox de prueba</p>
+        <h2>{mensaje.titulo}</h2>
+        <p>{mensaje.detalle}</p>
         <p>
-          Folio de sandbox: <strong>{envio.resultado.folioSandbox}</strong>.
-          Este folio es exclusivamente de prueba:{' '}
-          <strong>no representa una inscripción aceptada</strong> ni un lugar
-          confirmado en Copa Ollin.
+          Identificador técnico de prueba:{' '}
+          <strong>{envio.transactionId}</strong>
         </p>
+        <button
+          type="button"
+          className="button button--secondary"
+          onClick={reiniciarFormulario}
+        >
+          Registrar otro envío de prueba
+        </button>
       </div>
     );
   }
@@ -165,17 +323,6 @@ export default function RegistroForm() {
     <form
       className="registro-form"
       noValidate
-      onKeyDown={(event) => {
-        if (
-          event.key === 'Enter' &&
-          event.target instanceof HTMLInputElement &&
-          event.target.type !== 'checkbox' &&
-          event.target.type !== 'submit' &&
-          event.target.type !== 'button'
-        ) {
-          event.preventDefault();
-        }
-      }}
       onSubmit={(event) => {
         if (pasoActual !== 'revision') {
           event.preventDefault();
@@ -198,6 +345,23 @@ export default function RegistroForm() {
           </li>
         ))}
       </ol>
+
+      {resultado && (
+        <div
+          role="alert"
+          className="registro-resultado registro-resultado--error"
+        >
+          <strong>{MENSAJES_ENVIO[resultado.tipo].titulo}</strong>
+          <p>{MENSAJES_ENVIO[resultado.tipo].detalle}</p>
+          {resultado.tipo === 'validacion' && resultado.campos.length > 0 && (
+            <ul>
+              {resultado.campos.map((campo) => (
+                <li key={campo}>{ETIQUETAS_CAMPOS[campo] ?? campo}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {pasoActual === 'equipo' && (
         <fieldset>
@@ -396,42 +560,57 @@ export default function RegistroForm() {
           <legend>Documentos y consentimientos</legend>
 
           <p>
-            Los controles de archivo son de <strong>sandbox</strong>: no se
-            envía ni conserva ningún documento hasta que exista el endpoint del
-            Sprint 2 (issue #10). No se afirma que un archivo quedó guardado.
+            Sandbox: sube únicamente <strong>PDF ficticios</strong>. Límite
+            provisional de {formatearBytes(MAX_ARCHIVO_BYTES)} por archivo y{' '}
+            {formatearBytes(MAX_TOTAL_ARCHIVOS_BYTES)} en total; los límites
+            definitivos siguen pendientes de CROFI (P0-06). Ningún archivo se
+            guarda hasta que el servidor confirme el envío.
           </p>
 
-          {[
-            {
-              id: 'sandbox-comprobante-pago',
-              etiqueta: 'Comprobante de pago (sandbox, PDF o imagen)',
-            },
-            {
-              id: 'sandbox-identificacion',
-              etiqueta:
-                'Identificación del capitán (sandbox: credencial UNAM, credencial escolar o identificación oficial)',
-            },
-            {
-              id: 'sandbox-carta-responsiva',
-              etiqueta: 'Carta responsiva firmada (sandbox)',
-            },
-          ].map((documento) => (
-            <div key={documento.id}>
-              <label htmlFor={documento.id}>{documento.etiqueta}</label>
-              <input id={documento.id} type="file" disabled />
-              <p>
-                Formatos y tamaño máximo pendientes de confirmación de CROFI
-                (P0-06). Este control queda deshabilitado hasta resolverlo.
-              </p>
-            </div>
-          ))}
+          {DOCUMENTOS.map((documento, indice) => {
+            const archivo = archivos[documento.campo];
+            const error = erroresArchivo[documento.campo];
+            const idInput = `documento-${documento.campo}`;
+            return (
+              <div key={documento.campo} className="registro-archivo">
+                <label htmlFor={idInput}>{documento.etiqueta} (PDF)</label>
+                {archivo ? (
+                  <div className="registro-archivo__seleccionado">
+                    <p>
+                      Archivo seleccionado: <strong>{archivo.name}</strong> (
+                      {formatearBytes(archivo.size)}). Aún no se ha enviado.
+                    </p>
+                    <button
+                      type="button"
+                      className="button button--secondary"
+                      onClick={() => quitarArchivo(documento.campo)}
+                    >
+                      Reemplazar {documento.etiqueta.toLowerCase()}
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    id={idInput}
+                    type="file"
+                    accept="application/pdf"
+                    aria-invalid={Boolean(error)}
+                    ref={indice === 0 ? primerCampoRef : undefined}
+                    onChange={(event) =>
+                      void alSeleccionarArchivo(
+                        documento.campo,
+                        event.target.files?.[0],
+                      )
+                    }
+                  />
+                )}
+                {error && <p role="alert">{error}</p>}
+              </div>
+            );
+          })}
+          {errorTotal && <p role="alert">{errorTotal}</p>}
 
           <label>
-            <input
-              type="checkbox"
-              ref={combinarRefs(aceptaReglamentoRef, primerConsentimientoRef)}
-              {...aceptaReglamentoRegistro}
-            />
+            <input type="checkbox" {...register('aceptaReglamento')} />
             Acepto el reglamento de la categoría seleccionada.
           </label>
           {errors.aceptaReglamento && (
@@ -483,9 +662,18 @@ export default function RegistroForm() {
             <dd>{getValues('integrantes').length}</dd>
             <dt>Robot</dt>
             <dd>{getValues('nombreRobot')}</dd>
+            <dt>Documentos</dt>
+            <dd>
+              <ul>
+                {DOCUMENTOS.map((documento) => (
+                  <li key={documento.campo}>
+                    {documento.etiqueta}:{' '}
+                    {archivos[documento.campo]?.name ?? 'sin archivo'}
+                  </li>
+                ))}
+              </ul>
+            </dd>
           </dl>
-
-          {envio.estado === 'error' && <p role="alert">{envio.mensaje}</p>}
         </fieldset>
       )}
 
@@ -495,6 +683,7 @@ export default function RegistroForm() {
             type="button"
             className="button button--secondary"
             onClick={irAlPasoAnterior}
+            disabled={envio.estado === 'enviando'}
           >
             Volver
           </button>
@@ -511,6 +700,7 @@ export default function RegistroForm() {
             type="submit"
             className="button"
             disabled={envio.estado === 'enviando'}
+            aria-busy={envio.estado === 'enviando'}
           >
             {envio.estado === 'enviando'
               ? 'Enviando registro de prueba…'

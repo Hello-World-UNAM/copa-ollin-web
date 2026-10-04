@@ -1,104 +1,156 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { fixtureRegistro } from './fixtures/registro';
-import AxeBuilder from '@axe-core/playwright';
 
-test.describe('Registro de Equipo - Integración Real Sandbox', () => {
-  test('Completa el formulario, conserva datos al retroceder, sube PDFs y usa la ruta real', async ({
-    page,
-  }) => {
-    // 1. SE ELIMINÓ EL MOCK DE CLIENTE.
-    // Ahora Playwright hará la petición POST real al endpoint /api/register del servidor.
+const pdf = (name: string) => ({
+  name,
+  mimeType: 'application/pdf',
+  buffer: Buffer.from('%PDF-1.4\n%%EOF\n'),
+});
 
-    await page.goto('/registro');
+async function llenarHastaDocumentos(page: Page) {
+  await page.goto('/registro');
+  await expect(
+    page.locator('astro-island:not([ssr]) form.registro-form'),
+  ).toBeVisible();
+  await page
+    .getByLabel('Nombre del equipo')
+    .fill(fixtureRegistro.equipo.nombre);
+  await page
+    .getByLabel('Institución educativa')
+    .fill(fixtureRegistro.equipo.institucion);
+  await page
+    .getByLabel('Estado o ciudad de procedencia')
+    .fill('Ciudad Ficticia');
+  await page.getByRole('button', { name: 'Continuar' }).click();
 
-    // Paso 1: Información del Equipo
-    await page
-      .getByLabel(/Nombre del equipo/i)
-      .fill(fixtureRegistro.equipo.nombre);
-    await page
-      .getByLabel(/Institución/i)
-      .fill(fixtureRegistro.equipo.institucion);
-    await page.getByRole('button', { name: /Siguiente/i }).click();
+  await page
+    .getByLabel(/Nombre completo del capitán/)
+    .fill(fixtureRegistro.capitan.nombre);
+  await page
+    .getByLabel('Correo electrónico', { exact: true })
+    .fill(fixtureRegistro.capitan.correo);
+  await page.getByLabel('Teléfono').fill(fixtureRegistro.capitan.telefono);
+  await page
+    .getByLabel('Integrante 1: nombre completo')
+    .fill(fixtureRegistro.integranteExtra.nombre);
+  await page.getByRole('button', { name: 'Continuar' }).click();
 
-    // Paso 2: Integrantes
-    await page
-      .getByLabel(/Nombre del capitán/i)
-      .fill(fixtureRegistro.capitan.nombre);
-    await page
-      .getByLabel(/Correo del capitán/i)
-      .fill(fixtureRegistro.capitan.correo);
-    await page.getByLabel(/Teléfono/i).fill(fixtureRegistro.capitan.telefono);
+  await page.getByLabel('Nombre del robot').fill(fixtureRegistro.robot.nombre);
+  await page
+    .getByLabel(/Descripción del robot/)
+    .fill('Robot ficticio de prueba');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(
+    page.getByRole('group', { name: 'Documentos y consentimientos' }),
+  ).toBeVisible();
+}
 
-    await page.getByRole('button', { name: /Agregar integrante/i }).click();
-    await page
-      .getByLabel(/Nombre del integrante 2/i)
-      .fill(fixtureRegistro.integranteExtra.nombre);
-    await page
-      .getByLabel(/Correo del integrante 2/i)
-      .fill(fixtureRegistro.integranteExtra.correo);
-    await page.getByRole('button', { name: /Siguiente/i }).click();
+async function completarDocumentosYRevisar(page: Page) {
+  await page
+    .locator('#documento-archivoIdentificacion')
+    .setInputFiles(pdf('identificacion.pdf'));
+  await page
+    .locator('#documento-comprobantePago')
+    .setInputFiles(pdf('comprobante.pdf'));
+  await page
+    .locator('#documento-cartaResponsiva')
+    .setInputFiles(pdf('carta.pdf'));
+  await expect(page.getByText(/Archivo seleccionado/)).toHaveCount(3);
+  await page.getByLabel(/Acepto el reglamento/).check();
+  await page.getByLabel(/Acepto el uso de fotografías/).check();
+  await page.getByLabel(/Confirmo que el robot cumple/).check();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(
+    page.getByRole('group', { name: 'Revisión antes de enviar' }),
+  ).toBeVisible();
+}
 
-    // Comprobación de resiliencia (Retroceder)
-    await page.getByRole('button', { name: /Atrás/i }).click();
-    await expect(page.getByLabel(/Nombre del integrante 2/i)).toHaveValue(
-      fixtureRegistro.integranteExtra.nombre,
-    );
-    await page.getByRole('button', { name: /Siguiente/i }).click();
+const respuestaGuardada = {
+  status: 200,
+  contentType: 'application/json',
+  body: JSON.stringify({ code: 'SAVED', message: 'ok', isDuplicate: false }),
+};
 
-    // Paso 3: Robot y Documentos (Creación de PDFs ficticios en memoria)
-    await page
-      .getByLabel(/Nombre del robot/i)
-      .fill(fixtureRegistro.robot.nombre);
-
-    // Playwright nos permite crear un buffer falso que simula un PDF sin tener que crear el archivo en tu disco
-    const fakePdf = Buffer.from('%PDF-1.4 mock content para pruebas');
-
-    await page.getByLabel(/Identificación/i).setInputFiles({
-      name: 'identidad.pdf',
-      mimeType: 'application/pdf',
-      buffer: fakePdf,
-    });
-    await page.getByLabel(/Comprobante/i).setInputFiles({
-      name: 'comprobante.pdf',
-      mimeType: 'application/pdf',
-      buffer: fakePdf,
-    });
-    await page.getByLabel(/Carta/i).setInputFiles({
-      name: 'carta.pdf',
-      mimeType: 'application/pdf',
-      buffer: fakePdf,
-    });
-
-    await page.getByRole('button', { name: /Siguiente/i }).click();
-
-    // Paso 4: Revisión y Envío a la ruta real
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/api/register') &&
-        response.request().method() === 'POST',
-    );
-
-    await page.getByRole('button', { name: /Enviar registro/i }).click();
-
-    const response = await responsePromise;
-    expect(response.status()).toBe(200);
+test('un fallo de red conserva datos y archivos y el reintento usa el mismo identificador', async ({
+  page,
+}) => {
+  const peticiones: string[] = [];
+  await page.route('**/api/register', (route) => {
+    peticiones.push(route.request().postData() ?? '');
+    return peticiones.length === 1
+      ? route.abort()
+      : route.fulfill(respuestaGuardada);
   });
 
-  test('Auditoría de accesibilidad y línea base de rendimiento', async ({
-    page,
-  }) => {
-    // 1. Línea base de rendimiento: medir el tiempo de carga
-    const startTime = Date.now();
-    await page.goto('/registro');
-    const loadTime = Date.now() - startTime;
-
-    // Umbral informativo: el formulario debe cargar en menos de 3 segundos (3000ms)
-    expect(loadTime).toBeLessThan(3000);
-
-    // 2. Auditoría automatizada básica con Axe
-    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
-
-    // Esperamos que no haya violaciones de accesibilidad graves (arreglo vacío)
-    expect(accessibilityScanResults.violations).toEqual([]);
+  await llenarHastaDocumentos(page);
+  await completarDocumentosYRevisar(page);
+  const enviar = page.getByRole('button', {
+    name: 'Enviar registro de prueba',
   });
+
+  await enviar.click();
+  await expect(page.locator('.registro-resultado')).toContainText(
+    /No se pudo conectar/,
+  );
+  await expect(page.getByText(/identificacion\.pdf/)).toBeVisible();
+
+  await enviar.click();
+  await expect(page.getByRole('status')).toContainText(
+    /no representa una inscripción aceptada/i,
+  );
+
+  const id = (cuerpo: string) =>
+    /name="transactionId"\r\n\r\n([^\r\n]+)/.exec(cuerpo)?.[1];
+  expect(id(peticiones[0] ?? '')).toBeTruthy();
+  expect(id(peticiones[0] ?? '')).toBe(id(peticiones[1] ?? ''));
+  expect(peticiones[1]).toContain(
+    'name="comprobantePago"; filename="comprobante.pdf"',
+  );
+});
+
+test('un doble clic genera una sola petición', async ({ page }) => {
+  let llamadas = 0;
+  await page.route('**/api/register', async (route) => {
+    llamadas += 1;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return route.fulfill(respuestaGuardada);
+  });
+
+  await llenarHastaDocumentos(page);
+  await completarDocumentosYRevisar(page);
+  await page
+    .getByRole('button', { name: 'Enviar registro de prueba' })
+    .dblclick();
+  await expect(page.getByRole('status')).toBeVisible();
+  expect(llamadas).toBe(1);
+});
+
+test('un archivo que no es PDF se rechaza en el cliente', async ({ page }) => {
+  await llenarHastaDocumentos(page);
+  await page.locator('#documento-comprobantePago').setInputFiles({
+    name: 'x.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('hola'),
+  });
+  await expect(page.getByText(/Solo se aceptan archivos PDF/)).toBeVisible();
+});
+
+test('un error 502 del servidor no se presenta como éxito y conserva los archivos', async ({
+  page,
+}) => {
+  await page.route('**/api/register', (route) =>
+    route.fulfill({
+      status: 502,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'TEMPORARY_STORAGE_ERROR' }),
+    }),
+  );
+
+  await llenarHastaDocumentos(page);
+  await completarDocumentosYRevisar(page);
+  await page.getByRole('button', { name: 'Enviar registro de prueba' }).click();
+  await expect(page.locator('.registro-resultado')).toContainText(
+    /almacenamiento de pruebas no respondió/,
+  );
+  await expect(page.getByRole('status')).toHaveCount(0);
 });

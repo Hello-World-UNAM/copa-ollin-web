@@ -1,23 +1,24 @@
 import { z } from 'zod';
 
-export const MAX_SANDBOX_FILE_SIZE = 5 * 1024 * 1024;
-export const SANDBOX_FILE_MIME_TYPE = 'application/pdf';
+import {
+  MAX_ARCHIVO_BYTES,
+  MAX_PALABRAS_DESCRIPCION,
+  MIME_PDF,
+  contarPalabras,
+  validarArchivoPdf,
+  validarTotalArchivos,
+} from '../registro/contract';
+
+// Se conservan los nombres exportados: handler.test.ts los importa.
+export const MAX_SANDBOX_FILE_SIZE = MAX_ARCHIVO_BYTES;
+export const SANDBOX_FILE_MIME_TYPE = MIME_PDF;
 
 const sandboxPdfSchema = z
   .instanceof(File, { error: 'Se requiere un archivo PDF ficticio' })
-  .refine((file) => file.size > 0, 'El archivo no puede estar vacío')
-  .refine(
-    (file) => file.size <= MAX_SANDBOX_FILE_SIZE,
-    'El archivo no debe superar los 5 MiB',
-  )
-  .refine(
-    (file) => file.type === SANDBOX_FILE_MIME_TYPE,
-    'Solo se aceptan archivos PDF en el sandbox',
-  )
-  .refine(async (file) => {
-    const header = new Uint8Array(await file.slice(0, 5).arrayBuffer());
-    return new TextDecoder().decode(header) === '%PDF-';
-  }, 'El contenido del archivo no coincide con un PDF');
+  .superRefine(async (file, ctx) => {
+    const mensaje = await validarArchivoPdf(file);
+    if (mensaje) ctx.addIssue({ code: 'custom', message: mensaje });
+  });
 
 const memberSchema = z
   .object({
@@ -57,8 +58,8 @@ export const registerSchema = z
     descripcionRobot: z
       .string()
       .refine(
-        (description) =>
-          description.trim().split(/\s+/).filter(Boolean).length <= 300,
+        (descripcion) =>
+          contarPalabras(descripcion) <= MAX_PALABRAS_DESCRIPCION,
         'La descripción no puede superar 300 palabras',
       ),
     aceptaReglamento: z.boolean(),
@@ -68,4 +69,14 @@ export const registerSchema = z
     comprobantePago: sandboxPdfSchema,
     cartaResponsiva: sandboxPdfSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((datos, ctx) => {
+    const mensaje = validarTotalArchivos([
+      datos.archivoIdentificacion,
+      datos.comprobantePago,
+      datos.cartaResponsiva,
+    ]);
+    if (mensaje) {
+      ctx.addIssue({ code: 'custom', message: mensaje, path: ['archivos'] });
+    }
+  });
