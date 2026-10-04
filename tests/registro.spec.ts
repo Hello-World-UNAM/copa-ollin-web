@@ -53,27 +53,21 @@ test.describe('Registro de Equipo - Integración Real Sandbox', () => {
     // Playwright nos permite crear un buffer falso que simula un PDF sin tener que crear el archivo en tu disco
     const fakePdf = Buffer.from('%PDF-1.4 mock content para pruebas');
 
-    await page
-      .getByLabel(/Identificación/i)
-      .setInputFiles({
-        name: 'identidad.pdf',
-        mimeType: 'application/pdf',
-        buffer: fakePdf,
-      });
-    await page
-      .getByLabel(/Comprobante/i)
-      .setInputFiles({
-        name: 'comprobante.pdf',
-        mimeType: 'application/pdf',
-        buffer: fakePdf,
-      });
-    await page
-      .getByLabel(/Carta/i)
-      .setInputFiles({
-        name: 'carta.pdf',
-        mimeType: 'application/pdf',
-        buffer: fakePdf,
-      });
+    await page.getByLabel(/Identificación/i).setInputFiles({
+      name: 'identidad.pdf',
+      mimeType: 'application/pdf',
+      buffer: fakePdf,
+    });
+    await page.getByLabel(/Comprobante/i).setInputFiles({
+      name: 'comprobante.pdf',
+      mimeType: 'application/pdf',
+      buffer: fakePdf,
+    });
+    await page.getByLabel(/Carta/i).setInputFiles({
+      name: 'carta.pdf',
+      mimeType: 'application/pdf',
+      buffer: fakePdf,
+    });
 
     await page.getByRole('button', { name: /Siguiente/i }).click();
 
