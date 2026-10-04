@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 import type { APIContext, GetStaticPaths } from 'astro';
 
@@ -20,12 +21,11 @@ export async function GET({ params }: APIContext): Promise<Response> {
     return new Response('Not found', { status: 404 });
   }
 
-  const pdfUrl = new URL(
-    `../../../../docs/sources/regulations/${slug}.pdf`,
-    import.meta.url,
-  );
+  // Esta ruta se prerenderiza: dev y build leen desde la raíz del proyecto,
+  // sin depender de la ubicación del módulo compilado por Astro.
+  const pdfPath = resolve('docs/sources/regulations', `${slug}.pdf`);
 
-  const pdfBuffer = await readFile(pdfUrl);
+  const pdfBuffer = await readFile(pdfPath);
 
   return new Response(pdfBuffer, {
     headers: {

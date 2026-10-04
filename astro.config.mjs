@@ -63,6 +63,36 @@ function stripTranscriptionNotice() {
   };
 }
 
+function wrapRegulationSections() {
+  return (tree) => {
+    if (!Array.isArray(tree.children)) return;
+
+    const children = [];
+    let currentSection = null;
+
+    tree.children.forEach((child) => {
+      if (child.type === 'element' && child.tagName === 'h2') {
+        currentSection = {
+          type: 'element',
+          tagName: 'section',
+          properties: { className: ['regulation-section'] },
+          children: [child],
+        };
+        children.push(currentSection);
+        return;
+      }
+
+      if (currentSection) {
+        currentSection.children.push(child);
+      } else {
+        children.push(child);
+      }
+    });
+
+    tree.children = children;
+  };
+}
+
 export default defineConfig({
   adapter: vercel(),
   integrations: [react()],
@@ -70,6 +100,10 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   markdown: {
-    rehypePlugins: [shiftMarkdownHeadings, stripTranscriptionNotice],
+    rehypePlugins: [
+      shiftMarkdownHeadings,
+      stripTranscriptionNotice,
+      wrapRegulationSections,
+    ],
   },
 });

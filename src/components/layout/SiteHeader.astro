@@ -28,7 +28,7 @@ const currentPath = Astro.url.pathname;
       aria-expanded="false"
     >
       <Menu size={20} aria-hidden="true" />
-      Menú
+      <span class="visually-hidden">Menú</span>
     </button>
 
     <nav
@@ -65,13 +65,17 @@ const currentPath = Astro.url.pathname;
   const navigation = document.querySelector<HTMLElement>('#site-nav');
 
   if (menuButton && navigation) {
-    const setMenuState = (isOpen: boolean) => {
+    const setMenuState = (isOpen: boolean, restoreFocus = true) => {
       menuButton.setAttribute('aria-expanded', String(isOpen));
+      menuButton.setAttribute(
+        'aria-label',
+        isOpen ? 'Cerrar menú' : 'Abrir menú',
+      );
       navigation.hidden = !isOpen;
 
       if (isOpen) {
         navigation.querySelector<HTMLAnchorElement>('a')?.focus();
-      } else {
+      } else if (restoreFocus) {
         menuButton.focus();
       }
     };
@@ -79,6 +83,26 @@ const currentPath = Astro.url.pathname;
     menuButton.addEventListener('click', () => {
       setMenuState(menuButton.getAttribute('aria-expanded') !== 'true');
     });
+
+    const closeMenuOutside = (event: Event) => {
+      if (
+        menuButton.getAttribute('aria-expanded') === 'true' &&
+        event.target instanceof Node &&
+        !navigation.contains(event.target) &&
+        !menuButton.contains(event.target)
+      ) {
+        // Al pulsar fuera, recupera el foco si aún estaba en el menú;
+        // al tabular fuera, conserva el foco en el destino elegido.
+        setMenuState(
+          false,
+          event.type === 'pointerdown' &&
+            navigation.contains(document.activeElement),
+        );
+      }
+    };
+
+    document.addEventListener('pointerdown', closeMenuOutside);
+    document.addEventListener('focusin', closeMenuOutside);
 
     document.addEventListener('keydown', (event) => {
       if (
