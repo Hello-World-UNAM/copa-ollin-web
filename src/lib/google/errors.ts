@@ -24,7 +24,9 @@ export class GoogleAdapterRecoveryError extends GoogleAdapterTemporaryError {
       | 'drive-upload-outcome-unknown'
       | 'sheets-reconciliation-failed'
       | 'sheets-row-state-ambiguous'
-      | 'drive-cleanup-failed',
+      | 'drive-cleanup-failed'
+      | 'idempotency-reservation-recovery-required'
+      | 'idempotency-reservation-state-unknown',
     readonly providerStatus?: number,
     options?: ErrorOptions,
   ) {

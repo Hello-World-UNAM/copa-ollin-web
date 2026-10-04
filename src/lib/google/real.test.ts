@@ -6,10 +6,13 @@ import {
 } from './errors';
 import { createGoogleSandboxAdapter } from './real';
 import type { GoogleSandboxConfig, GoogleSandboxServices } from './real';
+import type { RegistrationReservationStore } from './reservations';
 import { createFakeRegistrationData } from './mock';
 
 const config: Required<GoogleSandboxConfig> = {
-  credentialsPath: '/tmp/fake-service-account.json',
+  oauthClientId: 'fictitious-oauth-client-id',
+  oauthClientSecret: 'fictitious-oauth-client-secret',
+  oauthRefreshToken: 'fictitious-oauth-refresh-token',
   spreadsheetId: 'fake-spreadsheet-id',
   sheetRange: 'Registros!A:R',
   driveFolderId: 'fake-drive-folder-id',
@@ -72,13 +75,51 @@ function createServices(initialRows: unknown[][] = []) {
   return { services, state };
 }
 
+function createReservationStore(): RegistrationReservationStore {
+  const states = new Map<
+    string,
+    'processing' | 'completed' | 'recovery-required'
+  >();
+
+  return {
+    async reserve(transactionId) {
+      const current = states.get(transactionId);
+      if (current) return current;
+      states.set(transactionId, 'processing');
+      return 'acquired';
+    },
+    async complete(transactionId) {
+      states.set(transactionId, 'completed');
+    },
+    async release(transactionId) {
+      if (states.get(transactionId) === 'processing') {
+        states.delete(transactionId);
+      }
+    },
+    async markRecoveryRequired(transactionId) {
+      states.set(transactionId, 'recovery-required');
+    },
+    async cleanup(transactionId) {
+      states.delete(transactionId);
+    },
+  };
+}
+
+function createAdapter(
+  services: GoogleSandboxServices,
+  reservationStore = createReservationStore(),
+) {
+  return createGoogleSandboxAdapter({
+    config,
+    createServices: () => services,
+    reservationStore,
+  });
+}
+
 describe('adapter real con servicios Google simulados', () => {
   it('carga tres archivos y escribe exactamente una fila con sus enlaces', async () => {
     const { services, state } = createServices();
-    const adapter = createGoogleSandboxAdapter({
-      config,
-      createServices: () => services,
-    });
+    const adapter = createAdapter(services);
 
     const result = await adapter.saveRegistration(createTestData());
 
@@ -97,10 +138,7 @@ describe('adapter real con servicios Google simulados', () => {
   it('reconoce el transactionId repetido antes de subir archivos o añadir filas', async () => {
     const registration = createTestData();
     const { services, state } = createServices([['real-adapter-test-001']]);
-    const adapter = createGoogleSandboxAdapter({
-      config,
-      createServices: () => services,
-    });
+    const adapter = createAdapter(services);
 
     const result = await adapter.saveRegistration(registration);
 
@@ -109,19 +147,32 @@ describe('adapter real con servicios Google simulados', () => {
     expect(state.uploadedNames).toHaveLength(0);
   });
 
+  it('reconoce un retry después de completar la reserva sin repetir archivos', async () => {
+    const { services, state } = createServices();
+    const adapter = createAdapter(services);
+    const registration = createTestData('completed-reservation-id');
+
+    const firstResult = await adapter.saveRegistration(registration);
+    const retryResult = await adapter.saveRegistration(registration);
+
+    expect(firstResult.isDuplicate).toBeUndefined();
+    expect(retryResult.isDuplicate).toBe(true);
+    expect(state.rows).toHaveLength(1);
+    expect(state.uploadedNames).toHaveLength(3);
+  });
+
   it('elimina todos los archivos subidos si falla la escritura de la fila', async () => {
     const { services, state } = createServices();
-    vi.spyOn(services.sheets.spreadsheets.values, 'append').mockRejectedValue(
-      new Error('Error ficticio de Sheets'),
-    );
-    const adapter = createGoogleSandboxAdapter({
-      config,
-      createServices: () => services,
-    });
+    const reservationStore = createReservationStore();
+    const append = vi
+      .spyOn(services.sheets.spreadsheets.values, 'append')
+      .mockRejectedValue(new Error('Error ficticio de Sheets'));
+    const adapter = createAdapter(services, reservationStore);
+    const registration = createTestData();
 
-    await expect(
-      adapter.saveRegistration(createTestData()),
-    ).rejects.toBeInstanceOf(GoogleAdapterTemporaryError);
+    await expect(adapter.saveRegistration(registration)).rejects.toBeInstanceOf(
+      GoogleAdapterTemporaryError,
+    );
     expect(state.uploadedNames).toHaveLength(3);
     expect(state.deletedIds).toEqual([
       'fake-file-1',
@@ -129,6 +180,15 @@ describe('adapter real con servicios Google simulados', () => {
       'fake-file-3',
     ]);
     expect(state.rows).toHaveLength(0);
+
+    append.mockImplementation(async ({ requestBody }) => {
+      state.rows.push(...requestBody.values);
+    });
+    const retryResult = await adapter.saveRegistration(registration);
+
+    expect(retryResult.isDuplicate).toBeUndefined();
+    expect(state.rows).toHaveLength(1);
+    expect(state.uploadedNames).toHaveLength(6);
   });
 
   it('conserva los PDFs si Sheets guardó la fila pero la respuesta se perdió', async () => {
@@ -139,10 +199,7 @@ describe('adapter real con servicios Google simulados', () => {
         throw new Error('Timeout ficticio después de persistir');
       },
     );
-    const adapter = createGoogleSandboxAdapter({
-      config,
-      createServices: () => services,
-    });
+    const adapter = createAdapter(services);
 
     const result = await adapter.saveRegistration(createTestData());
 
@@ -153,6 +210,7 @@ describe('adapter real con servicios Google simulados', () => {
 
   it('requiere recuperación si Drive falla con resultado de subida ambiguo', async () => {
     const { services, state } = createServices();
+    const reservationStore = createReservationStore();
     const createFile = services.drive.files.create;
     let createCount = 0;
     vi.spyOn(services.drive.files, 'create').mockImplementation(
@@ -162,16 +220,19 @@ describe('adapter real con servicios Google simulados', () => {
         return createFile(args);
       },
     );
-    const adapter = createGoogleSandboxAdapter({
-      config,
-      createServices: () => services,
-    });
+    const adapter = createAdapter(services, reservationStore);
+    const registration = createTestData();
 
-    await expect(
-      adapter.saveRegistration(createTestData()),
-    ).rejects.toBeInstanceOf(GoogleAdapterRecoveryError);
+    await expect(adapter.saveRegistration(registration)).rejects.toBeInstanceOf(
+      GoogleAdapterRecoveryError,
+    );
     expect(state.deletedIds).toEqual(['fake-file-1']);
     expect(state.rows).toHaveLength(0);
+
+    await expect(adapter.saveRegistration(registration)).rejects.toBeInstanceOf(
+      GoogleAdapterRecoveryError,
+    );
+    expect(state.uploadedNames).toHaveLength(1);
   });
 
   it('marca como recuperable el fallo si alguna eliminación de Drive falla', async () => {
@@ -183,10 +244,7 @@ describe('adapter real con servicios Google simulados', () => {
     vi.spyOn(services.drive.files, 'delete')
       .mockRejectedValueOnce(new Error('Error ficticio de limpieza'))
       .mockImplementation(deleteFile);
-    const adapter = createGoogleSandboxAdapter({
-      config,
-      createServices: () => services,
-    });
+    const adapter = createAdapter(services);
 
     await expect(
       adapter.saveRegistration(createTestData()),
@@ -197,13 +255,40 @@ describe('adapter real con servicios Google simulados', () => {
   it('falla cerrada si falta la configuración requerida', async () => {
     const createServicesSpy = vi.fn();
     const adapter = createGoogleSandboxAdapter({
-      config: { ...config, spreadsheetId: '' },
+      config: { ...config, oauthRefreshToken: '' },
       createServices: createServicesSpy,
+      reservationStore: createReservationStore(),
     });
 
     await expect(
       adapter.saveRegistration(createTestData()),
     ).rejects.toBeInstanceOf(GoogleAdapterConfigurationError);
     expect(createServicesSpy).not.toHaveBeenCalled();
+  });
+
+  it('sólo permite procesar una solicitud cuando el mismo ID llega simultáneamente', async () => {
+    const registration = createTestData('same-registration-id');
+    const { services, state } = createServices();
+    const adapter = createAdapter(services);
+
+    const attempts = await Promise.allSettled([
+      adapter.saveRegistration(registration),
+      adapter.saveRegistration(registration),
+    ]);
+    const successfulAttempts = attempts.filter(
+      (attempt) => attempt.status === 'fulfilled',
+    );
+    const rejectedAttempts = attempts.filter(
+      (attempt) => attempt.status === 'rejected',
+    );
+
+    expect(successfulAttempts).toHaveLength(1);
+    expect(rejectedAttempts).toHaveLength(1);
+    expect(rejectedAttempts[0]).toMatchObject({
+      status: 'rejected',
+      reason: expect.any(GoogleAdapterTemporaryError),
+    });
+    expect(state.rows).toHaveLength(1);
+    expect(state.uploadedNames).toHaveLength(3);
   });
 });

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { google } from 'googleapis';
 import { createFakeRegistrationData } from './mock';
 import { createGoogleSandboxAdapter } from './real';
+import { createFirestoreReservationStore } from './reservations';
 import { createRegistrationHandler } from '../registration/handler';
 
 loadEnv({ quiet: true });
@@ -12,10 +13,16 @@ const integrationEnabled =
 const fileTestAuthorized =
   process.env.SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED === 'true';
 const requiredEnvironmentNames = [
-  'GOOGLE_APPLICATION_CREDENTIALS',
+  'SANDBOX_GOOGLE_OAUTH_CLIENT_ID',
+  'SANDBOX_GOOGLE_OAUTH_CLIENT_SECRET',
+  'SANDBOX_GOOGLE_OAUTH_REFRESH_TOKEN',
   'SANDBOX_GOOGLE_SPREADSHEET_ID',
   'SANDBOX_GOOGLE_SHEET_RANGE',
   'SANDBOX_GOOGLE_DRIVE_FOLDER_ID',
+  'SANDBOX_REGISTRATION_TOKEN',
+  'SANDBOX_FIRESTORE_PROJECT_ID',
+  'SANDBOX_FIRESTORE_CLIENT_EMAIL',
+  'SANDBOX_FIRESTORE_PRIVATE_KEY',
 ] as const;
 
 function readEnvironment(name: string): string | undefined {
@@ -23,17 +30,46 @@ function readEnvironment(name: string): string | undefined {
 }
 
 function readGoogleConfig() {
-  const credentialsPath = readEnvironment('GOOGLE_APPLICATION_CREDENTIALS');
+  const oauthClientId = readEnvironment('SANDBOX_GOOGLE_OAUTH_CLIENT_ID');
+  const oauthClientSecret = readEnvironment(
+    'SANDBOX_GOOGLE_OAUTH_CLIENT_SECRET',
+  );
+  const oauthRefreshToken = readEnvironment(
+    'SANDBOX_GOOGLE_OAUTH_REFRESH_TOKEN',
+  );
   const spreadsheetId = readEnvironment('SANDBOX_GOOGLE_SPREADSHEET_ID');
   const sheetRange = readEnvironment('SANDBOX_GOOGLE_SHEET_RANGE');
   const driveFolderId = readEnvironment('SANDBOX_GOOGLE_DRIVE_FOLDER_ID');
-  if (!credentialsPath || !spreadsheetId || !sheetRange || !driveFolderId) {
+  const registrationToken = readEnvironment('SANDBOX_REGISTRATION_TOKEN');
+  const firestoreProjectId = readEnvironment('SANDBOX_FIRESTORE_PROJECT_ID');
+  const firestoreClientEmail = readEnvironment(
+    'SANDBOX_FIRESTORE_CLIENT_EMAIL',
+  );
+  const firestorePrivateKey = readEnvironment('SANDBOX_FIRESTORE_PRIVATE_KEY');
+  if (
+    !oauthClientId ||
+    !oauthClientSecret ||
+    !oauthRefreshToken ||
+    !spreadsheetId ||
+    !sheetRange ||
+    !driveFolderId ||
+    !registrationToken ||
+    !firestoreProjectId ||
+    !firestoreClientEmail ||
+    !firestorePrivateKey
+  ) {
     const missingValues = requiredEnvironmentNames.filter((name) => {
       const key = {
-        GOOGLE_APPLICATION_CREDENTIALS: credentialsPath,
+        SANDBOX_GOOGLE_OAUTH_CLIENT_ID: oauthClientId,
+        SANDBOX_GOOGLE_OAUTH_CLIENT_SECRET: oauthClientSecret,
+        SANDBOX_GOOGLE_OAUTH_REFRESH_TOKEN: oauthRefreshToken,
         SANDBOX_GOOGLE_SPREADSHEET_ID: spreadsheetId,
         SANDBOX_GOOGLE_SHEET_RANGE: sheetRange,
         SANDBOX_GOOGLE_DRIVE_FOLDER_ID: driveFolderId,
+        SANDBOX_REGISTRATION_TOKEN: registrationToken,
+        SANDBOX_FIRESTORE_PROJECT_ID: firestoreProjectId,
+        SANDBOX_FIRESTORE_CLIENT_EMAIL: firestoreClientEmail,
+        SANDBOX_FIRESTORE_PRIVATE_KEY: firestorePrivateKey,
       }[name];
       return !key?.trim();
     });
@@ -41,7 +77,56 @@ function readGoogleConfig() {
       `Falta configuración local para la prueba: ${missingValues.join(', ')}`,
     );
   }
-  return { credentialsPath, spreadsheetId, sheetRange, driveFolderId };
+  return {
+    oauthClientId,
+    oauthClientSecret,
+    oauthRefreshToken,
+    spreadsheetId,
+    sheetRange,
+    driveFolderId,
+    registrationToken,
+    firestoreProjectId,
+    firestoreClientEmail,
+    firestorePrivateKey,
+  };
+}
+
+function getSanitizedProviderReason(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+
+  const response = error.response;
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('data' in response)
+  ) {
+    return undefined;
+  }
+
+  const data = response.data;
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('error' in data) ||
+    typeof data.error !== 'object' ||
+    data.error === null ||
+    !('errors' in data.error) ||
+    !Array.isArray(data.error.errors)
+  ) {
+    return undefined;
+  }
+
+  const reason = data.error.errors.find(
+    (item): item is { reason: string } =>
+      typeof item === 'object' &&
+      item !== null &&
+      'reason' in item &&
+      typeof item.reason === 'string',
+  )?.reason;
+
+  return reason && /^[A-Za-z0-9_-]+$/.test(reason) ? reason : undefined;
 }
 
 const describeGoogleIntegration = integrationEnabled ? describe : describe.skip;
@@ -103,7 +188,7 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
   it('escribe una fila, omite el reintento y elimina la fila y archivos ficticios', async () => {
     if (!fileTestAuthorized) {
       throw new Error(
-        'No se ejecutará la subida real sin SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true, después de resolver P0-06.',
+        'No se ejecutará la subida real sin autorización explícita para esta prueba de sandbox.',
       );
     }
 
@@ -116,45 +201,104 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
       );
     }
 
-    const auth = new google.auth.GoogleAuth({
-      keyFile: config.credentialsPath,
-      scopes: [
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive.metadata.readonly',
-      ],
-    });
+    const auth = new google.auth.OAuth2(
+      config.oauthClientId,
+      config.oauthClientSecret,
+    );
+    auth.setCredentials({ refresh_token: config.oauthRefreshToken });
     const sheets = google.sheets({ version: 'v4', auth });
     const drive = google.drive({ version: 'v3', auth });
+    let sheetId: number;
+    let preflightStage = 'obtener token OAuth';
     try {
+      const { token } = await auth.getAccessToken();
+      if (!token) {
+        throw new Error('OAuth no devolvió un token de acceso.');
+      }
+      preflightStage = 'comprobar scope drive.file';
+      const tokenInfo = await auth.getTokenInfo(token);
+      const authorizedScopes = tokenInfo.scopes ?? [];
+      if (
+        authorizedScopes.length !== 1 ||
+        authorizedScopes[0] !== 'https://www.googleapis.com/auth/drive.file'
+      ) {
+        throw new Error(
+          'El token OAuth no tiene únicamente el scope drive.file.',
+        );
+      }
+
+      preflightStage = 'validar el archivo seleccionado como hoja';
+      const spreadsheetFile = await drive.files.get({
+        fileId: config.spreadsheetId,
+        fields: 'mimeType',
+      });
+      if (
+        spreadsheetFile.data.mimeType !==
+        'application/vnd.google-apps.spreadsheet'
+      ) {
+        throw new Error('El archivo seleccionado no es una hoja de cálculo.');
+      }
+
+      preflightStage = 'validar la carpeta seleccionada';
+      const folder = await drive.files.get({
+        fileId: config.driveFolderId,
+        fields: 'mimeType',
+      });
+      if (folder.data.mimeType !== 'application/vnd.google-apps.folder') {
+        throw new Error('El archivo seleccionado no es una carpeta.');
+      }
+
+      preflightStage = 'leer la pestaña Registros';
       await sheets.spreadsheets.values.get({
         spreadsheetId: config.spreadsheetId,
         range: config.sheetRange,
         majorDimension: 'ROWS',
       });
-      const folder = await drive.files.get({
-        fileId: config.driveFolderId,
-        fields: 'mimeType,driveId',
-        supportsAllDrives: true,
+
+      preflightStage = 'leer metadatos de la pestaña';
+      const spreadsheet = await sheets.spreadsheets.get({
+        spreadsheetId: config.spreadsheetId,
+        fields: 'sheets.properties(sheetId,title)',
       });
-      if (
-        folder.data.mimeType !== 'application/vnd.google-apps.folder' ||
-        !folder.data.driveId
-      ) {
-        throw new Error(
-          'El destino configurado no es una carpeta de Unidad compartida.',
-        );
+      const selectedSheet = spreadsheet.data.sheets?.find(
+        (sheet) => sheet.properties?.title === spreadsheetTab,
+      );
+      if (typeof selectedSheet?.properties?.sheetId !== 'number') {
+        throw new Error('No se encontró la pestaña configurada.');
       }
-    } catch {
+      sheetId = selectedSheet.properties.sheetId;
+    } catch (error) {
+      const response =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? error.response
+          : undefined;
+      const providerStatus =
+        typeof response === 'object' &&
+        response !== null &&
+        'status' in response &&
+        typeof response.status === 'number'
+          ? response.status
+          : undefined;
+      const providerReason = getSanitizedProviderReason(error);
       throw new Error(
-        'Preflight de Google Sandbox falló. Verifica APIs, acceso a la hoja y que la carpeta sea visible dentro de una Unidad compartida; no se iniciaron escrituras.',
+        `Preflight de Google Sandbox falló durante: ${preflightStage}${providerStatus ? ` (HTTP ${providerStatus})` : ''}${providerReason ? ` [${providerReason}]` : ''}. No se iniciaron escrituras.`,
+        { cause: error },
       );
     }
 
-    const adapter = createGoogleSandboxAdapter({ config });
+    const reservationStore = createFirestoreReservationStore({
+      projectId: config.firestoreProjectId,
+      clientEmail: config.firestoreClientEmail,
+      privateKey: config.firestorePrivateKey,
+    });
+    const adapter = createGoogleSandboxAdapter({
+      config,
+      reservationStore,
+    });
     const handleRegistration = createRegistrationHandler({
       adapter,
       sandboxEnabled: true,
+      sandboxAccessToken: config.registrationToken,
     });
     const pdfContent = createGeneratedPdf();
     const createPdf = (name: string) => {
@@ -168,22 +312,46 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
       cartaResponsiva: createPdf('carta-ficticia.pdf'),
     });
     const driveFileNamePrefix = `copa-ollin-${transactionId}`;
-
     try {
-      const firstResponse = await handleRegistration(
-        new Request('http://localhost/api/register', {
-          method: 'POST',
-          body: createRegistrationFormData(registration),
-        }),
-      );
-      const duplicateResponse = await handleRegistration(
-        new Request('http://localhost/api/register', {
-          method: 'POST',
-          body: createRegistrationFormData(registration),
-        }),
-      );
+      const sendRegistration = () =>
+        handleRegistration(
+          new Request('http://localhost/api/register', {
+            method: 'POST',
+            headers: {
+              authorization: `Bearer ${config.registrationToken}`,
+            },
+            body: createRegistrationFormData(registration),
+          }),
+        );
+      const [firstResponse, concurrentResponse] = await Promise.all([
+        sendRegistration(),
+        sendRegistration(),
+      ]);
       const firstResult = await firstResponse.json();
-      const duplicateResult = await duplicateResponse.json();
+      const concurrentResult = await concurrentResponse.json();
+      const acceptedResponses = [firstResult, concurrentResult].filter(
+        (result) => result.code === 'SAVED',
+      );
+      expect(acceptedResponses).toHaveLength(1);
+      expect(
+        [firstResult.code, concurrentResult.code].every((code) =>
+          ['SAVED', 'DUPLICATE', 'TEMPORARY_STORAGE_ERROR'].includes(code),
+        ),
+      ).toBe(true);
+      expect(
+        [firstResponse.status, concurrentResponse.status].every((status) =>
+          [200, 502].includes(status),
+        ),
+      ).toBe(true);
+
+      const retryResponse = await sendRegistration();
+      const retryResult = await retryResponse.json();
+      expect(retryResponse.status).toBe(200);
+      expect(retryResult).toMatchObject({
+        code: 'DUPLICATE',
+        isDuplicate: true,
+      });
+
       const rowsResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: config.spreadsheetId,
         range: config.sheetRange,
@@ -202,13 +370,7 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
       });
       const createdFiles = driveFilesResponse.data.files ?? [];
 
-      expect(firstResponse.status, JSON.stringify(firstResult)).toBe(200);
-      expect(firstResult).toMatchObject({ code: 'SAVED', isDuplicate: false });
-      expect(duplicateResponse.status).toBe(200);
-      expect(duplicateResult).toMatchObject({
-        code: 'DUPLICATE',
-        isDuplicate: true,
-      });
+      expect(retryResponse.status).toBe(200);
       expect(matchingRows).toHaveLength(1);
       expect(createdFiles).toHaveLength(3);
       const rowFileLinks = matchingRows[0]?.slice(15, 18) ?? [];
@@ -224,39 +386,59 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
         ).toBe(true);
       }
     } finally {
-      const rowsResponse = await sheets.spreadsheets.values.get({
-        spreadsheetId: config.spreadsheetId,
-        range: config.sheetRange,
-        majorDimension: 'ROWS',
-      });
-      const matchingRowIndexes = (rowsResponse.data.values ?? [])
-        .map((row, index) => (row[0] === transactionId ? index + 1 : -1))
-        .filter((index) => index > 0);
+      try {
+        const rowsResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId: config.spreadsheetId,
+          range: config.sheetRange,
+          majorDimension: 'ROWS',
+        });
+        const matchingRowIndexes = (rowsResponse.data.values ?? [])
+          .map((row, index) => (row[0] === transactionId ? index + 1 : -1))
+          .filter((index) => index > 0)
+          .sort((left, right) => right - left);
 
-      await Promise.all(
-        matchingRowIndexes.map((rowIndex) =>
-          sheets.spreadsheets.values.clear({
+        if (matchingRowIndexes.length > 0) {
+          await sheets.spreadsheets.batchUpdate({
             spreadsheetId: config.spreadsheetId,
-            range: `${spreadsheetTab}!A${rowIndex}:R${rowIndex}`,
-          }),
-        ),
-      );
+            requestBody: {
+              requests: matchingRowIndexes.map((rowIndex) => ({
+                deleteDimension: {
+                  range: {
+                    sheetId,
+                    dimension: 'ROWS',
+                    startIndex: rowIndex - 1,
+                    endIndex: rowIndex,
+                  },
+                },
+              })),
+            },
+          });
+        }
 
-      const driveFilesResponse = await drive.files.list({
-        q: `'${config.driveFolderId}' in parents and name contains '${driveFileNamePrefix}' and trashed = false`,
-        corpora: 'allDrives',
-        includeItemsFromAllDrives: true,
-        pageSize: 100,
-        fields: 'files(id)',
-        supportsAllDrives: true,
-      });
-      await Promise.all(
-        (driveFilesResponse.data.files ?? []).flatMap((file) =>
-          file.id
-            ? [drive.files.delete({ fileId: file.id, supportsAllDrives: true })]
-            : [],
-        ),
-      );
+        const driveFilesResponse = await drive.files.list({
+          q: `'${config.driveFolderId}' in parents and name contains '${driveFileNamePrefix}' and trashed = false`,
+          corpora: 'allDrives',
+          includeItemsFromAllDrives: true,
+          pageSize: 100,
+          fields: 'files(id)',
+          supportsAllDrives: true,
+        });
+        await Promise.all(
+          (driveFilesResponse.data.files ?? []).flatMap((file) =>
+            file.id
+              ? [
+                  drive.files.delete({
+                    fileId: file.id,
+                    supportsAllDrives: true,
+                  }),
+                ]
+              : [],
+          ),
+        );
+        await reservationStore.cleanup(transactionId);
+      } finally {
+        await reservationStore.close?.();
+      }
     }
 
     const remainingRowsResponse = await sheets.spreadsheets.values.get({

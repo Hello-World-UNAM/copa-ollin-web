@@ -1,8 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState } from 'react';
-import { useFieldArray, useForm, type SubmitHandler } from 'react-hook-form';
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  type SubmitHandler,
+} from 'react-hook-form';
 
 import { categories } from '../../data/categories';
+import { crearRegistroFormData } from '../../lib/registro/formData';
 import {
   submitRegistroSandboxMock,
   type RegistroSandboxMockResult,
@@ -43,6 +49,9 @@ const camposPorPaso: Record<PasoId, (keyof RegistroPayload)[]> = {
     'aceptaReglamento',
     'aceptaUsoImagen',
     'confirmaRestriccionesCategoria',
+    'archivoIdentificacion',
+    'comprobantePago',
+    'cartaResponsiva',
   ],
   revision: [],
 };
@@ -52,6 +61,10 @@ type EstadoEnvio =
   | { estado: 'enviando' }
   | { estado: 'exito'; resultado: RegistroSandboxMockResult }
   | { estado: 'error'; mensaje: string };
+
+interface Props {
+  usarEndpointSandbox?: boolean;
+}
 
 function combinarRefs<T>(
   refRegistro: (instancia: T | null) => void,
@@ -63,7 +76,7 @@ function combinarRefs<T>(
   };
 }
 
-export default function RegistroForm() {
+export default function RegistroForm({ usarEndpointSandbox = false }: Props) {
   const [pasoActual, setPasoActual] = useState<PasoId>('equipo');
   const [envio, setEnvio] = useState<EstadoEnvio>({ estado: 'inactivo' });
 
@@ -77,6 +90,7 @@ export default function RegistroForm() {
     handleSubmit,
     trigger,
     getValues,
+    setValue,
     formState: { errors },
   } = useForm<RegistroPayload>({
     resolver: zodResolver(registroSchema),
@@ -91,6 +105,14 @@ export default function RegistroForm() {
 
   const indicePaso = pasos.findIndex((paso) => paso.id === pasoActual);
   const pasoInfo = pasos[indicePaso];
+  const transactionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (transactionIdRef.current) return;
+
+    transactionIdRef.current = window.crypto.randomUUID();
+    setValue('transactionId', transactionIdRef.current);
+  }, [setValue]);
 
   const { ref: nombreEquipoRef, ...nombreEquipoRegistro } =
     register('nombreEquipo');
@@ -134,8 +156,28 @@ export default function RegistroForm() {
   const onSubmit: SubmitHandler<RegistroPayload> = async (payload) => {
     setEnvio({ estado: 'enviando' });
     try {
-      // TODO(#10): sustituir por el endpoint sandbox real en cuanto exista.
-      const resultado = await submitRegistroSandboxMock(payload);
+      const formData = crearRegistroFormData(payload);
+      if (usarEndpointSandbox) {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!response.ok) {
+          throw new Error('El endpoint de sandbox rechazó la solicitud.');
+        }
+
+        setEnvio({
+          estado: 'exito',
+          resultado: {
+            ok: true,
+            folioSandbox: payload.transactionId,
+            recibidoEn: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+
+      const resultado = await submitRegistroSandboxMock(formData);
       setEnvio({ estado: 'exito', resultado });
     } catch {
       setEnvio({
@@ -396,35 +438,56 @@ export default function RegistroForm() {
           <legend>Documentos y consentimientos</legend>
 
           <p>
-            Los controles de archivo son de <strong>sandbox</strong>: no se
-            envía ni conserva ningún documento hasta que exista el endpoint del
-            Sprint 2 (issue #10). No se afirma que un archivo quedó guardado.
+            Selecciona únicamente archivos PDF ficticios para esta prueba. Los
+            archivos se validan en este formulario, pero no se envían ni se
+            conservan todavía.
           </p>
 
-          {[
-            {
-              id: 'sandbox-comprobante-pago',
-              etiqueta: 'Comprobante de pago (sandbox, PDF o imagen)',
-            },
-            {
-              id: 'sandbox-identificacion',
-              etiqueta:
-                'Identificación del capitán (sandbox: credencial UNAM, credencial escolar o identificación oficial)',
-            },
-            {
-              id: 'sandbox-carta-responsiva',
-              etiqueta: 'Carta responsiva firmada (sandbox)',
-            },
-          ].map((documento) => (
-            <div key={documento.id}>
-              <label htmlFor={documento.id}>{documento.etiqueta}</label>
-              <input id={documento.id} type="file" disabled />
-              <p>
-                Formatos y tamaño máximo pendientes de confirmación de CROFI
-                (P0-06). Este control queda deshabilitado hasta resolverlo.
-              </p>
-            </div>
+          {(
+            [
+              {
+                name: 'comprobantePago',
+                id: 'sandbox-comprobante-pago',
+                etiqueta: 'Comprobante de pago (PDF ficticio)',
+              },
+              {
+                name: 'archivoIdentificacion',
+                id: 'sandbox-identificacion',
+                etiqueta: 'Identificación del capitán (PDF ficticio)',
+              },
+              {
+                name: 'cartaResponsiva',
+                id: 'sandbox-carta-responsiva',
+                etiqueta: 'Carta responsiva (PDF ficticio)',
+              },
+            ] as const
+          ).map((documento) => (
+            <Controller
+              key={documento.id}
+              control={control}
+              name={documento.name}
+              render={({ field, fieldState }) => (
+                <div>
+                  <label htmlFor={documento.id}>{documento.etiqueta}</label>
+                  <input
+                    id={documento.id}
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    aria-invalid={fieldState.invalid}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    onChange={(event) => {
+                      field.onChange(event.currentTarget.files?.[0]);
+                    }}
+                  />
+                  {fieldState.error && (
+                    <p role="alert">{fieldState.error.message}</p>
+                  )}
+                </div>
+              )}
+            />
           ))}
+          <p>Máximo 1 MiB por PDF y 3 MiB entre los tres archivos.</p>
 
           <label>
             <input

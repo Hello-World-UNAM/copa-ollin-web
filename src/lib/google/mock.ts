@@ -18,8 +18,6 @@ export const mockGoogleAdapter: GoogleAdapter = {
       };
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 25));
-
     mockDatabase.set(data.transactionId, {
       transactionId: data.transactionId,
       teamName: data.nombreEquipo,
@@ -29,6 +27,8 @@ export const mockGoogleAdapter: GoogleAdapter = {
         data.cartaResponsiva.name,
       ],
     });
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
 
     return {
       success: true,

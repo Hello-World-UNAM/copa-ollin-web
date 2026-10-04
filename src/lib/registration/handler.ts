@@ -1,9 +1,13 @@
+import { timingSafeEqual } from 'node:crypto';
 import {
   GoogleAdapterConfigurationError,
   GoogleAdapterRecoveryError,
   GoogleAdapterTemporaryError,
 } from '../google/errors';
-import { registerSchema } from '../schemas/register';
+import {
+  MAX_SANDBOX_REQUEST_BODY_SIZE,
+  registerSchema,
+} from '../schemas/register';
 import type { GoogleAdapter } from '../google/types';
 
 const scalarFieldNames = [
@@ -40,6 +44,53 @@ function jsonResponse(body: unknown, status: number): Response {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+function hasValidSandboxAuthorization(
+  request: Request,
+  expectedToken: string,
+): boolean {
+  const authorization = request.headers.get('authorization');
+  const match = authorization?.match(/^Bearer ([^\s]+)$/);
+  if (!match?.[1]) return false;
+
+  const expected = Buffer.from(expectedToken, 'utf8');
+  const provided = Buffer.from(match[1], 'utf8');
+  return (
+    expected.length === provided.length && timingSafeEqual(expected, provided)
+  );
+}
+
+function createRequestWithBodyLimit(request: Request) {
+  let bodyTooLarge = false;
+  let bytesRead = 0;
+
+  if (!request.body) {
+    return { request, isBodyTooLarge: () => bodyTooLarge };
+  }
+
+  const limitedBody = request.body.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        bytesRead += chunk.byteLength;
+        if (bytesRead > MAX_SANDBOX_REQUEST_BODY_SIZE) {
+          bodyTooLarge = true;
+          controller.error(new Error('Sandbox request body too large'));
+          return;
+        }
+        controller.enqueue(chunk);
+      },
+    }),
+  );
+  const requestInit = {
+    body: limitedBody,
+    duplex: 'half',
+  } as RequestInit & { duplex: 'half' };
+
+  return {
+    request: new Request(request, requestInit),
+    isBodyTooLarge: () => bodyTooLarge,
+  };
 }
 
 function readSingleString(
@@ -107,6 +158,7 @@ function parseFormData(formData: FormData): unknown {
 export function createRegistrationHandler(options: {
   adapter: GoogleAdapter;
   sandboxEnabled: boolean;
+  sandboxAccessToken?: string;
 }): (request: Request) => Promise<Response> {
   return async (request) => {
     if (!options.sandboxEnabled) {
@@ -119,10 +171,55 @@ export function createRegistrationHandler(options: {
       );
     }
 
+    if (!options.sandboxAccessToken) {
+      return jsonResponse(
+        {
+          code: 'SANDBOX_AUTH_NOT_CONFIGURED',
+          error: 'La autorización del sandbox no está configurada.',
+        },
+        503,
+      );
+    }
+
+    if (!hasValidSandboxAuthorization(request, options.sandboxAccessToken)) {
+      return jsonResponse(
+        {
+          code: 'SANDBOX_UNAUTHORIZED',
+          error: 'Se requiere autorización para usar el sandbox.',
+        },
+        401,
+      );
+    }
+
+    const contentLength = request.headers.get('content-length');
+    if (
+      contentLength !== null &&
+      /^\d+$/.test(contentLength) &&
+      Number(contentLength) > MAX_SANDBOX_REQUEST_BODY_SIZE
+    ) {
+      return jsonResponse(
+        {
+          code: 'PAYLOAD_TOO_LARGE',
+          error: 'La solicitud supera el límite de tamaño del sandbox.',
+        },
+        413,
+      );
+    }
+
+    const limitedRequest = createRequestWithBodyLimit(request);
     let formData: FormData;
     try {
-      formData = await request.formData();
+      formData = await limitedRequest.request.formData();
     } catch {
+      if (limitedRequest.isBodyTooLarge()) {
+        return jsonResponse(
+          {
+            code: 'PAYLOAD_TOO_LARGE',
+            error: 'La solicitud supera el límite de tamaño del sandbox.',
+          },
+          413,
+        );
+      }
       return jsonResponse(
         {
           code: 'INVALID_MULTIPART',
