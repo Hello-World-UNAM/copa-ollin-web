@@ -1,11 +1,27 @@
 import { z } from 'zod';
 
 import { categories } from '../../data/categories';
+import {
+  MAX_SANDBOX_FILE_SIZE,
+  SANDBOX_FILE_MIME_TYPE,
+} from '../schemas/register';
 
 const categorySlugs = categories.map((c) => c.slug) as [string, ...string[]];
 
 const contarPalabras = (texto: string) =>
   texto.trim().length === 0 ? 0 : texto.trim().split(/\s+/).length;
+
+const documentoPdfSandboxSchema = z
+  .instanceof(File, { error: 'Selecciona un PDF ficticio.' })
+  .refine((file) => file.size > 0, 'El archivo no puede estar vacío.')
+  .refine(
+    (file) => file.size <= MAX_SANDBOX_FILE_SIZE,
+    'Cada PDF debe pesar como máximo 1 MiB.',
+  )
+  .refine(
+    (file) => file.type === SANDBOX_FILE_MIME_TYPE,
+    'El archivo debe ser un PDF.',
+  );
 
 export const integranteSchema = z.object({
   nombre: z
@@ -22,6 +38,7 @@ export const integranteSchema = z.object({
 });
 
 export const registroSchema = z.object({
+  transactionId: z.string().uuid('El identificador técnico debe ser un UUID.'),
   // Equipo
   nombreEquipo: z.string().trim().min(1, 'Escribe el nombre del equipo.'),
   categoria: z.enum(categorySlugs, {
@@ -77,12 +94,15 @@ export const registroSchema = z.object({
       (valor) => valor === true,
       'Debes confirmar que el robot cumple las restricciones de su categoría.',
     ),
+  archivoIdentificacion: documentoPdfSandboxSchema,
+  comprobantePago: documentoPdfSandboxSchema,
+  cartaResponsiva: documentoPdfSandboxSchema,
 });
 
 export type RegistroPayload = z.infer<typeof registroSchema>;
 export type IntegrantePayload = z.infer<typeof integranteSchema>;
 
-export const registroDefaultValues: RegistroPayload = {
+export const registroDefaultValues: Partial<RegistroPayload> = {
   nombreEquipo: '',
   categoria: categorySlugs[0],
   institucion: '',

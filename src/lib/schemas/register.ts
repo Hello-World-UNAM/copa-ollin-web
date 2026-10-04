@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-export const MAX_SANDBOX_FILE_SIZE = 5 * 1024 * 1024;
+export const MAX_SANDBOX_FILE_SIZE = 1 * 1024 * 1024;
+export const MAX_SANDBOX_TOTAL_FILE_SIZE = 3 * 1024 * 1024;
+export const MAX_SANDBOX_MULTIPART_OVERHEAD = 64 * 1024;
+export const MAX_SANDBOX_REQUEST_BODY_SIZE =
+  MAX_SANDBOX_TOTAL_FILE_SIZE + MAX_SANDBOX_MULTIPART_OVERHEAD;
 export const SANDBOX_FILE_MIME_TYPE = 'application/pdf';
 
 const sandboxPdfSchema = z
@@ -8,7 +12,7 @@ const sandboxPdfSchema = z
   .refine((file) => file.size > 0, 'El archivo no puede estar vacío')
   .refine(
     (file) => file.size <= MAX_SANDBOX_FILE_SIZE,
-    'El archivo no debe superar los 5 MiB',
+    'El archivo no debe superar 1 MiB',
   )
   .refine(
     (file) => file.type === SANDBOX_FILE_MIME_TYPE,
@@ -68,4 +72,25 @@ export const registerSchema = z
     comprobantePago: sandboxPdfSchema,
     cartaResponsiva: sandboxPdfSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((registration, context) => {
+    const files = [
+      registration.archivoIdentificacion,
+      registration.comprobantePago,
+      registration.cartaResponsiva,
+    ];
+    if (!files.every((file) => file instanceof File)) return;
+
+    const totalFileSize =
+      registration.archivoIdentificacion.size +
+      registration.comprobantePago.size +
+      registration.cartaResponsiva.size;
+
+    if (totalFileSize > MAX_SANDBOX_TOTAL_FILE_SIZE) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Los tres archivos no deben superar 3 MiB en total',
+        path: ['archivos'],
+      });
+    }
+  });

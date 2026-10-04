@@ -24,7 +24,7 @@ const sandboxHabilitado = import.meta.env.REGISTRO_SANDBOX_MODE === 'true';
             capturado se conserva como inscripción productiva.
           </p>
         </Card>
-        <RegistroForm client:load />
+        <RegistroForm client:load usarEndpointSandbox />
       </>
     ) : (
       <Card>

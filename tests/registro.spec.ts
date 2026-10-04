@@ -1,87 +1,113 @@
 import { test, expect } from '@playwright/test';
-import { fixtureRegistro } from './fixtures/registro';
 import AxeBuilder from '@axe-core/playwright';
+import { fixtureRegistro, tokenSandboxE2e } from './fixtures/registro';
 
-test.describe('Registro de Equipo - Integración Real Sandbox', () => {
-  test('Completa el formulario, conserva datos al retroceder, sube PDFs y usa la ruta real', async ({
+test.describe('Registro de equipo en sandbox local', () => {
+  test('completa el formulario ficticio y recibe respuesta del endpoint real local', async ({
     page,
   }) => {
-    // 1. SE ELIMINÓ EL MOCK DE CLIENTE.
-    // Ahora Playwright hará la petición POST real al endpoint /api/register del servidor.
+    await page.route('**/api/register', (route) =>
+      route.continue({
+        headers: {
+          ...route.request().headers(),
+          authorization: `Bearer ${tokenSandboxE2e}`,
+        },
+      }),
+    );
 
     await page.goto('/registro');
+    await expect(
+      page.locator('astro-island:not([ssr]) form.registro-form'),
+    ).toBeVisible();
 
-    // Paso 1: Información del Equipo
     await page
       .getByLabel(/Nombre del equipo/i)
       .fill(fixtureRegistro.equipo.nombre);
     await page
-      .getByLabel(/Institución/i)
+      .getByLabel(/Institución educativa/i)
       .fill(fixtureRegistro.equipo.institucion);
-    await page.getByRole('button', { name: /Siguiente/i }).click();
-
-    // Paso 2: Integrantes
     await page
-      .getByLabel(/Nombre del capitán/i)
+      .getByLabel(/Estado o ciudad de procedencia/i)
+      .fill(fixtureRegistro.equipo.procedencia);
+    await page.getByRole('button', { name: 'Continuar' }).click();
+
+    await page
+      .getByLabel(/Nombre completo del capitán/i)
       .fill(fixtureRegistro.capitan.nombre);
     await page
-      .getByLabel(/Correo del capitán/i)
+      .getByLabel('Correo electrónico', { exact: true })
       .fill(fixtureRegistro.capitan.correo);
     await page.getByLabel(/Teléfono/i).fill(fixtureRegistro.capitan.telefono);
+    await page
+      .getByLabel(/Integrante 1: nombre completo/i)
+      .fill('Integrante Ficticio Inicial');
+    await page
+      .getByLabel(/Correo electrónico \(Opcional\)/i)
+      .first()
+      .fill('integrante-inicial@example.invalid');
 
     await page.getByRole('button', { name: /Agregar integrante/i }).click();
     await page
-      .getByLabel(/Nombre del integrante 2/i)
+      .getByLabel(/Integrante 2: nombre completo/i)
       .fill(fixtureRegistro.integranteExtra.nombre);
     await page
-      .getByLabel(/Correo del integrante 2/i)
+      .getByLabel(/Correo electrónico \(Opcional\)/i)
+      .last()
       .fill(fixtureRegistro.integranteExtra.correo);
-    await page.getByRole('button', { name: /Siguiente/i }).click();
+    await page.getByRole('button', { name: 'Continuar' }).click();
 
-    // Comprobación de resiliencia (Retroceder)
-    await page.getByRole('button', { name: /Atrás/i }).click();
-    await expect(page.getByLabel(/Nombre del integrante 2/i)).toHaveValue(
+    await page.getByRole('button', { name: 'Volver' }).click();
+    await expect(page.getByLabel(/Integrante 2: nombre completo/i)).toHaveValue(
       fixtureRegistro.integranteExtra.nombre,
     );
-    await page.getByRole('button', { name: /Siguiente/i }).click();
+    await page.getByRole('button', { name: 'Continuar' }).click();
 
-    // Paso 3: Robot y Documentos (Creación de PDFs ficticios en memoria)
     await page
       .getByLabel(/Nombre del robot/i)
       .fill(fixtureRegistro.robot.nombre);
+    await page
+      .getByLabel(/Descripción del robot/i)
+      .fill(fixtureRegistro.robot.descripcion);
+    await page.getByRole('button', { name: 'Continuar' }).click();
 
-    // Playwright nos permite crear un buffer falso que simula un PDF sin tener que crear el archivo en tu disco
-    const fakePdf = Buffer.from('%PDF-1.4 mock content para pruebas');
+    const fakePdf = Buffer.from('%PDF-1.4 contenido ficticio de prueba');
 
-    await page.getByLabel(/Identificación/i).setInputFiles({
-      name: 'identidad.pdf',
+    await page.getByLabel(/Identificación del capitán/i).setInputFiles({
+      name: 'identificacion-ficticia.pdf',
       mimeType: 'application/pdf',
       buffer: fakePdf,
     });
-    await page.getByLabel(/Comprobante/i).setInputFiles({
-      name: 'comprobante.pdf',
+    await page.getByLabel(/Comprobante de pago/i).setInputFiles({
+      name: 'comprobante-ficticio.pdf',
       mimeType: 'application/pdf',
       buffer: fakePdf,
     });
-    await page.getByLabel(/Carta/i).setInputFiles({
-      name: 'carta.pdf',
+    await page.getByLabel(/Carta responsiva/i).setInputFiles({
+      name: 'carta-ficticia.pdf',
       mimeType: 'application/pdf',
       buffer: fakePdf,
     });
 
-    await page.getByRole('button', { name: /Siguiente/i }).click();
+    await page.getByLabel(/Acepto el reglamento/i).check();
+    await page.getByLabel(/Acepto el uso de fotografías/i).check();
+    await page.getByLabel(/Confirmo que el robot cumple/i).check();
+    await page.getByRole('button', { name: 'Continuar' }).click();
 
-    // Paso 4: Revisión y Envío a la ruta real
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().includes('/api/register') &&
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: /Enviar registro/i }).click();
+    await page
+      .getByRole('button', { name: 'Enviar registro de prueba' })
+      .click();
 
     const response = await responsePromise;
     expect(response.status()).toBe(200);
+    await expect(page.getByRole('status')).toContainText(
+      /no representa una inscripción aceptada/i,
+    );
   });
 
   test('Auditoría de accesibilidad y línea base de rendimiento', async ({

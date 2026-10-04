@@ -1,5 +1,3 @@
-import type { RegistroPayload } from './schema';
-
 export interface RegistroSandboxMockResult {
   ok: true;
   folioSandbox: string;
@@ -7,7 +5,7 @@ export interface RegistroSandboxMockResult {
 }
 
 export async function submitRegistroSandboxMock(
-  payload: RegistroPayload,
+  payload: FormData,
 ): Promise<RegistroSandboxMockResult> {
   void payload; // el mock no persiste ni transmite datos.
 
