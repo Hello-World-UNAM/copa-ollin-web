@@ -1,70 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import { categories } from '../../data/categories';
-import type { RegistroPayload } from './schema';
-import { crearRegistroFormData } from './formData';
+import { CAMPOS_ARCHIVO, CAMPOS_ESCALARES } from './contract';
+import { archivosFicticios, payloadFicticio } from './fixtures';
+import { construirFormData } from './formData';
 
-const [primeraCategoria] = categories;
-if (!primeraCategoria) {
-  throw new Error('El catálogo de categorías está vacío.');
-}
+describe('construirFormData', () => {
+  const formData = construirFormData(
+    payloadFicticio,
+    archivosFicticios(),
+    'reg-test-001',
+  );
 
-const crearPdfFicticio = (nombre: string) =>
-  new File(['%PDF-1.4 ficticio'], nombre, { type: 'application/pdf' });
+  it('envía exactamente los campos del contrato, cada uno una vez', () => {
+    const claves = [...formData.keys()].sort();
+    expect(claves).toEqual([...CAMPOS_ESCALARES, ...CAMPOS_ARCHIVO].sort());
+  });
 
-const payloadFicticio: RegistroPayload = {
-  transactionId: '00000000-0000-4000-8000-000000000010',
-  nombreEquipo: 'Equipo Ficticio 01',
-  categoria: primeraCategoria.slug,
-  institucion: 'Institución Ficticia',
-  estadoCiudadProcedencia: 'Ciudad Ficticia',
-  nombreCapitan: 'Capitana Ficticia',
-  correoCapitan: 'capitana@example.invalid',
-  telefonoCapitan: '0000000000',
-  identificacionInstitucional: '',
-  integrantes: [{ nombre: 'Integrante Ficticio', correo: '' }],
-  nombreRobot: 'Robot Ficticio',
-  descripcionRobot: 'Descripción de prueba ficticia.',
-  aceptaReglamento: true,
-  aceptaUsoImagen: false,
-  confirmaRestriccionesCategoria: true,
-  archivoIdentificacion: crearPdfFicticio('identificacion-ficticia.pdf'),
-  comprobantePago: crearPdfFicticio('comprobante-ficticio.pdf'),
-  cartaResponsiva: crearPdfFicticio('carta-ficticia.pdf'),
-};
-
-describe('crearRegistroFormData', () => {
-  it('serializa los 18 campos con los nombres que recibe el endpoint', () => {
-    const formData = crearRegistroFormData(payloadFicticio);
-
-    expect([...formData.keys()]).toEqual([
-      'transactionId',
-      'nombreEquipo',
-      'categoria',
-      'institucion',
-      'estadoCiudadProcedencia',
-      'nombreCapitan',
-      'correoCapitan',
-      'telefonoCapitan',
-      'identificacionInstitucional',
-      'integrantes',
-      'nombreRobot',
-      'descripcionRobot',
-      'aceptaReglamento',
-      'aceptaUsoImagen',
-      'confirmaRestriccionesCategoria',
-      'archivoIdentificacion',
-      'comprobantePago',
-      'cartaResponsiva',
-    ]);
-    expect(formData.get('transactionId')).toBe(payloadFicticio.transactionId);
-    expect(formData.get('integrantes')).toBe(
-      JSON.stringify(payloadFicticio.integrantes),
-    );
+  it('serializa booleanos como "true"/"false" y conserva el transactionId', () => {
     expect(formData.get('aceptaReglamento')).toBe('true');
-    expect(formData.get('aceptaUsoImagen')).toBe('false');
-    expect(formData.get('archivoIdentificacion')).toMatchObject({
-      name: 'identificacion-ficticia.pdf',
-      type: 'application/pdf',
-    });
+    expect(formData.get('transactionId')).toBe('reg-test-001');
+  });
+
+  it('omite el correo vacío de los integrantes', () => {
+    const integrantes = JSON.parse(String(formData.get('integrantes')));
+    expect(integrantes).toEqual([
+      { nombre: 'Integrante Ficticio Uno' },
+      { nombre: 'Integrante Ficticio Dos', correo: 'dos@example.invalid' },
+    ]);
+  });
+
+  it('adjunta los PDF con su nombre de archivo', () => {
+    const comprobante = formData.get('comprobantePago');
+    expect(comprobante).toBeInstanceOf(File);
+    expect((comprobante as File).name).toBe('comprobante.pdf');
   });
 });

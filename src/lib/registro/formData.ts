@@ -1,31 +1,45 @@
+import {
+  CAMPOS_ARCHIVO,
+  CAMPOS_ESCALARES,
+  type CampoArchivo,
+  type CampoEscalar,
+} from './contract';
 import type { RegistroPayload } from './schema';
 
-export function crearRegistroFormData(payload: RegistroPayload): FormData {
-  const formData = new FormData();
-  formData.set('transactionId', payload.transactionId);
-  formData.set('nombreEquipo', payload.nombreEquipo);
-  formData.set('categoria', payload.categoria);
-  formData.set('institucion', payload.institucion);
-  formData.set('estadoCiudadProcedencia', payload.estadoCiudadProcedencia);
-  formData.set('nombreCapitan', payload.nombreCapitan);
-  formData.set('correoCapitan', payload.correoCapitan);
-  formData.set('telefonoCapitan', payload.telefonoCapitan);
-  formData.set(
-    'identificacionInstitucional',
-    payload.identificacionInstitucional ?? '',
-  );
-  formData.set('integrantes', JSON.stringify(payload.integrantes));
-  formData.set('nombreRobot', payload.nombreRobot);
-  formData.set('descripcionRobot', payload.descripcionRobot);
-  formData.set('aceptaReglamento', String(payload.aceptaReglamento));
-  formData.set('aceptaUsoImagen', String(payload.aceptaUsoImagen));
-  formData.set(
-    'confirmaRestriccionesCategoria',
-    String(payload.confirmaRestriccionesCategoria),
-  );
-  formData.set('archivoIdentificacion', payload.archivoIdentificacion);
-  formData.set('comprobantePago', payload.comprobantePago);
-  formData.set('cartaResponsiva', payload.cartaResponsiva);
+export type ArchivosRegistro = Record<CampoArchivo, File>;
 
+export function construirFormData(
+  payload: RegistroPayload,
+  archivos: ArchivosRegistro,
+  transactionId: string,
+): FormData {
+  // El servidor rechaza correo '' (z.email): se omite si está vacío.
+  const integrantes = payload.integrantes.map(({ nombre, correo }) =>
+    correo ? { nombre, correo } : { nombre },
+  );
+
+  const escalares: Record<CampoEscalar, string> = {
+    transactionId,
+    nombreEquipo: payload.nombreEquipo,
+    categoria: payload.categoria,
+    institucion: payload.institucion,
+    estadoCiudadProcedencia: payload.estadoCiudadProcedencia,
+    nombreCapitan: payload.nombreCapitan,
+    correoCapitan: payload.correoCapitan,
+    telefonoCapitan: payload.telefonoCapitan,
+    identificacionInstitucional: payload.identificacionInstitucional ?? '',
+    integrantes: JSON.stringify(integrantes),
+    nombreRobot: payload.nombreRobot,
+    descripcionRobot: payload.descripcionRobot,
+    aceptaReglamento: String(payload.aceptaReglamento),
+    aceptaUsoImagen: String(payload.aceptaUsoImagen),
+    confirmaRestriccionesCategoria: String(
+      payload.confirmaRestriccionesCategoria,
+    ),
+  };
+
+  const formData = new FormData();
+  for (const campo of CAMPOS_ESCALARES) formData.set(campo, escalares[campo]);
+  for (const campo of CAMPOS_ARCHIVO) formData.set(campo, archivos[campo]);
   return formData;
 }

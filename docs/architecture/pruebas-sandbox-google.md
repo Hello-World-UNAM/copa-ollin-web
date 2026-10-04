@@ -145,6 +145,8 @@ El test genera un `transactionId` aleatorio y tres PDFs válidos. Envía dos vec
 
 Si el test falla durante la limpieza, no repitas inmediatamente: inspecciona únicamente los recursos de sandbox autorizados, elimina cualquier fila o PDF que empiece con el prefijo `copa-ollin-qa-` de la corrida y deja constancia sanitizada de la incidencia. No borres elementos ajenos a la prueba.
 
+Los PDF generados pesan menos de 1 KiB, por lo que cumplen el límite provisional de 1 MiB por archivo y 3 MiB en total.
+
 ### Si el preflight o la carga devuelve 403/404
 
 - Detén los reintentos de escritura; no cambies a recursos productivos ni hagas público el acceso.

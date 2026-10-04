@@ -128,3 +128,21 @@ issue #10.
 - **Validaciones:** no suponer validaciones de montos, formatos de archivos ni consentimientos.
 
 La ruta pública `/registro` permanecerá "en preparación" hasta resolver las dependencias mencionadas. El equipo puede desarrollar el recorrido completo detrás de una separación inequívoca de sandbox, sin datos reales y sin presentarlo como registro productivo. La habilitación pública conserva como gate obligatorio el aviso de privacidad aprobado por CROFI.
+
+## Integración del formulario en Sprint 3 — PR #27
+
+Esta sección actualiza el estado del formulario descrito anteriormente. El formulario usa `POST /api/register`, transmite los tres PDFs ficticios y conserva los datos, archivos e identificador técnico al reintentar. Ya no utiliza el adapter simulado en la interfaz.
+
+Los nombres de campos, límites y validación de archivos se comparten mediante `src/lib/registro/contract.ts`:
+
+| Elemento | Valor provisional | Estado |
+|---|---|---|
+| PDF por archivo / total | 1 MiB / 3 MiB, en cliente y servidor | Sólo sandbox; P0-06 sigue pendiente. |
+| Formato aceptado | PDF, MIME y firma `%PDF-` | Sólo sandbox. |
+| Reintento | `transactionId` estable hasta confirmar o reiniciar | El servidor admite letras, números, guion y guion bajo, hasta 80 caracteres. |
+
+El cliente exige las tres confirmaciones, teléfono de al menos 10 caracteres, al menos un integrante, una categoría del catálogo y descripción no vacía. El servidor conserva las validaciones provisionales previas; P1-03, P1-05 y P1-08 siguen pendientes. El correo vacío de un integrante se omite al serializar.
+
+Se mantienen la autorización del endpoint, el límite del cuerpo multipart y la persistencia/idempotencia incorporadas en #26. El formulario no incorpora el token de servidor. Sin una autorización válida, el endpoint devuelve `401` y la UI indica que el sandbox no está disponible, conservando el borrador. La prueba E2E añade únicamente un token ficticio al enviar al handler local con adapter mock; la autorización del recorrido manual en staging requiere coordinación operativa y QA.
+
+La UI distingue guardado, duplicado, validación, autorización/configuración, tamaño, fallo temporal, recuperación y red. Sólo `200` con `SAVED` o `DUPLICATE` produce confirmación; ningún mensaje promete aceptación de la inscripción. `/registro` mantiene «en preparación» cuando el flag de sandbox no está habilitado.

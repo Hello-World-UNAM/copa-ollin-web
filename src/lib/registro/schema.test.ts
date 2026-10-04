@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { categories } from '../../data/categories';
 import { registroSchema } from './schema';
+import { registerSchema } from '../schemas/register';
 
 const [primeraCategoria] = categories;
 if (!primeraCategoria) {
@@ -80,26 +81,29 @@ describe('registroSchema (payload ficticio de sandbox)', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rechaza un transactionId que no sea UUID', () => {
-    const result = registroSchema.safeParse({
+  it('el servidor rechaza un transactionId con caracteres no permitidos', async () => {
+    const result = await registerSchema.safeParseAsync({
       ...payloadFicticio,
-      transactionId: 'no-es-un-uuid',
+      integrantes: [{ nombre: 'Integrante Ficticio Uno' }],
+      transactionId: 'id con espacios',
     });
 
     expect(result.success).toBe(false);
   });
 
-  it('rechaza si falta uno de los tres PDF', () => {
+  it('el servidor rechaza si falta uno de los tres PDF', async () => {
     const payloadSinCarta: Partial<typeof payloadFicticio> = {
       ...payloadFicticio,
     };
     delete payloadSinCarta.cartaResponsiva;
 
-    expect(registroSchema.safeParse(payloadSinCarta).success).toBe(false);
+    expect((await registerSchema.safeParseAsync(payloadSinCarta)).success).toBe(
+      false,
+    );
   });
 
-  it('rechaza un archivo que no declara MIME PDF', () => {
-    const result = registroSchema.safeParse({
+  it('el servidor rechaza un archivo que no declara MIME PDF', async () => {
+    const result = await registerSchema.safeParseAsync({
       ...payloadFicticio,
       comprobantePago: new File(['contenido ficticio'], 'texto.txt', {
         type: 'text/plain',
@@ -109,10 +113,10 @@ describe('registroSchema (payload ficticio de sandbox)', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rechaza PDFs mayores a 1 MiB', () => {
+  it('el servidor rechaza PDFs mayores a 1 MiB', async () => {
     const bytesGrandes = new Uint8Array(1024 * 1024 + 1);
     bytesGrandes.set(bytesPdfFicticio);
-    const result = registroSchema.safeParse({
+    const result = await registerSchema.safeParseAsync({
       ...payloadFicticio,
       archivoIdentificacion: crearPdfFicticio(
         'identificacion-grande-ficticia.pdf',
@@ -123,11 +127,12 @@ describe('registroSchema (payload ficticio de sandbox)', () => {
     expect(result.success).toBe(false);
   });
 
-  it('acepta tres PDFs de 1 MiB, el límite total de sandbox', () => {
+  it('el servidor acepta tres PDFs de 1 MiB, el límite total de sandbox', async () => {
     const bytesDeUnMiB = new Uint8Array(1024 * 1024);
     bytesDeUnMiB.set(bytesPdfFicticio);
-    const result = registroSchema.safeParse({
+    const result = await registerSchema.safeParseAsync({
       ...payloadFicticio,
+      integrantes: [{ nombre: 'Integrante Ficticio Uno' }],
       archivoIdentificacion: crearPdfFicticio(
         'identificacion-ficticia.pdf',
         bytesDeUnMiB,

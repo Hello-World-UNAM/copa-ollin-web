@@ -9,30 +9,10 @@ import {
   registerSchema,
 } from '../schemas/register';
 import type { GoogleAdapter } from '../google/types';
+import { CAMPOS_ARCHIVO, CAMPOS_ESCALARES } from '../registro/contract';
 
-const scalarFieldNames = [
-  'transactionId',
-  'nombreEquipo',
-  'categoria',
-  'institucion',
-  'estadoCiudadProcedencia',
-  'nombreCapitan',
-  'correoCapitan',
-  'telefonoCapitan',
-  'identificacionInstitucional',
-  'integrantes',
-  'nombreRobot',
-  'descripcionRobot',
-  'aceptaReglamento',
-  'aceptaUsoImagen',
-  'confirmaRestriccionesCategoria',
-] as const;
-
-const fileFieldNames = [
-  'archivoIdentificacion',
-  'comprobantePago',
-  'cartaResponsiva',
-] as const;
+const scalarFieldNames = CAMPOS_ESCALARES;
+const fileFieldNames = CAMPOS_ARCHIVO;
 
 const allowedFieldNames = new Set<string>([
   ...scalarFieldNames,
