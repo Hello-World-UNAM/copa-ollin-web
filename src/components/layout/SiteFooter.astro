@@ -1,25 +1,39 @@
 ---
 import Container from '../ui/Container.astro';
+import { ArrowUp } from '@lucide/astro';
 ---
 
 <footer class="site-footer">
   <Container class="site-footer__inner">
-    <p>
-      <strong>CROFI</strong> organiza Copa Ollin en colaboración con Club Hello
-      World.
-    </p>
-    <nav class="site-footer__nav" aria-label="Navegación del pie de página">
-      <ul>
-        <li>
-          <a href="/">Inicio</a>
-        </li>
-        <li>
-          <a href="/#categorias">Categorías y reglamentos</a>
-        </li>
-        <li>
-          <a href="/registro">Estado del registro</a>
-        </li>
-      </ul>
-    </nav>
+    <div class="site-footer__content">
+      <div class="site-footer__identity">
+        <p class="site-footer__eyebrow">Torneo universitario de robótica</p>
+        <p class="site-footer__title">Copa Ollin</p>
+        <p class="site-footer__description">
+          <strong>CROFI</strong> organiza Copa Ollin en colaboración con Club
+          Hello World.
+        </p>
+      </div>
+      <nav class="site-footer__nav" aria-label="Navegación del pie de página">
+        <p class="site-footer__eyebrow">Explora el sitio</p>
+        <ul>
+          <li>
+            <a href="/">Inicio</a>
+          </li>
+          <li>
+            <a href="/#categorias">Categorías y reglamentos</a>
+          </li>
+          <li>
+            <a href="/registro">Estado del registro</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <div class="site-footer__bottom">
+      <p>Copa Ollin · 2026</p>
+      <a class="site-footer__back" href="#inicio">
+        Volver arriba <ArrowUp size={20} aria-hidden="true" />
+      </a>
+    </div>
   </Container>
 </footer>

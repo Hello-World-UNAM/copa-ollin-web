@@ -261,6 +261,7 @@ El diseño es mobile-first. Los breakpoints sirven al contenido y no deben usars
 - Fondo blanco, borde inferior negro de `2px` y acento cian opcional de `4px`.
 - CROFI aparece como marca primaria; las marcas secundarias no desplazan la navegación.
 - En móvil, el menú debe abrirse con un botón nombrado, conservar foco y cerrarse con `Escape`.
+- Hasta `1023px`, marca a la izquierda y botón de menú a la derecha en la misma fila; desde `1024px`, enlaces visibles en horizontal. Sin JavaScript, los enlaces permanecen disponibles debajo de la marca.
 - La ruta activa usa peso, subrayado y color; nunca sólo color.
 - Incluir un enlace “Saltar al contenido” visible al recibir foco.
 
@@ -374,6 +375,7 @@ La confirmación de envío debe decir qué se recibió y qué ocurrirá después
 - Contiene privacidad, contacto, reglamentos y atribuciones.
 - Puede incorporar UNAM y Facultad de Ingeniería en un bloque institucional separado.
 - Usa texto mínimo de `14px`, contraste AA y enlaces subrayados.
+- Agrupa identidad y navegación en una columna móvil y dos desde `768px`; una banda inferior separa la edición del evento y el enlace «Volver arriba». Evita duplicar el espacio que ya aporta el contenido principal.
 
 ## Patrones de página
 

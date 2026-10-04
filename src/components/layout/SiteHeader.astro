@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import { Menu } from '@lucide/astro';
+import { Menu, X } from '@lucide/astro';
 
 import crofiLogo from '../../../assets/brand/crofi-fondo-blanco.png';
 import Container from '../ui/Container.astro';
@@ -8,7 +8,7 @@ import Container from '../ui/Container.astro';
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="site-header">
+<header id="inicio" class="site-header">
   <Container class="site-header__inner">
     <a class="site-header__brand" href="/" aria-label="Copa Ollin, inicio">
       <Image
@@ -19,6 +19,10 @@ const currentPath = Astro.url.pathname;
         widths={[120, 180]}
         sizes="120px"
       />
+      <span class="site-header__identity" aria-hidden="true">
+        <span class="site-header__name">Copa Ollin</span>
+        <span class="site-header__edition">Robótica · 2026</span>
+      </span>
     </a>
 
     <button
@@ -26,29 +30,28 @@ const currentPath = Astro.url.pathname;
       type="button"
       aria-controls="site-nav"
       aria-expanded="false"
+      aria-label="Abrir menú"
+      hidden
     >
-      <Menu size={20} aria-hidden="true" />
+      <Menu class="site-nav__icon-open" size={24} aria-hidden="true" />
+      <X class="site-nav__icon-close" size={24} aria-hidden="true" />
       <span class="visually-hidden">Menú</span>
     </button>
 
-    <nav
-      id="site-nav"
-      class="site-nav"
-      aria-label="Navegación principal"
-      hidden
-    >
+    <nav id="site-nav" class="site-nav" aria-label="Navegación principal">
       <ul>
         <li>
-          <a
-            href="/#categorias"
-            aria-current={currentPath === '/' ? 'page' : undefined}
-          >
-            Categorías
+          <a href="/" aria-current={currentPath === '/' ? 'page' : undefined}>
+            Inicio
           </a>
+        </li>
+        <li>
+          <a href="/#categorias">Categorías</a>
         </li>
         <li>
           <a
             href="/registro"
+            class="site-nav__registration"
             aria-current={currentPath === '/registro' ? 'page' : undefined}
           >
             Registro
@@ -65,13 +68,17 @@ const currentPath = Astro.url.pathname;
   const navigation = document.querySelector<HTMLElement>('#site-nav');
 
   if (menuButton && navigation) {
+    const desktop = window.matchMedia('(min-width: 64rem)');
+    menuButton.closest('header')?.setAttribute('data-nav-ready', '');
+    menuButton.hidden = false;
+
     const setMenuState = (isOpen: boolean, restoreFocus = true) => {
       menuButton.setAttribute('aria-expanded', String(isOpen));
       menuButton.setAttribute(
         'aria-label',
         isOpen ? 'Cerrar menú' : 'Abrir menú',
       );
-      navigation.hidden = !isOpen;
+      navigation.hidden = !desktop.matches && !isOpen;
 
       if (isOpen) {
         navigation.querySelector<HTMLAnchorElement>('a')?.focus();
@@ -80,8 +87,26 @@ const currentPath = Astro.url.pathname;
       }
     };
 
+    const syncViewport = () => {
+      const focusWillBeHidden =
+        !desktop.matches && navigation.contains(document.activeElement);
+      setMenuState(false, focusWillBeHidden);
+    };
+    syncViewport();
+    desktop.addEventListener('change', syncViewport);
+
     menuButton.addEventListener('click', () => {
       setMenuState(menuButton.getAttribute('aria-expanded') !== 'true');
+    });
+
+    navigation.addEventListener('click', (event) => {
+      if (
+        !desktop.matches &&
+        event.target instanceof Element &&
+        event.target.closest('a')
+      ) {
+        setMenuState(false);
+      }
     });
 
     const closeMenuOutside = (event: Event) => {
