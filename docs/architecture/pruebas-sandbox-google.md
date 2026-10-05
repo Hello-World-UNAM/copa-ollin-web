@@ -61,7 +61,7 @@ Una vez autorizada la prueba:
 6. En Firestore, comprueba primero si ya existe una base. Usa sólo la base `(default)`, que es la elegible para la cuota gratuita; no crees una segunda. Al crearla, elige edición **Standard**, API **Native mode** y reglas iniciales **Production mode** (el servidor usa IAM; el cliente web no debe acceder directamente).
 7. La ubicación de Firestore no se puede cambiar después de crear la base. Si la consola ofrece `northamerica-south1` (Querétaro), es la opción regional más cercana a la sede del evento. Si una ubicación predeterminada ya está fijada, o no aparece la región esperada, detente antes de crearla y revisa la ubicación mostrada; no crees otra base para probar.
 8. Crea una service account separada para la reserva Firestore y dale el rol `Cloud Datastore User` (`roles/datastore.user`) únicamente en el proyecto aislado de pruebas. Ese rol da acceso de lectura/escritura a documentos Firestore del proyecto, por eso no reutilices la identidad en producción ni le concedas roles de Drive/Sheets.
-9. Crea una clave JSON para esa service account sólo si vas a probar localmente con el código actual. Guárdala en `.private/` (ignorado por Git), ábrela localmente y copia `project_id`, `client_email` y únicamente el valor de `private_key` a las tres variables `SANDBOX_FIRESTORE_*` de `.env`. Guarda la private key en una sola línea entre comillas dobles, conservando los `\n` literales que aparecen en el JSON, por ejemplo `SANDBOX_FIRESTORE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"`. No copies el JSON completo. Nunca pegues la clave en el chat, navegador, issue ni Git; elimina la copia descargada sólo después de verificar localmente que `.env` la puede parsear y que el archivo sigue ignorado.
+9. Crea una clave JSON para esa service account sólo si vas a probar localmente con el código actual. Guárdala como `.private/firestore-sandbox.json` (ignorado por Git) con permisos `600`. Importa sus campos mediante `node scripts/sandbox-google-local.mjs --firestore-key .private/firestore-sandbox.json`; no copies la clave manualmente al navegador, chat, issue ni archivos versionados. El asistente conserva la configuración privada local. Revoca esta clave desde IAM al terminar las pruebas y no la reutilices en producción. Tras asignar el rol, su propagación puede tardar varios minutos: un rechazo inicial no justifica conceder Editor/Propietario ni desactivar la reserva.
 10. En la hoja, crea una pestaña llamada `Registros` y una fila de encabezados en este orden: `transactionId`, `nombreEquipo`, `categoria`, `institucion`, `estadoCiudadProcedencia`, `nombreCapitan`, `correoCapitan`, `telefonoCapitan`, `identificacionInstitucional`, `integrantes`, `nombreRobot`, `descripcionRobot`, `aceptaReglamento`, `aceptaUsoImagen`, `confirmaRestriccionesCategoria`, `archivoIdentificacion`, `comprobantePago`, `cartaResponsiva`.
 
 Firestore documenta para una base elegible la cuota gratuita de 1 GiB,
@@ -77,14 +77,12 @@ crear la base o asignar permisos.
 
 ### Estado de OAuth y Google Picker en el repositorio
 
-El adapter server-side consume client ID, client secret y refresh token; sin
-embargo, esta rama todavía no implementa una ruta de callback OAuth, una
-interfaz de Google Picker ni la creación de recursos con la aplicación. Por lo
-tanto, no registres una URI inventada como
-`/api/auth/google/callback`: esa ruta no existe. Si se implementa el flujo de
-código OAuth del servidor, primero se definirá y probará su callback exacto. Si
-se usa Google OAuth Playground para emitir el refresh token, se registrará la
-URI de retorno exacta del Playground, no una ruta local supuesta.
+El adapter server-side consume client ID, client secret y refresh token. El
+PR #26 incorporó el selector administrativo local descrito abajo; seleccionar
+recursos no obtiene ni guarda por sí mismo un refresh token del servidor.
+La aplicación Astro no implementa `/api/auth/google/callback`: no registres
+esa URI. El asistente local descrito en la sección 4 usa su propio callback en
+el puerto 4338; no es una ruta de Astro ni una autenticación de staging.
 
 Google Picker para web necesita su API habilitada, una API key restringida al
 origen autorizado y al API Picker, y un token OAuth de corta duración para que
@@ -104,6 +102,70 @@ React. Al seleccionar cada recurso, usa el botón para copiar su ID y pégalo
 directamente en `.env`; la interfaz no lo muestra ni registra.
 
 ## 4. Configurar el entorno local
+
+### Prueba interactiva desde el navegador local
+
+Decisión del 4 de octubre de 2026: Sebastián autorizó preparar una prueba con
+su cuenta y recursos Google aislados. Para ese caso existe un puente opt-in
+`LOCAL_SANDBOX_BROWSER_AUTH=true`: sólo Astro **dev**, conexión loopback,
+hostname local y `Origin` idéntico. Rechaza cabeceras de proxy y no reemplaza un
+Bearer ya proporcionado. El token se añade en servidor; nunca se envía al
+bundle. No autoriza staging ni producción. Inicia Astro siempre con
+`--host 127.0.0.1`; no expongas ese proceso en la LAN ni por túnel. Otros procesos
+locales de tu equipo son parte del perímetro de confianza.
+
+Las variables sensibles de Vercel no se pueden recuperar como credenciales
+mediante `vercel env pull`: los valores ocultos no sirven para autenticar.
+No confundas variables declaradas con secretos descargables ni con acceso
+Google verificado. El adapter actual utiliza `SANDBOX_GOOGLE_OAUTH_*`; los
+nombres históricos `GOOGLE_OAUTH_*` no son consumidos por este código.
+
+El asistente `scripts/sandbox-google-local.mjs` recibe el JSON de cliente OAuth
+web autorizado y un inventario Markdown privado con los enlaces de carpeta
+raíz, documentos ficticios y hoja Registros. No publiques ese inventario.
+El callback debe estar registrado exactamente como
+`http://localhost:4338/oauth/callback`.
+
+```bash
+node scripts/sandbox-google-local.mjs --authorize \
+  --client /ruta/privada/cliente-oauth.json \
+  --resources /ruta/privada/inventario-sandbox.md
+```
+
+Abre `http://localhost:4338/` y autoriza con la cuenta del sandbox. Sólo solicita
+`drive.file`, comprueba los scopes devueltos y guarda el refresh token en
+`.private/google-sandbox-local.env` con permisos `600`. Usa `state`, cookie
+HttpOnly/SameSite y sesión de diez minutos; no muestra tokens ni registra el
+callback. Detén el asistente al terminar. No concede acceso automático a
+recursos de otra app: si el preflight falla con 403/404, selecciona los recursos
+con Picker para esa misma app; nunca amplíes scopes para evitar ese paso.
+
+La reserva Firestore sigue siendo obligatoria para este adapter. Usa una cuenta
+de servicio del proyecto de pruebas aislado, base `(default)` y rol mínimo
+descrito arriba; no habilites facturación ni utilices una clave productiva.
+
+```bash
+node scripts/sandbox-google-local.mjs --firestore-key .private/firestore-sandbox.json
+node scripts/sandbox-google-local.mjs --preflight
+node scripts/sandbox-google-local.mjs --serve
+```
+
+El preflight sólo lee scopes, tipos, padres, permisos y los 18 encabezados de
+`Registros!A1:R1`. Requiere que hoja y carpeta pertenezcan a la raíz autorizada
+y no tengan acceso público/de dominio. `--serve` también verifica lectura de
+Firestore antes de levantar Astro en loopback con el adapter **real** y el
+puente local. Detén antes el otro Astro dev del mismo repo: Astro sólo admite
+uno aunque se cambie el puerto. Si falta configuración, no inicia el modo real
+ni escribe Google. No elimina filas ni archivos después de tu envío manual.
+
+Recarga `/registro` y empieza un formulario nuevo con datos y PDFs ficticios,
+sin reutilizar documentos personales de pruebas anteriores. El envío debe
+crear una fila y tres archivos privados; verificar sus enlaces y reintento.
+Los registros de prueba permanecen para inspección hasta que se autorice su
+limpieza. Una prueba mock no sustituye esta comprobación real.
+
+Referencias: [OAuth web server](https://developers.google.com/identity/protocols/oauth2/web-server)
+y [scope drive.file](https://developers.google.com/workspace/drive/api/guides/api-specific-auth).
 
 Edita `.env` localmente, sin mostrar sus valores en la terminal o en una captura. Conserva el valor existente de `ENABLE_SANDBOX_REGISTRATION` y completa estas claves con OAuth y los recursos aislados seleccionados para esta aplicación:
 
@@ -141,7 +203,13 @@ Solo después de recibir autorización explícita para la prueba remota y comple
 RUN_GOOGLE_SANDBOX_INTEGRATION=true SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true pnpm test:google-sandbox
 ```
 
-El test genera un `transactionId` aleatorio y tres PDFs válidos. Envía dos veces el mismo payload; comprueba que Sheets contenga una sola fila y Drive los tres archivos asociados; después elimina la fila y archivos que creó y verifica que no quede ninguno. El test no imprime ni guarda IDs operativos, URLs de los recursos ni payloads.
+El test genera un `transactionId` aleatorio y tres PDFs válidos. Envía dos
+solicitudes simultáneas con el mismo payload y un reintento posterior;
+comprueba que Sheets contenga una sola fila y Drive los tres archivos
+asociados. Después elimina la fila, archivos y reserva que creó y comprueba
+que no queden fila ni archivos. Invoca el handler directamente: no prueba el
+transporte HTTP de Vercel ni el navegador de staging. El test no imprime ni
+guarda IDs operativos, URLs de los recursos ni payloads.
 
 Si el test falla durante la limpieza, no repitas inmediatamente: inspecciona únicamente los recursos de sandbox autorizados, elimina cualquier fila o PDF que empiece con el prefijo `copa-ollin-qa-` de la corrida y deja constancia sanitizada de la incidencia. No borres elementos ajenos a la prueba.
 
@@ -174,8 +242,13 @@ El reviewer debe comprobar en el entorno restringido la hoja y carpeta sin compa
 ## 7. Límites conocidos
 
 - `transactionId` es una clave técnica de este harness de pruebas; su semántica productiva sigue pendiente de P2-02.
-- El control de duplicados consulta Sheets y es adecuado para probar reintentos secuenciales. No constituye una garantía distribuida de exclusión para dos solicitudes concurrentes al mismo tiempo.
-- El test unitario concurrente del mock sólo valida la reserva en memoria dentro de un proceso. El adapter real todavía hace lectura seguida de append; no cumple el criterio de concurrencia hasta incorporar una reserva persistente/atómica y probarla con solicitudes simultáneas.
+- Desde el PR #26, el adapter real reserva el identificador mediante una
+  transacción Firestore antes de leer Sheets o subir archivos. La reserva
+  persistente está implementada; las unitarias inyectan una reserva en memoria,
+  por lo que no prueban Firestore real ni múltiples instancias de Vercel.
+- La existencia del test remoto no demuestra su ejecución: se omite si
+  `RUN_GOOGLE_SANDBOX_INTEGRATION` no es `true`. Separar evidencia mock,
+  ejecución autorizada contra Google y concurrencia HTTP real de staging.
 - El test remoto envía dos solicitudes simultáneas y un reintento posterior. Sólo una solicitud concurrente puede recibir `SAVED`; una segunda puede recibir `DUPLICATE` o una respuesta recuperable de “en proceso”, y el reintento posterior debe ser `DUPLICATE`. No declara verificados Picker ni selección de recursos.
 - Una reserva en estado `recovery-required` o `processing` tras una caída debe investigarse antes de eliminarse. Primero verifica Sheets y Drive del sandbox para ese ID; sólo elimina la reserva después de reconciliar o limpiar la fila y archivos.
 - Si Drive confirma una carga pero se pierde la respuesta antes de recibir su ID, el cleanup automático no puede identificar ese archivo; revisa el sandbox después de una falla remota.

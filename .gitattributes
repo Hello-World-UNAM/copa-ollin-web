@@ -1,0 +1,2 @@
+# Los PDF conservan sus bytes y su tabla xref; no son documentos de texto.
+*.pdf binary

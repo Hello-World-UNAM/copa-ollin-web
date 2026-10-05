@@ -49,9 +49,8 @@ const { category } = Astro.props;
       </a>
       <a
         href={category.regulationPdfUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Descargar reglamento de ${category.workingName} en formato PDF (abre en una nueva pestaña)`}
+        download={`${category.slug}.pdf`}
+        aria-label={`Descargar reglamento de ${category.workingName} en formato PDF`}
       >
         <FileDown size={20} aria-hidden="true" />
         Descargar PDF

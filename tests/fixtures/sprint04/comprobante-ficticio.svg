@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320">
+  <rect width="640" height="320" fill="white"/>
+  <rect x="16" y="16" width="608" height="288" fill="none" stroke="black" stroke-width="4"/>
+  <g fill="black" font-family="sans-serif" text-anchor="middle">
+    <text x="320" y="100" font-size="30">COMPROBANTE FICTICIO</text>
+    <text x="320" y="155" font-size="22">SÓLO PRUEBAS · SIN VALOR DE PAGO</text>
+    <text x="320" y="210" font-size="20">No contiene datos de participantes.</text>
+  </g>
+</svg>

@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import { test, expect } from '@playwright/test';
 
 const categorias = [
@@ -14,6 +16,33 @@ const rutasAProbar = [
   '/registro',
   ...categorias.map((c) => `/categorias/${c}`),
 ];
+
+test('Los enlaces PDF descargan el original desde tarjetas y reglamentos', async ({
+  page,
+  context,
+}) => {
+  for (const categoria of categorias) {
+    const original = await readFile(
+      `docs/sources/regulations/${categoria}.pdf`,
+    );
+
+    for (const ruta of ['/', `/categorias/${categoria}`]) {
+      await page.goto(ruta);
+      const enlace = page.locator(`a[href="/regulations/${categoria}.pdf"]`);
+      await expect(enlace).toHaveAttribute('download', `${categoria}.pdf`);
+      const descargaPendiente = page.waitForEvent('download');
+      await enlace.click();
+      const descarga = await descargaPendiente;
+      expect(descarga.suggestedFilename()).toBe(`${categoria}.pdf`);
+      expect(await descarga.failure()).toBeNull();
+      const archivo = await descarga.path();
+      expect(archivo).not.toBeNull();
+      expect(await readFile(archivo!)).toEqual(original);
+      expect(new URL(page.url()).pathname).toBe(ruta);
+      expect(context.pages()).toHaveLength(1);
+    }
+  }
+});
 
 test.describe('Copa Ollin - Smoke Tests y Casos Negativos', () => {
   test('Todas las rutas tienen etiqueta noindex estricta', async ({ page }) => {

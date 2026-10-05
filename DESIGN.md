@@ -6,7 +6,7 @@
 
 **Estado:** base de diseño para implementación
 
-**Última actualización:** 13 de septiembre de 2026
+**Última actualización:** 4 de octubre de 2026
 
 ## Propósito y alcance
 
@@ -298,6 +298,7 @@ Todos los botones:
 
 - Imagen en un marco consistente de relación `4:3`.
 - Usar `object-fit: contain` como valor predeterminado para evitar cortar texto o robots de los recursos entregados.
+- Excepción aprobada: la tarjeta de Micromouse amateur usa `object-fit: cover`, centrado, para llenar el marco sin bandas negras; no modifica la imagen original ni el encuadre de otras categorías.
 - Fondo del marco negro para imágenes oscuras; blanco para imágenes transparentes o claras.
 - Nombre oficial, nivel amateur/profesional cuando aplique y enlace explícito al reglamento.
 - Toda la tarjeta puede ser clicable, pero el nombre del enlace debe seguir siendo descriptivo.
@@ -325,7 +326,7 @@ Todos los botones:
 - Mostrar las seis opciones como radios o tarjetas seleccionables, no como iconos sin texto.
 - La opción seleccionada combina borde, check e indicación textual.
 - Usar exactamente el mismo nombre en landing, formulario y hoja de datos.
-- No resolver la diferencia “Minisumo”/“Minisumo autónomo” sin la decisión registrada.
+- Usar “Minisumo Autónomo” y sus divisiones conforme a la confirmación registrada en preguntas abiertas; conservar los slugs técnicos existentes.
 
 ### Integrantes dinámicos
 
@@ -610,7 +611,7 @@ Una propuesta visual debe describirse con tokens y comportamiento, no sólo con 
 
 - Autorización escrita para versionar y servir la fuente Robotic.
 - Reglas oficiales de convivencia y uso público de logotipos.
-- Nombre público definitivo de las categorías de Minisumo.
+- Materiales oficiales de las categorías adicionales y reglamentos actualizados anunciados por CROFI.
 - Contenido final de premiación.
 - Aviso de privacidad, consentimientos y estados definitivos del registro.
 
