@@ -19,7 +19,7 @@ describe('interpretarRespuesta', () => {
     [400, { code: 'VALIDATION_ERROR', details: [] }, 'validacion'],
     [400, { code: 'UNEXPECTED_FIELD' }, 'solicitud'],
     [413, null, 'demasiado_grande'],
-    [401, { code: 'SANDBOX_UNAUTHORIZED' }, 'configuracion'],
+    [401, { code: 'SANDBOX_UNAUTHORIZED' }, 'autorizacion'],
     [502, { code: 'TEMPORARY_STORAGE_ERROR' }, 'temporal'],
     [502, { code: 'RECOVERY_REQUIRED' }, 'recuperacion'],
     [503, { code: 'SANDBOX_DISABLED' }, 'configuracion'],

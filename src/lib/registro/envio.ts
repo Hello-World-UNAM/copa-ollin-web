@@ -11,6 +11,7 @@ export type ResultadoEnvio =
   | { tipo: 'validacion'; campos: string[] }
   | { tipo: 'temporal' }
   | { tipo: 'recuperacion' }
+  | { tipo: 'autorizacion' }
   | { tipo: 'configuracion' }
   | { tipo: 'demasiado_grande' }
   | { tipo: 'solicitud' }
@@ -47,6 +48,11 @@ export const MENSAJES_ENVIO: Record<
     titulo: 'No pudimos confirmar el guardado',
     detalle:
       'El envío falló y el entorno de pruebas podría necesitar limpieza manual. Conservamos tus datos y archivos; reintenta una vez y, si persiste, avisa al equipo técnico.',
+  },
+  autorizacion: {
+    titulo: 'Falta autorización para enviar la prueba',
+    detalle:
+      'El servidor no autorizó este envío. Conservamos tus datos y archivos; solicita al equipo técnico que prepare el acceso al sandbox. No compartas tokens ni contraseñas.',
   },
   configuracion: {
     titulo: 'El registro de pruebas no está disponible',
@@ -120,7 +126,8 @@ export function interpretarRespuesta(
   if (status === 502) {
     return { tipo: code === 'RECOVERY_REQUIRED' ? 'recuperacion' : 'temporal' };
   }
-  if (status === 401 || status === 503) return { tipo: 'configuracion' };
+  if (status === 401) return { tipo: 'autorizacion' };
+  if (status === 503) return { tipo: 'configuracion' };
   return { tipo: 'interno' };
 }
 
