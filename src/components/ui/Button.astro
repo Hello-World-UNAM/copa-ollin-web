@@ -1,6 +1,7 @@
 ---
 interface Props {
   href?: string;
+  download?: string;
   variant?: 'primary' | 'secondary' | 'dark';
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
@@ -9,6 +10,7 @@ interface Props {
 
 const {
   href,
+  download,
   variant = 'primary',
   type = 'button',
   disabled = false,
@@ -18,7 +20,7 @@ const classes = ['button', `button--${variant}`, className];
 ---
 
 {href ? (
-  <a class:list={classes} href={href}>
+  <a class:list={classes} href={href} download={download}>
     <slot />
   </a>
 ) : (

@@ -556,6 +556,11 @@ p {
   object-position: center;
 }
 
+/* Encuadre solicitado: Micromouse llena el marco sin bandas negras. */
+.category-card__media-frame--micromouse-amateur img {
+  object-fit: cover;
+}
+
 .category-card__body {
   display: flex;
   flex: 1;

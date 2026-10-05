@@ -63,7 +63,12 @@ const pdfLinkLabel = `Descargar reglamento de ${category.workingName} (PDF)`;
           discrepancia.
         </p>
         <div class="cluster">
-          <Button href={category.regulationPdfUrl}>{pdfLinkLabel}</Button>
+          <Button
+            href={category.regulationPdfUrl}
+            download={`${category.slug}.pdf`}
+          >
+            {pdfLinkLabel}
+          </Button>
           <Button href="/registro" variant="dark">
             Ir a registro en preparación
           </Button>
