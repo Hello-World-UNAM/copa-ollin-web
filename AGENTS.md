@@ -125,6 +125,8 @@ Los agentes no hacen commit, push, merge, release ni cambios de configuración r
 
 ## Validación actual
 
+Para Sprint 4 lee `docs/architecture/contrato-sprint04.md`: acuerdo de coordinación, formatos y fixtures objetivo, no funcionalidad ya entregada. `pnpm test:contrato:sprint04` valida el paquete común; `pnpm dev:sandbox:mock` levanta sólo loopback con Google real apagado y token inequívocamente ficticio de servidor. Detén otros Astro de este repo antes de dev/E2E. Fixtures Node en `tests/fixtures/sprint04/` nunca se importan en el bundle cliente. Folio, imágenes de comprobante y conflicto 409 siguen siendo tareas de los issues; no declarar pruebas reales usando sus respuestas simuladas.
+
 Comprueba que `node --version` sea `v22.23.2` y que `pnpm --version` sea `11.3.0`; selecciona la versión declarada en `.nvmrc` antes de diagnosticar errores de dependencias. Instala con `pnpm install --frozen-lockfile`. Para cambios de aplicación ejecuta, como mínimo:
 
 ```bash

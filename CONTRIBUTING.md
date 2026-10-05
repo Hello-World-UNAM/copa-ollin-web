@@ -19,9 +19,33 @@ pnpm dev
 
 Las versiones esperadas son `v22.23.2` y `11.3.0`. pnpm conserva además un runtime local de Node para ejecutar scripts con la versión correcta, aunque el host tenga otra versión. Si un intento anterior dejó `node_modules` incompleto, selecciona primero Node 22 y ejecuta `pnpm install --force --frozen-lockfile`. No agregues `node-addon-api` ante un error de `sharp`: ese mensaje indica un intento de compilación contra el `libvips` del sistema; actualiza el repositorio y reinstala.
 
-Antes de abrir un pull request ejecuta `pnpm format:check`, `pnpm lint`, `pnpm check`, `pnpm test` y `pnpm build`. CI repite exactamente estos comandos en el check `quality`.
+Antes de abrir un pull request ejecuta `pnpm format:check`, `pnpm lint`, `pnpm check`, `pnpm test`, `pnpm build` y `pnpm test:e2e`. El check `quality` ejecuta estos comandos e instala los navegadores necesarios para E2E.
+
+Para probar el formulario sin Google usa `pnpm test:e2e`. Para el recorrido
+manual con Google real sigue la [guía de sandbox](docs/architecture/pruebas-sandbox-google.md#prueba-interactiva-desde-el-navegador-local): OAuth `drive.file`,
+recursos aislados, reserva Firestore y preflight son obligatorios. El puente
+de autorización local sólo funciona opt-in en Astro dev/loopback; no pongas
+tokens en el formulario ni expongas ese servidor a la red. Prueba únicamente
+con datos y documentos ficticios.
+
+La primera vez instala los navegadores de la suite:
+
+```bash
+pnpm exec playwright install chromium firefox
+pnpm test:e2e
+```
+
+Si faltan bibliotecas del sistema, consulta el error de Playwright y ejecuta
+`pnpm exec playwright install --with-deps chromium firefox` sólo cuando tengas
+permiso para instalar dependencias del equipo. Antes de la suite, detén el
+otro Astro dev de este repositorio, aunque esté en un puerto distinto.
+Playwright inicia su propio servidor en `127.0.0.1:4337`, usa datos/token
+ficticios y adapter mock; no acredita autorización ni persistencia de Google
+en staging. Al finalizar vuelve a levantar tu servidor de desarrollo habitual.
 
 ## Flujo de trabajo
+
+Para los issues paralelos de Sprint 4 consulta el [contrato y fixtures comunes](docs/architecture/contrato-sprint04.md). `pnpm test:contrato:sprint04` valida el paquete ficticio y `pnpm dev:sandbox:mock` inicia el formulario local sin credenciales Google; detén antes cualquier otro Astro de este repositorio. Folio, imágenes y conflicto son objetivos de los issues, no funciones ya implementadas por esos fixtures.
 
 1. Busca un issue existente antes de abrir uno nuevo y lee completo su objetivo, criterios, fuera de alcance, dependencias, responsable y reviewer sugerido.
 2. Mantén una sola tarea principal activa. Si falta una decisión o dependencia, explica el bloqueo y su impacto antes de cambiar código.

@@ -17,6 +17,7 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "dev:sandbox:mock": "node scripts/dev-sandbox-mock.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
@@ -24,6 +25,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:contrato:sprint04": "vitest run src/lib/registro/sprint04-fixtures.test.ts",
     "test:watch": "vitest",
     "test:google-sandbox": "vitest run src/lib/google/real.integration.test.ts",
     "test:e2e": "playwright test"
