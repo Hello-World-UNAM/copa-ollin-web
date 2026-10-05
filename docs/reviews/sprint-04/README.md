@@ -21,6 +21,8 @@ Los informes detallados de Sprint 3 y el PDF maestro permanecen fuera del reposi
 
 Asignación explícita solicitada por Sebastián. Cano revisa; Sebastián realiza QA. Ningún developer requiere el PR de otro para desarrollar y probar su capa. El hito integrado final sí reúne las entregas; cuatro mocks no equivalen a producto funcional.
 
+Issues publicados y asignados: [#29 Alejandro](https://github.com/Hello-World-UNAM/copa-ollin-web/issues/29), [#30 Paty](https://github.com/Hello-World-UNAM/copa-ollin-web/issues/30), [#31 Pastor](https://github.com/Hello-World-UNAM/copa-ollin-web/issues/31) y [#32 Alejandra](https://github.com/Hello-World-UNAM/copa-ollin-web/issues/32). Tablero: Sprint 4, estado Lista. La base se publica mediante [PR #28](https://github.com/Hello-World-UNAM/copa-ollin-web/pull/28); antes del kickoff comprobar que esté aprobado e integrado en main.
+
 ## Paquete disponible
 
 ```bash
