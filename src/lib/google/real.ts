@@ -1,3 +1,4 @@
+import { generarFolio } from './folio';
 import { Readable } from 'node:stream';
 import { google } from 'googleapis';
 import {
@@ -148,6 +149,7 @@ function createSheetRow(
     fileLinks[0] ?? '',
     fileLinks[1] ?? '',
     fileLinks[2] ?? '',
+    generarFolio(data.transactionId),
   ];
 }
 
@@ -200,6 +202,7 @@ async function saveRegistrationToGoogle(
     return {
       success: true,
       message: 'Registro duplicado omitido en Google Sandbox',
+      folio: generarFolio(data.transactionId),
       isDuplicate: true,
     };
   }
@@ -278,6 +281,7 @@ async function saveRegistrationToGoogle(
         return {
           success: true,
           message: 'Registro guardado en Google Sandbox',
+          folio: generarFolio(data.transactionId),
         };
       }
 
@@ -318,6 +322,7 @@ async function saveRegistrationToGoogle(
       return {
         success: true,
         message: 'Registro duplicado omitido en Google Sandbox',
+        folio: generarFolio(data.transactionId),
         isDuplicate: true,
       };
     }
@@ -328,6 +333,7 @@ async function saveRegistrationToGoogle(
   return {
     success: true,
     message: 'Registro guardado en Google Sandbox',
+    folio: generarFolio(data.transactionId),
   };
 }
 
@@ -373,6 +379,7 @@ export function createGoogleSandboxAdapter(
         return {
           success: true,
           message: 'Registro duplicado omitido en Google Sandbox',
+          folio: generarFolio(data.transactionId),
           isDuplicate: true,
         };
       }

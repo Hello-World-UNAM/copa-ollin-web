@@ -1,3 +1,4 @@
+import { generarFolio } from './folio';
 import { describe, expect, it, vi } from 'vitest';
 import {
   GoogleAdapterConfigurationError,
@@ -126,7 +127,10 @@ describe('adapter real con servicios Google simulados', () => {
     expect(result.isDuplicate).toBeUndefined();
     expect(state.uploadedNames).toHaveLength(3);
     expect(state.rows).toHaveLength(1);
-    expect(state.rows[0]).toHaveLength(18);
+    // Columnas 0-17 sin cambios; el folio es la nueva columna 18 al final.
+    expect(state.rows[0]).toHaveLength(19);
+    expect(state.rows[0]?.[18]).toBe(generarFolio('real-adapter-test-001'));
+    expect(result.folio).toBe(state.rows[0]?.[18]);
     expect(state.rows[0]?.[0]).toBe('real-adapter-test-001');
     expect(state.rows[0]?.slice(15, 18)).toEqual([
       'https://drive.google.invalid/file/d/fake-file-1/view',

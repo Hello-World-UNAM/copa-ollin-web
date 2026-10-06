@@ -258,6 +258,7 @@ export function createRegistrationHandler(options: {
         {
           code: result.isDuplicate ? 'DUPLICATE' : 'SAVED',
           message: result.message,
+          ...(result.folio ? { folio: result.folio } : {}),
           isDuplicate: result.isDuplicate ?? false,
         },
         200,

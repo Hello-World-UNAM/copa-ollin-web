@@ -1,3 +1,4 @@
+import { generarFolio } from './folio';
 import type { GoogleAdapter, RegistrationData } from './types';
 
 export interface MockRegistrationSnapshot {
@@ -14,6 +15,7 @@ export const mockGoogleAdapter: GoogleAdapter = {
       return {
         success: true,
         message: 'Registro duplicado omitido en el mock',
+        folio: generarFolio(data.transactionId),
         isDuplicate: true,
       };
     }
@@ -33,6 +35,7 @@ export const mockGoogleAdapter: GoogleAdapter = {
     return {
       success: true,
       message: 'Registro guardado en Sandbox (Mock)',
+      folio: generarFolio(data.transactionId),
     };
   },
 };
