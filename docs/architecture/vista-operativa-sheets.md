@@ -21,11 +21,24 @@ Estado: transformación implementada y probada con datos ficticios; **aplicació
 - Paso manual autorizado: escribir el encabezado `folio` en `S1` de la hoja sandbox. No sobrescribir A1:R1 ni filas existentes.
 - Riesgo abierto: la configuración exige `Registros!A:R` y el preflight lee `A1:R1`. Debe comprobarse en el sandbox autorizado que `append` escribe también la columna S con ese rango; si no, se propondrá a coordinación ampliar a `A:S` (cambio compartido).
 
+## Aviso "guarda tu folio" (entrega al formulario)
+
+El servidor añade `avisoFolio` junto a `folio` en las respuestas 200 `SAVED` y `DUPLICATE` (campo aditivo; clientes anteriores lo ignoran). Texto: ver `AVISO_FOLIO` en [`handler.ts`](../../src/lib/registration/handler.ts). **Mostrarlo y ofrecer copiar el folio corresponde al formulario (otro owner)**; hoy [`envio.ts`](../../src/lib/registro/envio.ts) no lo lee. El folio no valida pago ni inscripción.
+
 ## Vista derivada
 
 Transformación en [`vista-operativa.ts`](../../src/lib/google/vista-operativa.ts): encabezados claros, folio primero, categoría con nombre, integrantes uno por línea, Sí/No en confirmaciones y enlaces de documentos identificables. Se recomienda crear en la hoja una pestaña aparte (por ejemplo `Vista CROFI`) con filtro activado en la fila de encabezados.
 
 Pruebas: [`vista-operativa.test.ts`](../../src/lib/google/vista-operativa.test.ts) (ceros iniciales, integrantes legibles, folio derivado/persistido, fila canónica intacta, JSON ilegible).
+
+## Aplicar la vista en una hoja autorizada
+
+[`vista-operativa-aplicar.ts`](../../src/lib/google/vista-operativa-aplicar.ts) recibe un puerto de Sheets inyectado (probado sin Google en [`vista-operativa-aplicar.test.ts`](../../src/lib/google/vista-operativa-aplicar.test.ts)).
+
+- Por defecto **sólo planifica** (lecturas): informa filas, columnas, si falta `folio` en `S1` y si falta la pestaña.
+- Con `confirmar: true` crea o limpia la pestaña `Vista CROFI`, escribe encabezados y filas, congela la fila 1 y activa el filtro. La pestaña es derivada: no se edita a mano, se regenera.
+- En `Registros` sólo escribe `S1` (`folio`) y únicamente si está vacía.
+- Aún no existe un comando que conecte este módulo con OAuth: falta un runner para el sandbox propio, con autorización explícita.
 
 ## Reversión
 
@@ -34,5 +47,5 @@ Pruebas: [`vista-operativa.test.ts`](../../src/lib/google/vista-operativa.test.t
 
 ## Pendiente
 
-- Procedimiento/script de aplicación sobre una hoja real: requiere sandbox autorizado y aprobación; hasta entonces sólo existe la transformación.
+- Runner con OAuth para ejecutar la aplicación en el sandbox propio y captura ficticia del resultado; hasta entonces sólo existen la transformación y el módulo probado con puerto simulado.
 - Captura ficticia de la vista: se toma al aplicar en el sandbox.

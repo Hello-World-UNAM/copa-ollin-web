@@ -6,7 +6,7 @@ import {
   mockGoogleAdapter,
   resetMockRegistrationSnapshot,
 } from '../google/mock';
-import { createRegistrationHandler } from './handler';
+import { AVISO_FOLIO, createRegistrationHandler } from './handler';
 
 const TOKEN = 'token-unitario-ficticio';
 
@@ -36,5 +36,7 @@ describe('folio en la respuesta (adapter mock; no prueba persistencia real)', ()
     expect(segundo.code).toBe('DUPLICATE');
     expect(primero.folio).toMatch(PATRON_FOLIO);
     expect(segundo.folio).toBe(primero.folio);
+    expect(primero.avisoFolio).toBe(AVISO_FOLIO);
+    expect(segundo.avisoFolio).toBe(AVISO_FOLIO);
   });
 });
