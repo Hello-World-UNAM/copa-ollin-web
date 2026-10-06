@@ -37,3 +37,13 @@ export class GoogleAdapterRecoveryError extends GoogleAdapterTemporaryError {
     this.name = 'GoogleAdapterRecoveryError';
   }
 }
+
+export class GoogleAdapterConflictError extends Error {
+  constructor(
+    message = 'El identificador ya se usó con datos o documentos distintos.',
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = 'GoogleAdapterConflictError';
+  }
+}

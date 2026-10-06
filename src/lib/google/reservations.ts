@@ -3,10 +3,17 @@ import { FieldValue, Firestore } from '@google-cloud/firestore';
 import { GoogleAdapterConfigurationError } from './errors';
 
 export type ReservationState =
-  'acquired' | 'processing' | 'completed' | 'recovery-required';
+  'acquired' | 'processing' | 'completed' | 'recovery-required' | 'conflict';
 
 export interface RegistrationReservationStore {
-  reserve(transactionId: string): Promise<ReservationState>;
+  /**
+   * Con `fingerprint`, un ID ya reservado con otra huella devuelve
+   * 'conflict'. Reservas anteriores sin huella no se pueden comparar.
+   */
+  reserve(
+    transactionId: string,
+    fingerprint?: string,
+  ): Promise<ReservationState>;
   complete(transactionId: string): Promise<void>;
   release(transactionId: string): Promise<void>;
   markRecoveryRequired(
@@ -58,12 +65,16 @@ export function createFirestoreReservationStore(
     reservations.doc(reservationDocumentId(transactionId));
 
   return {
-    async reserve(transactionId) {
+    async reserve(transactionId, fingerprint) {
       const reference = getReservation(transactionId);
 
       return firestore.runTransaction(async (transaction) => {
         const snapshot = await transaction.get(reference);
         if (snapshot.exists) {
+          const stored = snapshot.get('fingerprint');
+          if (fingerprint && stored && stored !== fingerprint) {
+            return 'conflict';
+          }
           const state = snapshot.get('state');
           if (state === 'completed' || state === 'recovery-required') {
             return state;
@@ -73,6 +84,7 @@ export function createFirestoreReservationStore(
 
         transaction.create(reference, {
           state: 'processing',
+          ...(fingerprint ? { fingerprint } : {}),
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         });

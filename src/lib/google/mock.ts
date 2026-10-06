@@ -1,4 +1,6 @@
+import { GoogleAdapterConflictError } from './errors';
 import { generarFolio } from './folio';
+import { calcularHuella } from './huella';
 import type { GoogleAdapter, RegistrationData } from './types';
 
 export interface MockRegistrationSnapshot {
@@ -8,10 +10,15 @@ export interface MockRegistrationSnapshot {
 }
 
 const mockDatabase = new Map<string, MockRegistrationSnapshot>();
+const mockFingerprints = new Map<string, string>();
 
 export const mockGoogleAdapter: GoogleAdapter = {
   async saveRegistration(data) {
+    const fingerprint = await calcularHuella(data);
     if (mockDatabase.has(data.transactionId)) {
+      if (mockFingerprints.get(data.transactionId) !== fingerprint) {
+        throw new GoogleAdapterConflictError();
+      }
       return {
         success: true,
         message: 'Registro duplicado omitido en el mock',
@@ -20,6 +27,7 @@ export const mockGoogleAdapter: GoogleAdapter = {
       };
     }
 
+    mockFingerprints.set(data.transactionId, fingerprint);
     mockDatabase.set(data.transactionId, {
       transactionId: data.transactionId,
       teamName: data.nombreEquipo,
@@ -49,6 +57,7 @@ export function getMockRegistrationSnapshot(): MockRegistrationSnapshot[] {
 
 export function resetMockRegistrationSnapshot(): void {
   mockDatabase.clear();
+  mockFingerprints.clear();
 }
 
 export function createFakeRegistrationData(

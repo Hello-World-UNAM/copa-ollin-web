@@ -1,8 +1,10 @@
 import { generarFolio } from './folio';
+import { calcularHuella } from './huella';
 import { Readable } from 'node:stream';
 import { google } from 'googleapis';
 import {
   GoogleAdapterConfigurationError,
+  GoogleAdapterConflictError,
   GoogleAdapterRecoveryError,
   GoogleAdapterTemporaryError,
 } from './errors';
@@ -370,11 +372,17 @@ export function createGoogleSandboxAdapter(
 
       let reservationState;
       try {
-        reservationState = await reservationStore.reserve(data.transactionId);
+        reservationState = await reservationStore.reserve(
+          data.transactionId,
+          await calcularHuella(data),
+        );
       } catch (error) {
         throw new GoogleAdapterTemporaryError(undefined, { cause: error });
       }
 
+      if (reservationState === 'conflict') {
+        throw new GoogleAdapterConflictError();
+      }
       if (reservationState === 'completed') {
         return {
           success: true,

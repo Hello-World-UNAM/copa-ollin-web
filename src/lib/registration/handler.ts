@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import {
   GoogleAdapterConfigurationError,
+  GoogleAdapterConflictError,
   GoogleAdapterRecoveryError,
   GoogleAdapterTemporaryError,
 } from '../google/errors';
@@ -264,6 +265,17 @@ export function createRegistrationHandler(options: {
         200,
       );
     } catch (error) {
+      if (error instanceof GoogleAdapterConflictError) {
+        return jsonResponse(
+          {
+            code: 'IDEMPOTENCY_CONFLICT',
+            error:
+              'El identificador ya se usó con datos o documentos distintos. No se guardó el contenido nuevo.',
+          },
+          409,
+        );
+      }
+
       if (error instanceof GoogleAdapterConfigurationError) {
         return jsonResponse(
           {
