@@ -151,7 +151,7 @@ test('un fallo de red conserva datos y archivos y el reintento usa el mismo iden
 
 test('un doble clic genera una sola petición', async ({ page }) => {
   let llamadas = 0;
-  
+
   let liberarRespuesta: (value?: unknown) => void;
   const peticionEnPausa = new Promise((resolve) => {
     liberarRespuesta = resolve;
@@ -166,13 +166,13 @@ test('un doble clic genera una sola petición', async ({ page }) => {
 
   await llenarHastaDocumentos(page);
   await completarDocumentosYRevisar(page);
-  
+
   await page
     .getByRole('button', { name: 'Enviar registro de prueba' })
     .dblclick({ force: true });
-    
+
   liberarRespuesta!();
-  
+
   await expect(page.getByRole('status')).toBeVisible();
   expect(llamadas).toBe(1);
 });
