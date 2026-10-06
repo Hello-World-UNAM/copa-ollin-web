@@ -58,7 +58,7 @@ export function createFakeRegistrationData(
   return {
     transactionId,
     nombreEquipo: 'Equipo Ficticio de Prueba',
-    categoria: 'Micromouse amateur',
+    categoria: 'micromouse-amateur',
     institucion: 'Institución Ficticia',
     estadoCiudadProcedencia: 'Ciudad Ficticia',
     nombreCapitan: 'Capitana Ficticia',

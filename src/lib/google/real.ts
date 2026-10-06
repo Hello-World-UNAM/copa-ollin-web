@@ -151,6 +151,12 @@ function createSheetRow(
   ];
 }
 
+function extensionForMime(mimeType: string): string {
+  if (mimeType === 'image/png') return 'png';
+  if (mimeType === 'image/jpeg') return 'jpg';
+  return 'pdf';
+}
+
 function escapeDriveFileNamePart(value: string): string {
   return value.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80);
 }
@@ -205,7 +211,7 @@ async function saveRegistrationToGoogle(
   let fileLinks: string[] = [];
   try {
     for (const [documentName, file] of getRegistrationFiles(data)) {
-      const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.pdf`;
+      const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.${extensionForMime(file.type)}`;
       driveUploadOutcomeUnknown = true;
       const response = await services.drive.files.create({
         supportsAllDrives: true,
