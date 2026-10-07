@@ -38,6 +38,24 @@ Con la meta de 100 envíos simultáneos: unas 100 lecturas y 100 escrituras de S
 
 ## Qué no cubre
 
-- No hay medición real bajo carga: la concurrencia y las cuotas siguen pendientes (bloque F).
+- La medición real es de un solo sandbox y un solo usuario OAuth (ver abajo); no equivale a producción ni a 500 usuarios concurrentes.
 - La protección contra abuso (límite de solicitudes) no está implementada; requiere coordinar un código 429 con Cano y Sebastián.
 - Las pruebas usan clientes simulados; no demuestran el comportamiento de Google.
+
+## Medición real de concurrencia (sandbox, 2026-10-07)
+
+Ejecución de `pnpm sandbox:concurrencia` en el sandbox propio, con datos ficticios, desde la rama `feat/30-recuperacion-reservas`. Sólo conteos; sin IDs ni URLs.
+
+| Escenario | Resultado |
+|---|---|
+| 5 solicitudes, mismo ID | 1 `SAVED`, 4 `TEMPORARY_STORAGE_ERROR`; 1 fila, 3 archivos |
+| 100 solicitudes, IDs distintos, 5 instancias | 62 `SAVED`, 30 `TEMPORARY_STORAGE_ERROR`, 8 `RECOVERY_REQUIRED`; 62 filas; duración 56 s, p50 10,7 s, p95 34,8 s |
+
+Métricas del escenario de 100: `sheets.values.get` con 27 errores de cuota, 71 timeouts y 67 reintentos; `sheets.values.append` con 5 errores de cuota y 5 timeouts; `drive.files.create` con 3 timeouts; 14 borrados de limpieza.
+
+Conclusiones:
+
+- Integridad: sin duplicados ni falsas confirmaciones; cada `SAVED` tiene una fila y tres archivos; un append con timeout que sí escribió se reconcilió antes de confirmar.
+- Capacidad: con 100 solicitudes simultáneas el 38 % falló por cuota o timeouts, sobre todo en la lectura de reconciliación de Sheets. Los 8 `RECOVERY_REQUIRED` no se liberan solos y requieren el procedimiento de [recuperación de reservas](./recuperacion-de-reservas.md).
+- Los archivos excedentes (203 frente a 186 esperados) proceden de cargas parciales y casos ambiguos; la limpieza final los retira por prefijo.
+- Pendiente de decisión: límite de solicitudes o cola (requiere código 429 en el contrato), margen de timeout de la lectura de reconciliación y mensaje del formulario ante `502` temporal.
