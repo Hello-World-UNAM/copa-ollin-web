@@ -5,6 +5,13 @@ import { GoogleAdapterConfigurationError } from './errors';
 export type ReservationState =
   'acquired' | 'processing' | 'completed' | 'recovery-required' | 'conflict';
 
+export interface ReservaInspeccionada {
+  estado: string;
+  etapa?: string;
+  driveFileIds: string[];
+  antiguedadMinutos?: number;
+}
+
 export interface RegistrationReservationStore {
   /**
    * Con `fingerprint`, un ID ya reservado con otra huella devuelve
@@ -22,6 +29,8 @@ export interface RegistrationReservationStore {
     driveFileIds?: readonly string[],
   ): Promise<void>;
   cleanup(transactionId: string): Promise<void>;
+  /** Lectura para diagnóstico operativo; no modifica la reserva. */
+  inspeccionar?(transactionId: string): Promise<ReservaInspeccionada | null>;
   close?(): Promise<void>;
 }
 
@@ -121,6 +130,24 @@ export function createFirestoreReservationStore(
 
     async cleanup(transactionId) {
       await getReservation(transactionId).delete();
+    },
+    async inspeccionar(transactionId) {
+      const snapshot = await getReservation(transactionId).get();
+      if (!snapshot.exists) return null;
+      const actualizada = snapshot.get('updatedAt');
+      const ms =
+        actualizada && typeof actualizada.toMillis === 'function'
+          ? Date.now() - actualizada.toMillis()
+          : undefined;
+      const ids = snapshot.get('driveFileIds');
+      return {
+        estado: String(snapshot.get('state')),
+        etapa: snapshot.get('recoveryStage') ?? undefined,
+        driveFileIds: Array.isArray(ids) ? ids.map(String) : [],
+        ...(ms === undefined
+          ? {}
+          : { antiguedadMinutos: Math.max(0, Math.round(ms / 60000)) }),
+      };
     },
     async close() {
       await firestore.terminate();

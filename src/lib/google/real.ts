@@ -165,6 +165,12 @@ function escapeDriveFileNamePart(value: string): string {
   return value.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80);
 }
 
+// Prefijo común de los nombres de archivo de una transacción; sirve para
+// localizar archivos huérfanos en Drive aunque no se conozca su ID.
+export function prefijoArchivosDrive(transactionId: string): string {
+  return `copa-ollin-${escapeDriveFileNamePart(transactionId)}-`;
+}
+
 function getProviderHttpStatus(error: unknown): number | undefined {
   if (typeof error !== 'object' || error === null || !('response' in error)) {
     return undefined;
@@ -217,7 +223,7 @@ async function saveRegistrationToGoogle(
   const idsSubidos = () => uploadedFiles.map(({ id }) => id);
   try {
     for (const [documentName, file] of getRegistrationFiles(data)) {
-      const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.${extensionForMime(file.type)}`;
+      const fileName = `${prefijoArchivosDrive(data.transactionId)}${documentName}.${extensionForMime(file.type)}`;
       driveUploadOutcomeUnknown = true;
       const response = await services.drive.files.create({
         supportsAllDrives: true,
