@@ -335,6 +335,50 @@ describe('adapter real con servicios Google simulados', () => {
     ).toEqual([]);
   });
 
+  it('se recupera de una lectura de Sheets con 503 transitorio y guarda una sola fila', async () => {
+    const { services, state } = createServices();
+    const get = services.sheets.spreadsheets.values.get;
+    vi.spyOn(services.sheets.spreadsheets.values, 'get')
+      .mockImplementationOnce(async () => {
+        throw Object.assign(new Error('503 ficticio'), {
+          response: { status: 503 },
+        });
+      })
+      .mockImplementation(get);
+    const adapter = createGoogleSandboxAdapter({
+      config,
+      createServices: () => services,
+      reservationStore: createReservationStore(),
+      politica: { esperaBaseMs: 1, dormir: async () => undefined },
+    });
+
+    const result = await adapter.saveRegistration(
+      createTestData('reintento-001'),
+    );
+
+    expect(result.success).toBe(true);
+    expect(state.rows).toHaveLength(1);
+  });
+
+  it('no repite la subida a Drive tras un timeout: queda como recuperación', async () => {
+    const { services, state } = createServices();
+    const create = vi
+      .spyOn(services.drive.files, 'create')
+      .mockImplementation(() => new Promise(() => {}));
+    const adapter = createGoogleSandboxAdapter({
+      config,
+      createServices: () => services,
+      reservationStore: createReservationStore(),
+      politica: { timeoutMs: 20, dormir: async () => undefined },
+    });
+
+    await expect(
+      adapter.saveRegistration(createTestData('timeout-subida-001')),
+    ).rejects.toBeInstanceOf(GoogleAdapterRecoveryError);
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(state.rows).toHaveLength(0);
+  });
+
   it('falla cerrada si falta la configuración requerida', async () => {
     const createServicesSpy = vi.fn();
     const adapter = createGoogleSandboxAdapter({

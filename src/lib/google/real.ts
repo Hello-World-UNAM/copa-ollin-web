@@ -1,5 +1,9 @@
 import { generarFolio } from './folio';
 import { calcularHuella } from './huella';
+import {
+  ejecutarConPolitica,
+  type PoliticaLlamadas,
+} from './politica-llamadas';
 import { Readable } from 'node:stream';
 import { google } from 'googleapis';
 import {
@@ -117,6 +121,58 @@ async function createGoogleServices(
       auth,
     }) as unknown as GoogleSheetsPort,
     drive: google.drive({ version: 'v3', auth }) as unknown as GoogleDrivePort,
+  };
+}
+
+/**
+ * Aplica tiempo máximo a todas las llamadas y reintentos acotados sólo a las
+ * seguras de repetir (lecturas y borrados). Subir archivos y añadir la fila
+ * nunca se reintentan: un timeout ahí es resultado incierto.
+ */
+export function aplicarPoliticaAServicios(
+  services: GoogleSandboxServices,
+  politica?: Partial<PoliticaLlamadas>,
+): GoogleSandboxServices {
+  const subida = { timeoutMs: 20_000, ...politica };
+  return {
+    sheets: {
+      spreadsheets: {
+        values: {
+          get: (args) =>
+            ejecutarConPolitica(
+              'sheets',
+              'values.get',
+              () => services.sheets.spreadsheets.values.get(args),
+              { reintentable: true, politica },
+            ),
+          append: (args) =>
+            ejecutarConPolitica(
+              'sheets',
+              'values.append',
+              () => services.sheets.spreadsheets.values.append(args),
+              { reintentable: false, politica },
+            ),
+        },
+      },
+    },
+    drive: {
+      files: {
+        create: (args) =>
+          ejecutarConPolitica(
+            'drive',
+            'files.create',
+            () => services.drive.files.create(args),
+            { reintentable: false, politica: subida },
+          ),
+        delete: (args) =>
+          ejecutarConPolitica(
+            'drive',
+            'files.delete',
+            () => services.drive.files.delete(args),
+            { reintentable: true, politica },
+          ),
+      },
+    },
   };
 }
 
@@ -357,6 +413,7 @@ export function createGoogleSandboxAdapter(
     config?: GoogleSandboxConfig;
     createServices?: GoogleServicesFactory;
     reservationStore?: RegistrationReservationStore;
+    politica?: Partial<PoliticaLlamadas>;
   } = {},
 ): GoogleAdapter {
   return {
@@ -373,6 +430,7 @@ export function createGoogleSandboxAdapter(
         if (error instanceof GoogleAdapterConfigurationError) throw error;
         throw new GoogleAdapterTemporaryError(undefined, { cause: error });
       }
+      services = aplicarPoliticaAServicios(services, options.politica);
 
       let reservationStore: RegistrationReservationStore;
       try {

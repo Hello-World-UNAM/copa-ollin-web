@@ -17,3 +17,4 @@ Este directorio registra decisiones técnicas aprobadas y contratos internos de 
 
 - [Guía de pruebas restringidas de Google Sandbox](pruebas-sandbox-google.md)
 - [Recuperación de reservas ambiguas](recuperacion-de-reservas.md)
+- [Timeouts, reintentos y consumo de Google](limites-y-cuotas-google.md)
