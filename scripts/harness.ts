@@ -74,9 +74,9 @@ function calcularPercentiles(tiempos: number[]) {
   if (tiempos.length === 0) return { p50: 0, p95: 0, p99: 0 };
   tiempos.sort((a, b) => a - b);
   return {
-    p50: tiempos[Math.floor(tiempos.length * 0.5)],
-    p95: tiempos[Math.floor(tiempos.length * 0.95)],
-    p99: tiempos[Math.floor(tiempos.length * 0.99)],
+    p50: tiempos[Math.floor(tiempos.length * 0.5)] ?? 0,
+    p95: tiempos[Math.floor(tiempos.length * 0.95)] ?? 0,
+    p99: tiempos[Math.floor(tiempos.length * 0.99)] ?? 0,
   };
 }
 
