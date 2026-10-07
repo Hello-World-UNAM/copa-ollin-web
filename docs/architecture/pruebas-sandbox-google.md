@@ -254,3 +254,7 @@ El reviewer debe comprobar en el entorno restringido la hoja y carpeta sin compa
 - Si Drive confirma una carga pero se pierde la respuesta antes de recibir su ID, el cleanup automático no puede identificar ese archivo; revisa el sandbox después de una falla remota.
 - El modo mock no prueba credenciales, cuota, permisos efectivos ni disponibilidad de Google.
 - Nada de esta guía habilita producción o el procesamiento de datos reales.
+
+## Conservar los datos ficticios de la prueba de integración
+
+Con `SANDBOX_GOOGLE_CONSERVAR=true` la prueba no borra su fila, sus tres archivos ni su reserva, para inspeccionar la hoja `Vista CROFI`. Es sólo para el sandbox propio con datos ficticios. Después hay que eliminar a mano la fila (la del ID técnico de prueba), los tres archivos de la carpeta de pruebas y, si se desea repetir la prueba, la reserva en Firestore.

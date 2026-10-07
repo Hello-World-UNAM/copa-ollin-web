@@ -11,6 +11,8 @@ import { createRegistrationHandler } from '../registration/handler';
 loadEnv({ quiet: true });
 const integrationEnabled =
   process.env.RUN_GOOGLE_SANDBOX_INTEGRATION === 'true';
+// Conserva la fila y los archivos ficticios para inspeccionar la vista en Sheets.
+const conservarDatos = process.env.SANDBOX_GOOGLE_CONSERVAR === 'true';
 const fileTestAuthorized =
   process.env.SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED === 'true';
 const requiredEnvironmentNames = [
@@ -413,58 +415,67 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
       }
     } finally {
       try {
-        const rowsResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId: config.spreadsheetId,
-          range: config.sheetRange,
-          majorDimension: 'ROWS',
-        });
-        const matchingRowIndexes = (rowsResponse.data.values ?? [])
-          .map((row, index) => (row[0] === transactionId ? index + 1 : -1))
-          .filter((index) => index > 0)
-          .sort((left, right) => right - left);
-
-        if (matchingRowIndexes.length > 0) {
-          await sheets.spreadsheets.batchUpdate({
+        if (!conservarDatos) {
+          const rowsResponse = await sheets.spreadsheets.values.get({
             spreadsheetId: config.spreadsheetId,
-            requestBody: {
-              requests: matchingRowIndexes.map((rowIndex) => ({
-                deleteDimension: {
-                  range: {
-                    sheetId,
-                    dimension: 'ROWS',
-                    startIndex: rowIndex - 1,
-                    endIndex: rowIndex,
-                  },
-                },
-              })),
-            },
+            range: config.sheetRange,
+            majorDimension: 'ROWS',
           });
-        }
+          const matchingRowIndexes = (rowsResponse.data.values ?? [])
+            .map((row, index) => (row[0] === transactionId ? index + 1 : -1))
+            .filter((index) => index > 0)
+            .sort((left, right) => right - left);
 
-        const driveFilesResponse = await drive.files.list({
-          q: `'${config.driveFolderId}' in parents and name contains '${driveFileNamePrefix}' and trashed = false`,
-          corpora: 'allDrives',
-          includeItemsFromAllDrives: true,
-          pageSize: 100,
-          fields: 'files(id)',
-          supportsAllDrives: true,
-        });
-        await Promise.all(
-          (driveFilesResponse.data.files ?? []).flatMap((file) =>
-            file.id
-              ? [
-                  drive.files.delete({
-                    fileId: file.id,
-                    supportsAllDrives: true,
-                  }),
-                ]
-              : [],
-          ),
-        );
-        await reservationStore.cleanup(transactionId);
+          if (matchingRowIndexes.length > 0) {
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId: config.spreadsheetId,
+              requestBody: {
+                requests: matchingRowIndexes.map((rowIndex) => ({
+                  deleteDimension: {
+                    range: {
+                      sheetId,
+                      dimension: 'ROWS',
+                      startIndex: rowIndex - 1,
+                      endIndex: rowIndex,
+                    },
+                  },
+                })),
+              },
+            });
+          }
+
+          const driveFilesResponse = await drive.files.list({
+            q: `'${config.driveFolderId}' in parents and name contains '${driveFileNamePrefix}' and trashed = false`,
+            corpora: 'allDrives',
+            includeItemsFromAllDrives: true,
+            pageSize: 100,
+            fields: 'files(id)',
+            supportsAllDrives: true,
+          });
+          await Promise.all(
+            (driveFilesResponse.data.files ?? []).flatMap((file) =>
+              file.id
+                ? [
+                    drive.files.delete({
+                      fileId: file.id,
+                      supportsAllDrives: true,
+                    }),
+                  ]
+                : [],
+            ),
+          );
+          await reservationStore.cleanup(transactionId);
+        }
       } finally {
         await reservationStore.close?.();
       }
+    }
+
+    if (conservarDatos) {
+      console.log(
+        'Datos ficticios conservados: 1 fila y 3 archivos; hay que borrarlos manualmente.',
+      );
+      return;
     }
 
     const remainingRowsResponse = await sheets.spreadsheets.values.get({
