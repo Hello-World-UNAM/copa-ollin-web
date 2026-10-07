@@ -19,6 +19,7 @@ export interface RegistrationReservationStore {
   markRecoveryRequired(
     transactionId: string,
     recoveryStage: string,
+    driveFileIds?: readonly string[],
   ): Promise<void>;
   cleanup(transactionId: string): Promise<void>;
   close?(): Promise<void>;
@@ -109,10 +110,11 @@ export function createFirestoreReservationStore(
       });
     },
 
-    async markRecoveryRequired(transactionId, recoveryStage) {
+    async markRecoveryRequired(transactionId, recoveryStage, driveFileIds) {
       await getReservation(transactionId).update({
         state: 'recovery-required',
         recoveryStage,
+        driveFileIds: [...(driveFileIds ?? [])],
         updatedAt: FieldValue.serverTimestamp(),
       });
     },

@@ -77,6 +77,11 @@ function createServices(initialRows: unknown[][] = []) {
   return { services, state };
 }
 
+const referenciasRecuperacion = new Map<
+  string,
+  { etapa: string; driveFileIds: readonly string[] }
+>();
+
 function createReservationStore(): RegistrationReservationStore {
   const states = new Map<
     string,
@@ -106,8 +111,9 @@ function createReservationStore(): RegistrationReservationStore {
         fingerprints.delete(transactionId);
       }
     },
-    async markRecoveryRequired(transactionId) {
+    async markRecoveryRequired(transactionId, etapa, driveFileIds = []) {
       states.set(transactionId, 'recovery-required');
+      referenciasRecuperacion.set(transactionId, { etapa, driveFileIds });
     },
     async cleanup(transactionId) {
       states.delete(transactionId);
@@ -293,6 +299,40 @@ describe('adapter real con servicios Google simulados', () => {
       adapter.saveRegistration(createTestData()),
     ).rejects.toBeInstanceOf(GoogleAdapterRecoveryError);
     expect(state.deletedIds).toHaveLength(2);
+  });
+
+  it('conserva etapa e IDs de Drive en la reserva cuando falla la limpieza', async () => {
+    const { services } = createServices();
+    const reservationStore = createReservationStore();
+    vi.spyOn(services.sheets.spreadsheets.values, 'append').mockRejectedValue(
+      new Error('Error ficticio de Sheets'),
+    );
+    vi.spyOn(services.drive.files, 'delete').mockRejectedValue(
+      new Error('Error ficticio de limpieza'),
+    );
+    const adapter = createAdapter(services, reservationStore);
+
+    await expect(
+      adapter.saveRegistration(createTestData('ref-recuperacion-001')),
+    ).rejects.toBeInstanceOf(GoogleAdapterRecoveryError);
+
+    expect(referenciasRecuperacion.get('ref-recuperacion-001')).toEqual({
+      etapa: 'drive-cleanup-failed',
+      driveFileIds: ['fake-file-1', 'fake-file-2', 'fake-file-3'],
+    });
+  });
+
+  it('el error de recuperación expone IDs de Drive sin datos personales', async () => {
+    const error = new GoogleAdapterRecoveryError(
+      'drive-cleanup-failed',
+      undefined,
+      undefined,
+      ['fake-file-1'],
+    );
+    expect(error.driveFileIds).toEqual(['fake-file-1']);
+    expect(
+      new GoogleAdapterRecoveryError('drive-cleanup-failed').driveFileIds,
+    ).toEqual([]);
   });
 
   it('falla cerrada si falta la configuración requerida', async () => {

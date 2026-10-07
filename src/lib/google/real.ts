@@ -214,6 +214,7 @@ async function saveRegistrationToGoogle(
   let duplicateFoundAfterAppendError = false;
   let driveUploadOutcomeUnknown = false;
   let fileLinks: string[] = [];
+  const idsSubidos = () => uploadedFiles.map(({ id }) => id);
   try {
     for (const [documentName, file] of getRegistrationFiles(data)) {
       const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.${extensionForMime(file.type)}`;
@@ -272,6 +273,7 @@ async function saveRegistrationToGoogle(
           'sheets-reconciliation-failed',
           undefined,
           { cause: verificationError },
+          idsSubidos(),
         );
       }
 
@@ -292,6 +294,7 @@ async function saveRegistrationToGoogle(
           'sheets-row-state-ambiguous',
           undefined,
           { cause: error },
+          idsSubidos(),
         );
       }
       duplicateFoundAfterAppendError = rowsAfterAppendError.length === 1;
@@ -307,9 +310,12 @@ async function saveRegistrationToGoogle(
     );
 
     if (cleanupResults.some((result) => result.status === 'rejected')) {
-      throw new GoogleAdapterRecoveryError('drive-cleanup-failed', undefined, {
-        cause: error,
-      });
+      throw new GoogleAdapterRecoveryError(
+        'drive-cleanup-failed',
+        undefined,
+        { cause: error },
+        idsSubidos(),
+      );
     }
 
     if (driveUploadOutcomeUnknown) {
@@ -317,6 +323,7 @@ async function saveRegistrationToGoogle(
         'drive-upload-outcome-unknown',
         getProviderHttpStatus(error),
         { cause: error },
+        idsSubidos(),
       );
     }
 
@@ -411,6 +418,7 @@ export function createGoogleSandboxAdapter(
             await reservationStore.markRecoveryRequired(
               data.transactionId,
               error.recoveryStage,
+              error.driveFileIds,
             );
           } catch (reservationError) {
             throw new GoogleAdapterRecoveryError(
