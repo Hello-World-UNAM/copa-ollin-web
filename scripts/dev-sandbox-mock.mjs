@@ -21,14 +21,10 @@ if (process.argv.includes('--print-config')) {
         !key.startsWith('SANDBOX_FIRESTORE_'),
     ),
   );
-  const child = spawn(
-    'pnpm',
-    ['dev', '--host', '127.0.0.1', '--port', '4337'],
-    {
-      stdio: 'inherit',
-      env: { ...env, ...config },
-    },
-  );
+  const child = spawn('pnpm', ['dev', '--host', '0.0.0.0', '--port', '4337'], {
+    stdio: 'inherit',
+    env: { ...env, ...config },
+  });
   child.on('error', (error) => {
     console.error(error.message);
     process.exitCode = 1;
