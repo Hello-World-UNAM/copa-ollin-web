@@ -89,6 +89,18 @@ Todas se hacen en la consola de Firestore o de Drive del sandbox propio, nunca d
 
 Anota, sin IDs ni enlaces: fecha, SHA desplegado, estado y etapa, conteos antes y después, acción tomada y quién la ejecutó.
 
+## Evidencia de un caso real en el sandbox (2026-10-07)
+
+Se generaron casos con una corrida de 200 envíos simultáneos en el sandbox propio, con datos ficticios, y se conservaron dos con `RECOVERY_REQUIRED` (`SANDBOX_CONCURRENCIA_CONSERVAR_RECUPERACION=2`). Se resolvieron a mano con este procedimiento, sin IDs ni enlaces:
+
+| Momento | Estado | Etapa | Filas | Archivos | Veredicto |
+| ------- | ------ | ----- | ----- | -------- | --------- |
+| Antes (casos A y B) | `recovery-required` | `sheets-reconciliation-failed` | 0 | 3 | `archivos-huerfanos` |
+| Tras borrar los archivos (3c) | `recovery-required` | `sheets-reconciliation-failed` | 0 | 0 | `sin-rastros` |
+| Tras retirar la reserva (3b) | sin reserva | — | 0 | 0 | `sin-reserva` |
+
+El ciclo completo (reserva ambigua, diagnóstico, borrado de huérfanos, retiro de la reserva y estado libre para reintentar) funcionó en los dos casos. No se probaron en vivo los veredictos `completar-reserva` ni `investigar`.
+
 ## Límites conocidos
 
 - La antigüedad de la reserva es informativa: el umbral de 15 minutos es una recomendación operativa provisional, no un tiempo de expiración implementado.
