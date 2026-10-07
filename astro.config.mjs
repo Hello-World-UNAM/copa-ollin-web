@@ -64,26 +64,64 @@ function stripTranscriptionNotice() {
 }
 
 function wrapRegulationSections() {
-  return (tree) => {
+  return (tree, file) => {
+    const filePath = String(file.path ?? '').replaceAll('\\', '/');
+
+    if (!filePath.includes('docs/regulations/')) {
+      return;
+    }
+
     if (!Array.isArray(tree.children)) return;
 
     const children = [];
-    let currentSection = null;
+    let sectionContent = null;
+
+    const getText = (node) => {
+      if (node.type === 'text') return node.value ?? '';
+      if (!Array.isArray(node.children)) return '';
+      return node.children.map(getText).join('');
+    };
 
     tree.children.forEach((child) => {
-      if (child.type === 'element' && child.tagName === 'h2') {
-        currentSection = {
+      const isNumberedHeading =
+        child.type === 'element' &&
+        child.tagName === 'h3' &&
+        /^\d+\.\s/.test(getText(child));
+
+      if (isNumberedHeading) {
+        sectionContent = {
           type: 'element',
-          tagName: 'section',
-          properties: { className: ['regulation-section'] },
-          children: [child],
+          tagName: 'div',
+          properties: {
+            className: ['regulation-section__content'],
+          },
+          children: [],
         };
-        children.push(currentSection);
+
+        children.push({
+          type: 'element',
+          tagName: 'details',
+          properties: {
+            className: ['regulation-section'],
+          },
+          children: [
+            {
+              type: 'element',
+              tagName: 'summary',
+              properties: {
+                className: ['regulation-section__summary'],
+              },
+              children: [child],
+            },
+            sectionContent,
+          ],
+        });
+
         return;
       }
 
-      if (currentSection) {
-        currentSection.children.push(child);
+      if (sectionContent) {
+        sectionContent.children.push(child);
       } else {
         children.push(child);
       }

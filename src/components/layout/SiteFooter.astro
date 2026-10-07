@@ -1,6 +1,12 @@
 ---
-import Container from '../ui/Container.astro';
+import { Image } from 'astro:assets';
 import { ArrowUp } from '@lucide/astro';
+
+import facebookIcon from '../../../assets/brand/social/facebook-square-black-icon.png';
+import instagramIcon from '../../../assets/brand/social/instagram.webp';
+import fiUnamLogo from '../../../assets/brand/fi-unam-supplied.png';
+import helloWorldLogo from '../../../assets/brand/hello-world-black.svg';
+import Container from '../ui/Container.astro';
 ---
 
 <footer class="site-footer">
@@ -13,9 +19,38 @@ import { ArrowUp } from '@lucide/astro';
           <strong>CROFI</strong> organiza Copa Ollin en colaboración con Club
           Hello World.
         </p>
+
+        <div class="site-footer__social" aria-label="Redes sociales de CROFI">
+          <a
+            href="https://www.instagram.com/crofi.unam/"
+            aria-label="Instagram de CROFI (abre en una nueva pestaña)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              src={instagramIcon}
+              alt=""
+              class="site-footer__social-icon"
+            />
+          </a>
+
+          <a
+            href="https://www.facebook.com/share/14kRsz7NUMo/"
+            aria-label="Facebook de CROFI (abre en una nueva pestaña)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              src={facebookIcon}
+              alt=""
+              class="site-footer__social-icon"
+            />
+          </a>
+        </div>
       </div>
+
       <nav class="site-footer__nav" aria-label="Navegación del pie de página">
-        <p class="site-footer__eyebrow">Explora el sitio</p>
+        <p class="site-footer__eyebrow">Navegación</p>
         <ul>
           <li>
             <a href="/">Inicio</a>
@@ -28,11 +63,46 @@ import { ArrowUp } from '@lucide/astro';
           </li>
         </ul>
       </nav>
+
+      <div class="site-footer__institutions">
+        <p class="site-footer__eyebrow">Instituciones</p>
+
+        <div class="site-footer__logos">
+          <a
+            href="https://helloworld-unam.tech/"
+            aria-label="Hello World (abre en una nueva pestaña)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              src={helloWorldLogo}
+              alt=""
+              class="site-footer__logo site-footer__logo--hello-world"
+            />
+          </a>
+
+          <a
+            href="https://www.ingenieria.unam.mx/"
+            aria-label="Facultad de Ingeniería, UNAM (abre en una nueva pestaña)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              src={fiUnamLogo}
+              alt=""
+              class="site-footer__logo site-footer__logo--fi"
+            />
+          </a>
+        </div>
+      </div>
     </div>
+
     <div class="site-footer__bottom">
       <p>Copa Ollin · 2026</p>
+
       <a class="site-footer__back" href="#inicio">
-        Volver arriba <ArrowUp size={20} aria-hidden="true" />
+        Volver arriba
+        <ArrowUp size={20} aria-hidden="true" />
       </a>
     </div>
   </Container>

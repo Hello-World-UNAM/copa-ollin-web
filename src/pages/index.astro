@@ -5,6 +5,8 @@ import CategoryCard from '../components/categories/CategoryCard.astro';
 import Container from '../components/ui/Container.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { categories } from '../data/categories';
+import { Image } from 'astro:assets';
+import crofitoUno from '../../assets/brand/crofito-uno.png';
 ---
 
 <BaseLayout
@@ -13,29 +15,51 @@ import { categories } from '../data/categories';
 >
   <Container>
     <div class="stack">
-      <section aria-labelledby="titulo-inicio">
-        <p class="eyebrow">Torneo universitario de robótica</p>
-        <h1 id="titulo-inicio">Copa Ollin</h1>
-        <p>
-          Competencia de robótica organizada por CROFI en colaboración con Club
-          Hello World, con categorías para equipos universitarios y estudiantes
-          de ingeniería.
-        </p>
-        <p>
-          <strong>Evento:</strong> del 5 al 7 de noviembre de 2026. La sede está
-          por confirmar y se publicará cuando la Facultad emita su aprobación
-          oficial.
-        </p>
-        <p>
-          <strong>Estado del registro:</strong> apertura pendiente de
-          confirmación. El cierre de inscripciones es el 30 de octubre de 2026 a
-          las 23:59, hora de Ciudad de México.
-        </p>
-        <div class="cluster">
-          <Button href="/registro">Consultar estado del registro</Button>
-          <Button href="#categorias" variant="secondary">
-            Ver categorías
-          </Button>
+      <section class="home-hero" aria-labelledby="titulo-inicio">
+        <div class="home-hero__content">
+          <p class="eyebrow">Torneo universitario de robótica</p>
+          <h1 id="titulo-inicio">Copa Ollin</h1>
+
+          <p>
+            Competencia de robótica organizada por CROFI en colaboración con Club
+            Hello World, con categorías para equipos universitarios y estudiantes
+            de ingeniería.
+          </p>
+
+          <div class="home-hero__status">
+            <div class="home-hero__status-card">
+              <p>
+                <strong>Evento:</strong> del 5 al 7 de noviembre de 2026. La sede está
+                por confirmar y se publicará cuando la Facultad emita su aprobación
+                oficial.
+              </p>
+            </div>
+
+            <div class="home-hero__status-card">
+              <p>
+                <strong>Estado del registro:</strong> apertura pendiente de
+                confirmación. El cierre de inscripciones es el 30 de octubre de 2026
+                a las 23:59, hora de Ciudad de México.
+              </p>
+            </div>
+          </div>
+
+          <div class="cluster">
+            <Button href="/registro">Consultar estado del registro</Button>
+            <Button href="#categorias" variant="secondary">
+              Ver categorías
+            </Button>
+          </div>
+        </div>
+
+        <div class="home-hero__media">
+          <Image
+            src={crofitoUno}
+            alt=""
+            class="home-hero__image"
+            widths={[320, 480, 640]}
+            sizes="(min-width: 768px) 36vw, 80vw"
+          />
         </div>
       </section>
 
@@ -45,8 +69,7 @@ import { categories } from '../data/categories';
           <h2 id="titulo-premiacion">Estado actual</h2>
           <p>
             La información de premiación continúa en estado
-            <strong>Por confirmar</strong> hasta contar con aprobación oficial
-            de CROFI.
+            <strong> Por confirmar </strong>
           </p>
         </Card>
       </section>
