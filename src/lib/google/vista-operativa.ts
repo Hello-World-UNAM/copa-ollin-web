@@ -30,7 +30,7 @@ export const ENCABEZADOS_VISTA_OPERATIVA = [
   'Categoría',
   'Institución',
   'Procedencia',
-  'Capitán/Capitana',
+  'Capitán(na)',
   'Correo',
   'Teléfono',
   'Robot',
