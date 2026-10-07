@@ -1,3 +1,5 @@
+import { GoogleAdapterConflictError } from './errors';
+import { generarFolio } from './folio';
 import { describe, expect, it, vi } from 'vitest';
 import {
   GoogleAdapterConfigurationError,
@@ -81,10 +83,17 @@ function createReservationStore(): RegistrationReservationStore {
     'processing' | 'completed' | 'recovery-required'
   >();
 
+  const fingerprints = new Map<string, string>();
+
   return {
-    async reserve(transactionId) {
+    async reserve(transactionId, fingerprint) {
       const current = states.get(transactionId);
-      if (current) return current;
+      if (current) {
+        const stored = fingerprints.get(transactionId);
+        if (fingerprint && stored && stored !== fingerprint) return 'conflict';
+        return current;
+      }
+      if (fingerprint) fingerprints.set(transactionId, fingerprint);
       states.set(transactionId, 'processing');
       return 'acquired';
     },
@@ -94,6 +103,7 @@ function createReservationStore(): RegistrationReservationStore {
     async release(transactionId) {
       if (states.get(transactionId) === 'processing') {
         states.delete(transactionId);
+        fingerprints.delete(transactionId);
       }
     },
     async markRecoveryRequired(transactionId) {
@@ -126,7 +136,10 @@ describe('adapter real con servicios Google simulados', () => {
     expect(result.isDuplicate).toBeUndefined();
     expect(state.uploadedNames).toHaveLength(3);
     expect(state.rows).toHaveLength(1);
-    expect(state.rows[0]).toHaveLength(18);
+    // Columnas 0-17 sin cambios; el folio es la nueva columna 18 al final.
+    expect(state.rows[0]).toHaveLength(19);
+    expect(state.rows[0]?.[18]).toBe(generarFolio('real-adapter-test-001'));
+    expect(result.folio).toBe(state.rows[0]?.[18]);
     expect(state.rows[0]?.[0]).toBe('real-adapter-test-001');
     expect(state.rows[0]?.slice(15, 18)).toEqual([
       'https://drive.google.invalid/file/d/fake-file-1/view',
@@ -159,6 +172,36 @@ describe('adapter real con servicios Google simulados', () => {
     expect(retryResult.isDuplicate).toBe(true);
     expect(state.rows).toHaveLength(1);
     expect(state.uploadedNames).toHaveLength(3);
+  });
+
+  it('rechaza el mismo ID con datos distintos sin escribir filas ni archivos nuevos', async () => {
+    const { services, state } = createServices();
+    const adapter = createAdapter(services);
+    await adapter.saveRegistration(createTestData());
+
+    const distinto = { ...createTestData(), nombreEquipo: 'Equipo distinto' };
+    await expect(adapter.saveRegistration(distinto)).rejects.toBeInstanceOf(
+      GoogleAdapterConflictError,
+    );
+    expect(state.rows).toHaveLength(1);
+    expect(state.uploadedNames).toHaveLength(3);
+  });
+
+  it('comparte la reserva entre dos adapters (instancias) con el mismo store', async () => {
+    const reservationStore = createReservationStore();
+    const a = createServices();
+    const b = createServices();
+    const registro = createTestData();
+    const [r1, r2] = await Promise.allSettled([
+      createAdapter(a.services, reservationStore).saveRegistration(registro),
+      createAdapter(b.services, reservationStore).saveRegistration({
+        ...registro,
+        nombreRobot: 'Robot distinto',
+      }),
+    ]);
+    const ok = [r1, r2].filter((r) => r.status === 'fulfilled');
+    expect(ok).toHaveLength(1);
+    expect(a.state.rows.length + b.state.rows.length).toBe(1);
   });
 
   it('elimina todos los archivos subidos si falla la escritura de la fila', async () => {

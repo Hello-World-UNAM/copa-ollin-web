@@ -1,3 +1,6 @@
+import { GoogleAdapterConflictError } from './errors';
+import { generarFolio } from './folio';
+import { calcularHuella } from './huella';
 import type { GoogleAdapter, RegistrationData } from './types';
 
 export interface MockRegistrationSnapshot {
@@ -7,17 +10,24 @@ export interface MockRegistrationSnapshot {
 }
 
 const mockDatabase = new Map<string, MockRegistrationSnapshot>();
+const mockFingerprints = new Map<string, string>();
 
 export const mockGoogleAdapter: GoogleAdapter = {
   async saveRegistration(data) {
+    const fingerprint = await calcularHuella(data);
     if (mockDatabase.has(data.transactionId)) {
+      if (mockFingerprints.get(data.transactionId) !== fingerprint) {
+        throw new GoogleAdapterConflictError();
+      }
       return {
         success: true,
         message: 'Registro duplicado omitido en el mock',
+        folio: generarFolio(data.transactionId),
         isDuplicate: true,
       };
     }
 
+    mockFingerprints.set(data.transactionId, fingerprint);
     mockDatabase.set(data.transactionId, {
       transactionId: data.transactionId,
       teamName: data.nombreEquipo,
@@ -33,6 +43,7 @@ export const mockGoogleAdapter: GoogleAdapter = {
     return {
       success: true,
       message: 'Registro guardado en Sandbox (Mock)',
+      folio: generarFolio(data.transactionId),
     };
   },
 };
@@ -46,6 +57,7 @@ export function getMockRegistrationSnapshot(): MockRegistrationSnapshot[] {
 
 export function resetMockRegistrationSnapshot(): void {
   mockDatabase.clear();
+  mockFingerprints.clear();
 }
 
 export function createFakeRegistrationData(
@@ -58,7 +70,7 @@ export function createFakeRegistrationData(
   return {
     transactionId,
     nombreEquipo: 'Equipo Ficticio de Prueba',
-    categoria: 'Micromouse amateur',
+    categoria: 'micromouse-amateur',
     institucion: 'Institución Ficticia',
     estadoCiudadProcedencia: 'Ciudad Ficticia',
     nombreCapitan: 'Capitana Ficticia',

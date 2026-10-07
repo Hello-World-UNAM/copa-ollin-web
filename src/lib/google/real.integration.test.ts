@@ -4,12 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { google } from 'googleapis';
 import { createFakeRegistrationData } from './mock';
 import { createGoogleSandboxAdapter } from './real';
+import { generarFolio } from './folio';
 import { createFirestoreReservationStore } from './reservations';
 import { createRegistrationHandler } from '../registration/handler';
 
 loadEnv({ quiet: true });
 const integrationEnabled =
   process.env.RUN_GOOGLE_SANDBOX_INTEGRATION === 'true';
+// Conserva la fila y los archivos ficticios para inspeccionar la vista en Sheets.
+const conservarDatos = process.env.SANDBOX_GOOGLE_CONSERVAR === 'true';
 const fileTestAuthorized =
   process.env.SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED === 'true';
 const requiredEnvironmentNames = [
@@ -352,9 +355,32 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
         isDuplicate: true,
       });
 
+      const folioEsperado = generarFolio(transactionId);
+      expect(retryResult.folio).toBe(folioEsperado);
+      expect(acceptedResponses[0]?.folio).toBe(folioEsperado);
+
+      // Mismo ID con contenido distinto: 409 y sin escrituras nuevas.
+      const conflictResponse = await handleRegistration(
+        new Request('http://localhost/api/register', {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${config.registrationToken}`,
+          },
+          body: createRegistrationFormData({
+            ...registration,
+            nombreEquipo: 'Equipo Ficticio Distinto',
+          }),
+        }),
+      );
+      expect(conflictResponse.status).toBe(409);
+      expect(await conflictResponse.json()).toMatchObject({
+        code: 'IDEMPOTENCY_CONFLICT',
+      });
+
+      // Se lee A:S (no config.sheetRange) para comprobar la columna del folio.
       const rowsResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: config.spreadsheetId,
-        range: config.sheetRange,
+        range: `${config.sheetRange.split('!')[0]}!A:S`,
         majorDimension: 'ROWS',
       });
       const matchingRows = (rowsResponse.data.values ?? []).filter(
@@ -372,6 +398,8 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
 
       expect(retryResponse.status).toBe(200);
       expect(matchingRows).toHaveLength(1);
+      expect(matchingRows[0]?.[18]).toBe(folioEsperado);
+      expect(matchingRows[0]?.[1]).toBe(registration.nombreEquipo);
       expect(createdFiles).toHaveLength(3);
       const rowFileLinks = matchingRows[0]?.slice(15, 18) ?? [];
       expect(rowFileLinks).toHaveLength(3);
@@ -387,58 +415,67 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
       }
     } finally {
       try {
-        const rowsResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId: config.spreadsheetId,
-          range: config.sheetRange,
-          majorDimension: 'ROWS',
-        });
-        const matchingRowIndexes = (rowsResponse.data.values ?? [])
-          .map((row, index) => (row[0] === transactionId ? index + 1 : -1))
-          .filter((index) => index > 0)
-          .sort((left, right) => right - left);
-
-        if (matchingRowIndexes.length > 0) {
-          await sheets.spreadsheets.batchUpdate({
+        if (!conservarDatos) {
+          const rowsResponse = await sheets.spreadsheets.values.get({
             spreadsheetId: config.spreadsheetId,
-            requestBody: {
-              requests: matchingRowIndexes.map((rowIndex) => ({
-                deleteDimension: {
-                  range: {
-                    sheetId,
-                    dimension: 'ROWS',
-                    startIndex: rowIndex - 1,
-                    endIndex: rowIndex,
-                  },
-                },
-              })),
-            },
+            range: config.sheetRange,
+            majorDimension: 'ROWS',
           });
-        }
+          const matchingRowIndexes = (rowsResponse.data.values ?? [])
+            .map((row, index) => (row[0] === transactionId ? index + 1 : -1))
+            .filter((index) => index > 0)
+            .sort((left, right) => right - left);
 
-        const driveFilesResponse = await drive.files.list({
-          q: `'${config.driveFolderId}' in parents and name contains '${driveFileNamePrefix}' and trashed = false`,
-          corpora: 'allDrives',
-          includeItemsFromAllDrives: true,
-          pageSize: 100,
-          fields: 'files(id)',
-          supportsAllDrives: true,
-        });
-        await Promise.all(
-          (driveFilesResponse.data.files ?? []).flatMap((file) =>
-            file.id
-              ? [
-                  drive.files.delete({
-                    fileId: file.id,
-                    supportsAllDrives: true,
-                  }),
-                ]
-              : [],
-          ),
-        );
-        await reservationStore.cleanup(transactionId);
+          if (matchingRowIndexes.length > 0) {
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId: config.spreadsheetId,
+              requestBody: {
+                requests: matchingRowIndexes.map((rowIndex) => ({
+                  deleteDimension: {
+                    range: {
+                      sheetId,
+                      dimension: 'ROWS',
+                      startIndex: rowIndex - 1,
+                      endIndex: rowIndex,
+                    },
+                  },
+                })),
+              },
+            });
+          }
+
+          const driveFilesResponse = await drive.files.list({
+            q: `'${config.driveFolderId}' in parents and name contains '${driveFileNamePrefix}' and trashed = false`,
+            corpora: 'allDrives',
+            includeItemsFromAllDrives: true,
+            pageSize: 100,
+            fields: 'files(id)',
+            supportsAllDrives: true,
+          });
+          await Promise.all(
+            (driveFilesResponse.data.files ?? []).flatMap((file) =>
+              file.id
+                ? [
+                    drive.files.delete({
+                      fileId: file.id,
+                      supportsAllDrives: true,
+                    }),
+                  ]
+                : [],
+            ),
+          );
+          await reservationStore.cleanup(transactionId);
+        }
       } finally {
         await reservationStore.close?.();
       }
+    }
+
+    if (conservarDatos) {
+      console.log(
+        'Datos ficticios conservados: 1 fila y 3 archivos; hay que borrarlos manualmente.',
+      );
+      return;
     }
 
     const remainingRowsResponse = await sheets.spreadsheets.values.get({

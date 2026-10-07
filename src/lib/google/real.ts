@@ -1,7 +1,10 @@
+import { generarFolio } from './folio';
+import { calcularHuella } from './huella';
 import { Readable } from 'node:stream';
 import { google } from 'googleapis';
 import {
   GoogleAdapterConfigurationError,
+  GoogleAdapterConflictError,
   GoogleAdapterRecoveryError,
   GoogleAdapterTemporaryError,
 } from './errors';
@@ -148,7 +151,14 @@ function createSheetRow(
     fileLinks[0] ?? '',
     fileLinks[1] ?? '',
     fileLinks[2] ?? '',
+    generarFolio(data.transactionId),
   ];
+}
+
+function extensionForMime(mimeType: string): string {
+  if (mimeType === 'image/png') return 'png';
+  if (mimeType === 'image/jpeg') return 'jpg';
+  return 'pdf';
 }
 
 function escapeDriveFileNamePart(value: string): string {
@@ -194,6 +204,7 @@ async function saveRegistrationToGoogle(
     return {
       success: true,
       message: 'Registro duplicado omitido en Google Sandbox',
+      folio: generarFolio(data.transactionId),
       isDuplicate: true,
     };
   }
@@ -205,7 +216,7 @@ async function saveRegistrationToGoogle(
   let fileLinks: string[] = [];
   try {
     for (const [documentName, file] of getRegistrationFiles(data)) {
-      const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.pdf`;
+      const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.${extensionForMime(file.type)}`;
       driveUploadOutcomeUnknown = true;
       const response = await services.drive.files.create({
         supportsAllDrives: true,
@@ -272,6 +283,7 @@ async function saveRegistrationToGoogle(
         return {
           success: true,
           message: 'Registro guardado en Google Sandbox',
+          folio: generarFolio(data.transactionId),
         };
       }
 
@@ -312,6 +324,7 @@ async function saveRegistrationToGoogle(
       return {
         success: true,
         message: 'Registro duplicado omitido en Google Sandbox',
+        folio: generarFolio(data.transactionId),
         isDuplicate: true,
       };
     }
@@ -322,6 +335,7 @@ async function saveRegistrationToGoogle(
   return {
     success: true,
     message: 'Registro guardado en Google Sandbox',
+    folio: generarFolio(data.transactionId),
   };
 }
 
@@ -358,15 +372,22 @@ export function createGoogleSandboxAdapter(
 
       let reservationState;
       try {
-        reservationState = await reservationStore.reserve(data.transactionId);
+        reservationState = await reservationStore.reserve(
+          data.transactionId,
+          await calcularHuella(data),
+        );
       } catch (error) {
         throw new GoogleAdapterTemporaryError(undefined, { cause: error });
       }
 
+      if (reservationState === 'conflict') {
+        throw new GoogleAdapterConflictError();
+      }
       if (reservationState === 'completed') {
         return {
           success: true,
           message: 'Registro duplicado omitido en Google Sandbox',
+          folio: generarFolio(data.transactionId),
           isDuplicate: true,
         };
       }
