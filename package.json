@@ -28,6 +28,7 @@
     "test:contrato:sprint04": "vitest run src/lib/registro/sprint04-fixtures.test.ts",
     "test:watch": "vitest",
     "test:google-sandbox": "vitest run src/lib/google/real.integration.test.ts",
+    "sandbox:vista": "RUN_GOOGLE_SANDBOX_VISTA=true vitest run src/lib/google/vista-operativa.integration.test.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

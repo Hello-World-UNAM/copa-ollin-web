@@ -49,3 +49,25 @@ Pruebas: [`vista-operativa.test.ts`](../../src/lib/google/vista-operativa.test.t
 
 - Runner con OAuth para ejecutar la aplicación en el sandbox propio y captura ficticia del resultado; hasta entonces sólo existen la transformación y el módulo probado con puerto simulado.
 - Captura ficticia de la vista: se toma al aplicar en el sandbox.
+
+## Aplicar la vista en un sandbox propio autorizado
+
+Sólo con hoja de pruebas ficticia y credenciales locales (`.env` ignorado por Git, variables `SANDBOX_GOOGLE_*`). Nunca en CI ni sobre la hoja real.
+
+1. **Plan, sin escribir** (por defecto):
+
+   ```bash
+   pnpm sandbox:vista
+   ```
+
+   Imprime sólo cantidades y banderas (pestaña por crear, filas, encabezado de folio), sin IDs ni datos.
+
+2. **Aplicar** (crea la pestaña `Vista CROFI` y escribe `Registros!S1` sólo si estaba vacío):
+
+   ```bash
+   SANDBOX_VISTA_CONFIRMAR=true pnpm sandbox:vista
+   ```
+
+3. **Reversión**: borrar la pestaña `Vista CROFI` y, si el plan indicó `escribirEncabezadoFolio`, vaciar `Registros!S1`. La pestaña `Registros` y su JSON técnico no se modifican.
+
+Los valores se escriben en `RAW` para conservar ceros iniciales. Esta prueba no sustituye la verificación posterior en el staging compartido.
