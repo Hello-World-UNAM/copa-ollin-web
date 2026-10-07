@@ -47,6 +47,9 @@ function percentil(valores: number[], p: number): number {
   );
 }
 
+const PREFIJO_LIMPIEZA = 'qa-conc-';
+const soloLimpiar = process.env.SANDBOX_CONCURRENCIA_SOLO_LIMPIAR === 'true';
+
 describeConcurrencia(
   'concurrencia real en el sandbox propio autorizado',
   () => {
@@ -148,40 +151,55 @@ describeConcurrencia(
         pageToken = data.nextPageToken ?? undefined;
       } while (pageToken);
       // Sólo archivos de esta ejecución: nunca se tocan archivos ajenos.
-      const prefijoNombre = `copa-ollin-${prefijoId}`;
+      const prefijoNombre = `copa-ollin-${PREFIJO_LIMPIEZA}`;
       return encontrados.filter((archivo) =>
         (archivo.name ?? '').startsWith(prefijoNombre),
       );
     }
 
-    afterAll(async () => {
-      try {
-        const config = configuracion();
-        const { data } = await sheets.spreadsheets.values.get({
+    async function conReintentoDeCuota<T>(operacion: () => Promise<T>) {
+      for (let intento = 1; ; intento += 1) {
+        try {
+          return await operacion();
+        } catch (error) {
+          const codigo = (error as { code?: number }).code;
+          if (codigo !== 429 || intento >= 6) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 65_000));
+        }
+      }
+    }
+
+    async function limpiarFilas(): Promise<string[]> {
+      const config = configuracion();
+      const { data } = await conReintentoDeCuota(() =>
+        sheets.spreadsheets.values.get({
           spreadsheetId: config.spreadsheetId,
           range: config.sheetRange,
           majorDimension: 'ROWS',
-        });
-        const indices = (data.values ?? [])
-          .map((fila, indice) =>
-            String(fila[0] ?? '').startsWith(prefijoId) ? indice : -1,
-          )
-          .filter((indice) => indice >= 0)
-          .sort((a, b) => b - a);
-        if (indices.length > 0) {
-          const pestana = config.sheetRange.split('!')[0];
-          const meta = await sheets.spreadsheets.get({
+        }),
+      );
+      const encontrados = (data.values ?? [])
+        .map((fila, indice) => ({ id: String(fila[0] ?? ''), indice }))
+        .filter((fila) => fila.id.startsWith(PREFIJO_LIMPIEZA));
+      if (encontrados.length === 0) return [];
+      const pestana = config.sheetRange.split('!')[0];
+      const meta = await conReintentoDeCuota(() =>
+        sheets.spreadsheets.get({
+          spreadsheetId: config.spreadsheetId,
+          fields: 'sheets.properties(sheetId,title)',
+        }),
+      );
+      const sheetId = meta.data.sheets?.find(
+        (hoja) => hoja.properties?.title === pestana,
+      )?.properties?.sheetId;
+      if (typeof sheetId === 'number') {
+        await conReintentoDeCuota(() =>
+          sheets.spreadsheets.batchUpdate({
             spreadsheetId: config.spreadsheetId,
-            fields: 'sheets.properties(sheetId,title)',
-          });
-          const sheetId = meta.data.sheets?.find(
-            (hoja) => hoja.properties?.title === pestana,
-          )?.properties?.sheetId;
-          if (typeof sheetId === 'number') {
-            await sheets.spreadsheets.batchUpdate({
-              spreadsheetId: config.spreadsheetId,
-              requestBody: {
-                requests: indices.map((indice) => ({
+            requestBody: {
+              requests: [...encontrados]
+                .sort((x, y) => y.indice - x.indice)
+                .map(({ indice }) => ({
                   deleteDimension: {
                     range: {
                       sheetId,
@@ -191,26 +209,64 @@ describeConcurrencia(
                     },
                   },
                 })),
-              },
-            });
-          }
+            },
+          }),
+        );
+      }
+      return encontrados.map((fila) => fila.id);
+    }
+
+    async function limpiarArchivos(): Promise<string[]> {
+      const ids: string[] = [];
+      for (const archivo of await conReintentoDeCuota(
+        listarArchivosDeLaEjecucion,
+      )) {
+        const coincidencia =
+          /^copa-ollin-(qa-conc-[0-9a-f]{8}-[a-z0-9]+)-/.exec(
+            archivo.name ?? '',
+          );
+        if (coincidencia?.[1]) ids.push(coincidencia[1]);
+        if (archivo.id) {
+          const fileId = archivo.id;
+          await conReintentoDeCuota(() =>
+            drive.files.delete({ fileId, supportsAllDrives: true }),
+          );
         }
-        for (const archivo of await listarArchivosDeLaEjecucion()) {
-          if (archivo.id) {
-            await drive.files.delete({
-              fileId: archivo.id,
-              supportsAllDrives: true,
-            });
-          }
-        }
+      }
+      return ids;
+    }
+
+    // Cada paso es independiente: un fallo (p. ej. cuota) no impide los demás.
+    afterAll(async () => {
+      const fallos: unknown[] = [];
+      const ids = new Set(idsUsados);
+      try {
+        for (const id of await limpiarFilas()) ids.add(id);
+      } catch (error) {
+        fallos.push(error);
+      }
+      try {
+        for (const id of await limpiarArchivos()) ids.add(id);
+      } catch (error) {
+        fallos.push(error);
+      }
+      try {
         const limpiador = tiendas[0] ?? crearTienda();
-        for (const id of idsUsados) await limpiador?.cleanup(id);
-      } finally {
-        await Promise.all(tiendas.map((tienda) => tienda.close?.()));
+        for (const id of ids) await limpiador.cleanup(id);
+      } catch (error) {
+        fallos.push(error);
+      }
+      await Promise.all(tiendas.map((tienda) => tienda.close?.()));
+      if (fallos.length > 0) {
+        throw new Error(
+          'Limpieza incompleta: revisa filas, archivos y reservas con prefijo qa-conc-.',
+          { cause: fallos[0] },
+        );
       }
     }, 900_000);
 
     it('mismo ID desde instancias independientes: una sola fila y tres archivos', async () => {
+      if (soloLimpiar) return;
       if (!autorizada)
         throw new Error('Falta SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true.');
       const solicitudes = entero('SANDBOX_CONCURRENCIA_MISMO_ID', 5, 10);
@@ -258,6 +314,7 @@ describeConcurrencia(
     }, 900_000);
 
     it('muchos IDs distintos a la vez: sin duplicados ni falsas confirmaciones', async () => {
+      if (soloLimpiar) return;
       if (!autorizada)
         throw new Error('Falta SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true.');
       const envios = entero('SANDBOX_CONCURRENCIA_ENVIOS', 5, 500);

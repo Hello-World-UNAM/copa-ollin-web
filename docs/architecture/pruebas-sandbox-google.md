@@ -272,3 +272,5 @@ RUN_GOOGLE_SANDBOX_CONCURRENCIA=true SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true pn
 Variables opcionales: `SANDBOX_CONCURRENCIA_MISMO_ID` (defecto 5, máx. 10), `SANDBOX_CONCURRENCIA_ENVIOS` (defecto 5, máx. 500) y `SANDBOX_CONCURRENCIA_INSTANCIAS` (defecto 5, máx. 10). Escalar de forma gradual (5, 20, 100, 200 y, sólo si la anterior fue estable, 500).
 
 Se afirma: con el mismo ID hay a lo sumo una fila y un SAVED, y fila implica tres archivos; con IDs distintos cada SAVED tiene una fila, tres archivos y folio correcto, y los folios son únicos. Se mide (sin afirmar): duración, p50/p95, códigos, estados y métricas de llamadas, incluidos 429 o timeouts. Al terminar se limpian filas, archivos y reservas con prefijo `qa-conc-`. Registrar sólo conteos y fecha, nunca IDs ni URLs.
+
+Limpieza: barre todo lo que tenga prefijo `qa-conc-` (filas, archivos y reservas), reintenta ante 429 esperando 65 s y cada paso es independiente. Si una corrida dejó restos, ejecutar sólo la limpieza con `SANDBOX_CONCURRENCIA_SOLO_LIMPIAR=true` más las dos variables de autorización.
