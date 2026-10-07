@@ -813,7 +813,8 @@ p {
 }
 
 .home-hero__image {
-  width: min(100%, 28rem);
+  display: block;
+  width: 60%;
   height: auto;
   object-fit: contain;
 }
@@ -825,6 +826,9 @@ p {
 }
 
 @media (min-width: 48rem) {
+  .home-hero__image {
+    width: 100%;
+  }
   .regulation-content {
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
