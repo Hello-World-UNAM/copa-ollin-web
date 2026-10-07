@@ -1,4 +1,5 @@
 import { crearMultipartSprint04 } from '../tests/fixtures/sprint04/registro';
+import { tokenSandboxE2e } from '../tests/fixtures/registro';
 
 const TARGET = process.env.TARGET_URL || 'http://127.0.0.1:4337';
 const MODO_REAL = process.env.MODO_REAL === 'true';
@@ -22,6 +23,7 @@ async function simularVisitante(): Promise<Resultado> {
   const inicio = performance.now();
   try {
     const res = await fetch(`${TARGET}/registro`);
+    await res.text(); // Liberar la conexion de red
     return {
       tipo: 'GET',
       status: res.status,
@@ -45,9 +47,14 @@ async function simularEnvio(indice: number): Promise<Resultado> {
 
     const res = await fetch(`${TARGET}/api/register`, {
       method: 'POST',
+      headers: {
+        authorization: `Bearer ${tokenSandboxE2e}`,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       body: form as any,
     });
 
+    await res.text(); // Liberar la conexion de red
     return {
       tipo: 'POST',
       status: res.status,
