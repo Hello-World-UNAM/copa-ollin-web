@@ -133,6 +133,29 @@ function createAdapter(
 }
 
 describe('adapter real con servicios Google simulados', () => {
+  it.each([
+    ['image/png', 'png', [137, 80, 78, 71, 13, 10, 26, 10]],
+    ['image/jpeg', 'jpg', [255, 216, 255]],
+  ])(
+    'sube el comprobante %s a Drive con extensión .%s y el resto como PDF',
+    async (mime, extension, firma) => {
+      const { services, state } = createServices();
+      const datos = createTestData('real-adapter-imagen-001');
+      datos.comprobantePago = new File(
+        [new Uint8Array(firma)],
+        'comprobante-ficticio',
+        { type: mime },
+      );
+
+      await createAdapter(services).saveRegistration(datos);
+
+      expect(state.uploadedNames).toHaveLength(3);
+      expect(
+        state.uploadedNames.map((nombre) => nombre.split('.').pop()),
+      ).toEqual(['pdf', extension, 'pdf']);
+    },
+  );
+
   it('carga tres archivos y escribe exactamente una fila con sus enlaces', async () => {
     const { services, state } = createServices();
     const adapter = createAdapter(services);
