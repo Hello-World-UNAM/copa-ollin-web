@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { google } from 'googleapis';
 import { createFakeRegistrationData } from './mock';
 import { createGoogleSandboxAdapter } from './real';
+import { generarFolio } from './folio';
 import { createFirestoreReservationStore } from './reservations';
 import { createRegistrationHandler } from '../registration/handler';
 
@@ -352,9 +353,32 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
         isDuplicate: true,
       });
 
+      const folioEsperado = generarFolio(transactionId);
+      expect(retryResult.folio).toBe(folioEsperado);
+      expect(acceptedResponses[0]?.folio).toBe(folioEsperado);
+
+      // Mismo ID con contenido distinto: 409 y sin escrituras nuevas.
+      const conflictResponse = await handleRegistration(
+        new Request('http://localhost/api/register', {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${config.registrationToken}`,
+          },
+          body: createRegistrationFormData({
+            ...registration,
+            nombreEquipo: 'Equipo Ficticio Distinto',
+          }),
+        }),
+      );
+      expect(conflictResponse.status).toBe(409);
+      expect(await conflictResponse.json()).toMatchObject({
+        code: 'IDEMPOTENCY_CONFLICT',
+      });
+
+      // Se lee A:S (no config.sheetRange) para comprobar la columna del folio.
       const rowsResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: config.spreadsheetId,
-        range: config.sheetRange,
+        range: `${config.sheetRange.split('!')[0]}!A:S`,
         majorDimension: 'ROWS',
       });
       const matchingRows = (rowsResponse.data.values ?? []).filter(
@@ -372,6 +396,8 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
 
       expect(retryResponse.status).toBe(200);
       expect(matchingRows).toHaveLength(1);
+      expect(matchingRows[0]?.[18]).toBe(folioEsperado);
+      expect(matchingRows[0]?.[1]).toBe(registration.nombreEquipo);
       expect(createdFiles).toHaveLength(3);
       const rowFileLinks = matchingRows[0]?.slice(15, 18) ?? [];
       expect(rowFileLinks).toHaveLength(3);
