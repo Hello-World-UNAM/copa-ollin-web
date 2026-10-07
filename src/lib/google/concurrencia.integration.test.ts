@@ -208,7 +208,7 @@ describeConcurrencia(
       } finally {
         await Promise.all(tiendas.map((tienda) => tienda.close?.()));
       }
-    }, 300_000);
+    }, 900_000);
 
     it('mismo ID desde instancias independientes: una sola fila y tres archivos', async () => {
       if (!autorizada)
@@ -255,12 +255,12 @@ describeConcurrencia(
       for (const r of respuestas.filter((x) => x.estado === 200)) {
         expect(r.cuerpo.folio).toBe(generarFolio(id));
       }
-    }, 300_000);
+    }, 900_000);
 
     it('muchos IDs distintos a la vez: sin duplicados ni falsas confirmaciones', async () => {
       if (!autorizada)
         throw new Error('Falta SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true.');
-      const envios = entero('SANDBOX_CONCURRENCIA_ENVIOS', 5, 100);
+      const envios = entero('SANDBOX_CONCURRENCIA_ENVIOS', 5, 500);
       const numInstancias = entero('SANDBOX_CONCURRENCIA_INSTANCIAS', 5, 10);
       const ids = Array.from({ length: envios }, (_, i) => `${prefijoId}${i}`);
       idsUsados.push(...ids);
@@ -323,6 +323,6 @@ describeConcurrencia(
       expect(new Set(guardados.map((r) => r.cuerpo.folio)).size).toBe(
         guardados.length,
       );
-    }, 300_000);
+    }, 900_000);
   },
 );
