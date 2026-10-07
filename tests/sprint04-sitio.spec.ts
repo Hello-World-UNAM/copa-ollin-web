@@ -16,9 +16,9 @@ test.describe('Sprint 4 - Sitio informativo accesible', () => {
 
     await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
 
-    await expect(
-      page.locator('meta[property="og:description"]'),
-    ).toHaveCount(1);
+    await expect(page.locator('meta[property="og:description"]')).toHaveCount(
+      1,
+    );
   });
 
   test('robots.txt bloquea el rastreo del sitio', async ({ request }) => {
@@ -43,9 +43,9 @@ test.describe('Sprint 4 - Sitio informativo accesible', () => {
       breadcrumb.getByRole('link', { name: 'Categorías' }),
     ).toHaveAttribute('href', '/#categorias');
 
-    await expect(
-      breadcrumb.locator('[aria-current="page"]'),
-    ).toContainText(/Minisumo/i);
+    await expect(breadcrumb.locator('[aria-current="page"]')).toContainText(
+      /Minisumo/i,
+    );
   });
 
   test('los reglamentos usan acordeones funcionales', async ({ page }) => {
@@ -82,10 +82,7 @@ test.describe('Sprint 4 - Sitio informativo accesible', () => {
 
     for (const link of externalLinks) {
       await expect(link).toHaveAttribute('target', '_blank');
-      await expect(link).toHaveAttribute(
-        'rel',
-        /noopener noreferrer/,
-      );
+      await expect(link).toHaveAttribute('rel', /noopener noreferrer/);
     }
   });
 });

@@ -927,10 +927,10 @@ p {
   }
 
   .site-footer__social-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  object-fit: contain;
-}
+    width: 1.5rem;
+    height: 1.5rem;
+    object-fit: contain;
+  }
 
   .category-placeholder {
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
