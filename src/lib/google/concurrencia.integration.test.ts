@@ -56,6 +56,8 @@ describeConcurrencia(
     const idEjecucion = randomBytes(4).toString('hex');
     const prefijoId = `qa-conc-${idEjecucion}-`;
     const idsUsados: string[] = [];
+    // IDs con RECOVERY_REQUIRED que se conservan a propósito para practicar la recuperación.
+    const conservados = new Set<string>();
     const tiendas: RegistrationReservationStore[] = [];
 
     const oauth = new google.auth.OAuth2(
@@ -180,7 +182,10 @@ describeConcurrencia(
       );
       const encontrados = (data.values ?? [])
         .map((fila, indice) => ({ id: String(fila[0] ?? ''), indice }))
-        .filter((fila) => fila.id.startsWith(PREFIJO_LIMPIEZA));
+        .filter(
+          (fila) =>
+            fila.id.startsWith(PREFIJO_LIMPIEZA) && !conservados.has(fila.id),
+        );
       if (encontrados.length === 0) return [];
       const pestana = config.sheetRange.split('!')[0];
       const meta = await conReintentoDeCuota(() =>
@@ -225,6 +230,7 @@ describeConcurrencia(
           /^copa-ollin-(qa-conc-[0-9a-f]{8}-[a-z0-9]+)-/.exec(
             archivo.name ?? '',
           );
+        if (coincidencia?.[1] && conservados.has(coincidencia[1])) continue;
         if (coincidencia?.[1]) ids.push(coincidencia[1]);
         if (archivo.id) {
           const fileId = archivo.id;
@@ -239,7 +245,7 @@ describeConcurrencia(
     // Cada paso es independiente: un fallo (p. ej. cuota) no impide los demás.
     afterAll(async () => {
       const fallos: unknown[] = [];
-      const ids = new Set(idsUsados);
+      const ids = new Set(idsUsados.filter((id) => !conservados.has(id)));
       try {
         for (const id of await limpiarFilas()) ids.add(id);
       } catch (error) {
@@ -337,6 +343,19 @@ describeConcurrencia(
         }),
       );
       const duracionMs = Date.now() - inicio;
+
+      const aConservar = Number(
+        process.env.SANDBOX_CONCURRENCIA_CONSERVAR_RECUPERACION ?? 0,
+      );
+      if (Number.isInteger(aConservar) && aConservar >= 1 && aConservar <= 3) {
+        respuestas
+          .filter((r) => r.cuerpo.code === 'RECOVERY_REQUIRED')
+          .slice(0, aConservar)
+          .forEach((r) => conservados.add(r.id));
+        console.log(
+          `Conservados para recuperación (sólo local, no publicar): ${JSON.stringify([...conservados])}`,
+        );
+      }
 
       const { filasPorId, archivosPorId } = await contarEstado(ids);
       const guardados = respuestas.filter((r) => r.cuerpo.code === 'SAVED');

@@ -278,3 +278,7 @@ Limpieza: barre todo lo que tenga prefijo `qa-conc-` (filas, archivos y reservas
 ## Variante real con comprobante en imagen
 
 `pnpm test:google-sandbox` admite `SANDBOX_GOOGLE_COMPROBANTE=png` o `jpeg`: el comprobante se sube como imagen ficticia y la prueba comprueba en Drive la extensión (`.png`/`.jpg`) y el `mimeType` del archivo, además de fila, tres archivos, folio y limpieza.
+
+### Conservar casos `RECOVERY_REQUIRED` para practicar la recuperación
+
+Con `SANDBOX_CONCURRENCIA_CONSERVAR_RECUPERACION=1` a `3`, la prueba de IDs distintos conserva (fila, archivos y reserva) ese número de IDs que terminaron en `RECOVERY_REQUIRED` y los imprime sólo en la terminal local. El resto se limpia como siempre. Se resuelven con [recuperacion-de-reservas.md](recuperacion-de-reservas.md) y, al terminar, `SANDBOX_CONCURRENCIA_SOLO_LIMPIAR=true` retira lo que quede por prefijo.
