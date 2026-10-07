@@ -258,3 +258,17 @@ El reviewer debe comprobar en el entorno restringido la hoja y carpeta sin compa
 ## Conservar los datos ficticios de la prueba de integración
 
 Con `SANDBOX_GOOGLE_CONSERVAR=true` la prueba no borra su fila, sus tres archivos ni su reserva, para inspeccionar la hoja `Vista CROFI`. Es sólo para el sandbox propio con datos ficticios. Después hay que eliminar a mano la fila (la del ID técnico de prueba), los tres archivos de la carpeta de pruebas y, si se desea repetir la prueba, la reserva en Firestore.
+
+## Prueba opt-in de concurrencia real
+
+Archivo: `src/lib/google/concurrencia.integration.test.ts`. Sólo corre en el sandbox propio autorizado, con datos ficticios. No sustituye al mock en memoria: cada «instancia» usa su propio cliente Firestore, adapter y handler.
+
+Comando:
+
+```bash
+RUN_GOOGLE_SANDBOX_CONCURRENCIA=true SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true pnpm sandbox:concurrencia
+```
+
+Variables opcionales: `SANDBOX_CONCURRENCIA_MISMO_ID` (defecto 5, máx. 10), `SANDBOX_CONCURRENCIA_ENVIOS` (defecto 5, máx. 100) y `SANDBOX_CONCURRENCIA_INSTANCIAS` (defecto 5, máx. 10). Escalar de forma gradual (5, 20, 100).
+
+Se afirma: con el mismo ID hay a lo sumo una fila y un SAVED, y fila implica tres archivos; con IDs distintos cada SAVED tiene una fila, tres archivos y folio correcto, y los folios son únicos. Se mide (sin afirmar): duración, p50/p95, códigos, estados y métricas de llamadas, incluidos 429 o timeouts. Al terminar se limpian filas, archivos y reservas con prefijo `qa-conc-`. Registrar sólo conteos y fecha, nunca IDs ni URLs.

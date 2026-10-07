@@ -30,6 +30,7 @@
     "test:google-sandbox": "vitest run src/lib/google/real.integration.test.ts",
     "sandbox:vista": "RUN_GOOGLE_SANDBOX_VISTA=true vitest run src/lib/google/vista-operativa.integration.test.ts",
     "sandbox:recuperacion": "RUN_GOOGLE_SANDBOX_RECUPERACION=true vitest run src/lib/google/recuperacion.integration.test.ts",
+    "sandbox:concurrencia": "RUN_GOOGLE_SANDBOX_CONCURRENCIA=true vitest run src/lib/google/concurrencia.integration.test.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
