@@ -62,7 +62,7 @@ Una vez autorizada la prueba:
 7. La ubicación de Firestore no se puede cambiar después de crear la base. Si la consola ofrece `northamerica-south1` (Querétaro), es la opción regional más cercana a la sede del evento. Si una ubicación predeterminada ya está fijada, o no aparece la región esperada, detente antes de crearla y revisa la ubicación mostrada; no crees otra base para probar.
 8. Crea una service account separada para la reserva Firestore y dale el rol `Cloud Datastore User` (`roles/datastore.user`) únicamente en el proyecto aislado de pruebas. Ese rol da acceso de lectura/escritura a documentos Firestore del proyecto, por eso no reutilices la identidad en producción ni le concedas roles de Drive/Sheets.
 9. Crea una clave JSON para esa service account sólo si vas a probar localmente con el código actual. Guárdala como `.private/firestore-sandbox.json` (ignorado por Git) con permisos `600`. Importa sus campos mediante `node scripts/sandbox-google-local.mjs --firestore-key .private/firestore-sandbox.json`; no copies la clave manualmente al navegador, chat, issue ni archivos versionados. El asistente conserva la configuración privada local. Revoca esta clave desde IAM al terminar las pruebas y no la reutilices en producción. Tras asignar el rol, su propagación puede tardar varios minutos: un rechazo inicial no justifica conceder Editor/Propietario ni desactivar la reserva.
-10. En la hoja, crea una pestaña llamada `Registros` y una fila de encabezados en este orden: `transactionId`, `nombreEquipo`, `categoria`, `institucion`, `estadoCiudadProcedencia`, `nombreCapitan`, `correoCapitan`, `telefonoCapitan`, `identificacionInstitucional`, `integrantes`, `nombreRobot`, `descripcionRobot`, `aceptaReglamento`, `aceptaUsoImagen`, `confirmaRestriccionesCategoria`, `archivoIdentificacion`, `comprobantePago`, `cartaResponsiva`. El folio se guarda como columna 19 (`folio`, celda `S1`); el preflight sigue leyendo sólo `A1:R1`. Ver [vista-operativa-sheets.md](./vista-operativa-sheets.md).
+10. En la hoja, crea una pestaña llamada `Registros` y una fila de encabezados con estos nombres, en este orden (A1:S1): `ID técnico`, `Equipo`, `Categoría`, `Institución`, `Procedencia`, `Capitán(na)`, `Correo`, `Teléfono`, `Identificación institucional`, `Integrantes`, `Robot`, `Descripción del robot`, `Reglamento`, `Uso de imagen`, `Restricciones de categoría`, `Identificación (enlace)`, `Comprobante (enlace)`, `Carta responsiva (enlace)` y `Folio` (S1). El código lee y escribe por posición, no por nombre; el orden no debe cambiar. El preflight acepta también los nombres técnicos originales (`transactionId`, `nombreEquipo`, …, `cartaResponsiva`) para no romper hojas ya creadas, y sigue leyendo sólo `A1:R1`. Ver [vista-operativa-sheets.md](./vista-operativa-sheets.md).
 
 Firestore documenta para una base elegible la cuota gratuita de 1 GiB,
 50.000 lecturas por día, 20.000 escrituras por día, 20.000 eliminaciones por
@@ -258,3 +258,27 @@ El reviewer debe comprobar en el entorno restringido la hoja y carpeta sin compa
 ## Conservar los datos ficticios de la prueba de integración
 
 Con `SANDBOX_GOOGLE_CONSERVAR=true` la prueba no borra su fila, sus tres archivos ni su reserva, para inspeccionar la hoja `Vista CROFI`. Es sólo para el sandbox propio con datos ficticios. Después hay que eliminar a mano la fila (la del ID técnico de prueba), los tres archivos de la carpeta de pruebas y, si se desea repetir la prueba, la reserva en Firestore.
+
+## Prueba opt-in de concurrencia real
+
+Archivo: `src/lib/google/concurrencia.integration.test.ts`. Sólo corre en el sandbox propio autorizado, con datos ficticios. No sustituye al mock en memoria: cada «instancia» usa su propio cliente Firestore, adapter y handler.
+
+Comando:
+
+```bash
+RUN_GOOGLE_SANDBOX_CONCURRENCIA=true SANDBOX_GOOGLE_FILE_TEST_AUTHORIZED=true pnpm sandbox:concurrencia
+```
+
+Variables opcionales: `SANDBOX_CONCURRENCIA_MISMO_ID` (defecto 5, máx. 10), `SANDBOX_CONCURRENCIA_ENVIOS` (defecto 5, máx. 500) y `SANDBOX_CONCURRENCIA_INSTANCIAS` (defecto 5, máx. 10). Escalar de forma gradual (5, 20, 100, 200 y, sólo si la anterior fue estable, 500).
+
+Se afirma: con el mismo ID hay a lo sumo una fila y un SAVED, y fila implica tres archivos; con IDs distintos cada SAVED tiene una fila, tres archivos y folio correcto, y los folios son únicos. Se mide (sin afirmar): duración, p50/p95, códigos, estados y métricas de llamadas, incluidos 429 o timeouts. Al terminar se limpian filas, archivos y reservas con prefijo `qa-conc-`. Registrar sólo conteos y fecha, nunca IDs ni URLs.
+
+Limpieza: barre todo lo que tenga prefijo `qa-conc-` (filas, archivos y reservas), reintenta ante 429 esperando 65 s y cada paso es independiente. Si una corrida dejó restos, ejecutar sólo la limpieza con `SANDBOX_CONCURRENCIA_SOLO_LIMPIAR=true` más las dos variables de autorización.
+
+## Variante real con comprobante en imagen
+
+`pnpm test:google-sandbox` admite `SANDBOX_GOOGLE_COMPROBANTE=png` o `jpeg`: el comprobante se sube como imagen ficticia y la prueba comprueba en Drive la extensión (`.png`/`.jpg`) y el `mimeType` del archivo, además de fila, tres archivos, folio y limpieza.
+
+### Conservar casos `RECOVERY_REQUIRED` para practicar la recuperación
+
+Con `SANDBOX_CONCURRENCIA_CONSERVAR_RECUPERACION=1` a `3`, la prueba de IDs distintos conserva (fila, archivos y reserva) ese número de IDs que terminaron en `RECOVERY_REQUIRED` y los imprime sólo en la terminal local. El resto se limpia como siempre. Se resuelven con [recuperacion-de-reservas.md](recuperacion-de-reservas.md) y, al terminar, `SANDBOX_CONCURRENCIA_SOLO_LIMPIAR=true` retira lo que quede por prefijo.

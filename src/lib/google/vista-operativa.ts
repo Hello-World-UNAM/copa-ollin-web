@@ -45,6 +45,29 @@ export const ENCABEZADOS_VISTA_OPERATIVA = [
   'ID técnico',
 ] as const;
 
+/** Encabezados de la fila 1 de `Registros` (A1:S1), en el orden canónico de columnas. */
+export const ENCABEZADOS_REGISTROS = [
+  'ID técnico',
+  'Equipo',
+  'Categoría',
+  'Institución',
+  'Procedencia',
+  'Capitán(na)',
+  'Correo',
+  'Teléfono',
+  'Identificación institucional',
+  'Integrantes',
+  'Robot',
+  'Descripción del robot',
+  'Reglamento',
+  'Uso de imagen',
+  'Restricciones de categoría',
+  'Identificación (enlace)',
+  'Comprobante (enlace)',
+  'Carta responsiva (enlace)',
+  'Folio',
+] as const;
+
 const texto = (valor: unknown): string => (valor == null ? '' : String(valor));
 
 // Google puede devolver booleanos como TRUE/FALSE o true/false.

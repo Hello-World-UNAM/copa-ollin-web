@@ -1,5 +1,9 @@
 import { generarFolio } from './folio';
 import { calcularHuella } from './huella';
+import {
+  ejecutarConPolitica,
+  type PoliticaLlamadas,
+} from './politica-llamadas';
 import { Readable } from 'node:stream';
 import { google } from 'googleapis';
 import {
@@ -120,6 +124,58 @@ async function createGoogleServices(
   };
 }
 
+/**
+ * Aplica tiempo máximo a todas las llamadas y reintentos acotados sólo a las
+ * seguras de repetir (lecturas y borrados). Subir archivos y añadir la fila
+ * nunca se reintentan: un timeout ahí es resultado incierto.
+ */
+export function aplicarPoliticaAServicios(
+  services: GoogleSandboxServices,
+  politica?: Partial<PoliticaLlamadas>,
+): GoogleSandboxServices {
+  const subida = { timeoutMs: 20_000, ...politica };
+  return {
+    sheets: {
+      spreadsheets: {
+        values: {
+          get: (args) =>
+            ejecutarConPolitica(
+              'sheets',
+              'values.get',
+              () => services.sheets.spreadsheets.values.get(args),
+              { reintentable: true, politica },
+            ),
+          append: (args) =>
+            ejecutarConPolitica(
+              'sheets',
+              'values.append',
+              () => services.sheets.spreadsheets.values.append(args),
+              { reintentable: false, politica },
+            ),
+        },
+      },
+    },
+    drive: {
+      files: {
+        create: (args) =>
+          ejecutarConPolitica(
+            'drive',
+            'files.create',
+            () => services.drive.files.create(args),
+            { reintentable: false, politica: subida },
+          ),
+        delete: (args) =>
+          ejecutarConPolitica(
+            'drive',
+            'files.delete',
+            () => services.drive.files.delete(args),
+            { reintentable: true, politica },
+          ),
+      },
+    },
+  };
+}
+
 function getRegistrationFiles(data: RegistrationData) {
   return [
     ['identificacion', data.archivoIdentificacion],
@@ -163,6 +219,12 @@ function extensionForMime(mimeType: string): string {
 
 function escapeDriveFileNamePart(value: string): string {
   return value.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80);
+}
+
+// Prefijo común de los nombres de archivo de una transacción; sirve para
+// localizar archivos huérfanos en Drive aunque no se conozca su ID.
+export function prefijoArchivosDrive(transactionId: string): string {
+  return `copa-ollin-${escapeDriveFileNamePart(transactionId)}-`;
 }
 
 function getProviderHttpStatus(error: unknown): number | undefined {
@@ -214,9 +276,10 @@ async function saveRegistrationToGoogle(
   let duplicateFoundAfterAppendError = false;
   let driveUploadOutcomeUnknown = false;
   let fileLinks: string[] = [];
+  const idsSubidos = () => uploadedFiles.map(({ id }) => id);
   try {
     for (const [documentName, file] of getRegistrationFiles(data)) {
-      const fileName = `copa-ollin-${escapeDriveFileNamePart(data.transactionId)}-${documentName}.${extensionForMime(file.type)}`;
+      const fileName = `${prefijoArchivosDrive(data.transactionId)}${documentName}.${extensionForMime(file.type)}`;
       driveUploadOutcomeUnknown = true;
       const response = await services.drive.files.create({
         supportsAllDrives: true,
@@ -272,6 +335,7 @@ async function saveRegistrationToGoogle(
           'sheets-reconciliation-failed',
           undefined,
           { cause: verificationError },
+          idsSubidos(),
         );
       }
 
@@ -292,6 +356,7 @@ async function saveRegistrationToGoogle(
           'sheets-row-state-ambiguous',
           undefined,
           { cause: error },
+          idsSubidos(),
         );
       }
       duplicateFoundAfterAppendError = rowsAfterAppendError.length === 1;
@@ -307,9 +372,12 @@ async function saveRegistrationToGoogle(
     );
 
     if (cleanupResults.some((result) => result.status === 'rejected')) {
-      throw new GoogleAdapterRecoveryError('drive-cleanup-failed', undefined, {
-        cause: error,
-      });
+      throw new GoogleAdapterRecoveryError(
+        'drive-cleanup-failed',
+        undefined,
+        { cause: error },
+        idsSubidos(),
+      );
     }
 
     if (driveUploadOutcomeUnknown) {
@@ -317,6 +385,7 @@ async function saveRegistrationToGoogle(
         'drive-upload-outcome-unknown',
         getProviderHttpStatus(error),
         { cause: error },
+        idsSubidos(),
       );
     }
 
@@ -344,6 +413,7 @@ export function createGoogleSandboxAdapter(
     config?: GoogleSandboxConfig;
     createServices?: GoogleServicesFactory;
     reservationStore?: RegistrationReservationStore;
+    politica?: Partial<PoliticaLlamadas>;
   } = {},
 ): GoogleAdapter {
   return {
@@ -360,6 +430,7 @@ export function createGoogleSandboxAdapter(
         if (error instanceof GoogleAdapterConfigurationError) throw error;
         throw new GoogleAdapterTemporaryError(undefined, { cause: error });
       }
+      services = aplicarPoliticaAServicios(services, options.politica);
 
       let reservationStore: RegistrationReservationStore;
       try {
@@ -411,6 +482,7 @@ export function createGoogleSandboxAdapter(
             await reservationStore.markRecoveryRequired(
               data.transactionId,
               error.recoveryStage,
+              error.driveFileIds,
             );
           } catch (reservationError) {
             throw new GoogleAdapterRecoveryError(

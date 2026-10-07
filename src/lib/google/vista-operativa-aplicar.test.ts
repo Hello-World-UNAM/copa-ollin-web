@@ -88,7 +88,7 @@ describe('aplicarVistaOperativa', () => {
   });
 
   it('no sobrescribe un encabezado S1 existente', async () => {
-    const { puerto, escrituras } = crearPuerto({ folioS1: 'folio' });
+    const { puerto, escrituras } = crearPuerto({ folioS1: 'Folio' });
     await aplicarVistaOperativa(puerto, { confirmar: true });
     expect(escrituras.some((e) => e.includes('Registros'))).toBe(false);
   });
