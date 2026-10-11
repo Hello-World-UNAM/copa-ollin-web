@@ -1,7 +1,7 @@
 import { z } from 'zod';
-
 import { categories } from '../../data/categories';
 import { MAX_PALABRAS_DESCRIPCION, contarPalabras } from './contract';
+import { ESTADOS_MX } from './estados';
 
 const categorySlugs = categories.map((c) => c.slug) as [string, ...string[]];
 
@@ -13,9 +13,11 @@ export const integranteSchema = z.object({
   correo: z
     .string()
     .trim()
-    .email('Escribe un correo válido.')
-    .optional()
-    .or(z.literal('')),
+    .refine(
+      (valor) => valor === '' || z.email().safeParse(valor).success,
+      'Escribe un correo válido',
+    )
+    .optional(),
 });
 
 export const registroSchema = z.object({
@@ -28,8 +30,11 @@ export const registroSchema = z.object({
   estadoCiudadProcedencia: z
     .string()
     .trim()
-    .min(1, 'Escribe el estado o ciudad de procedencia.'),
-
+    .min(1, 'Escribe el estado de procedencia.')
+    .refine(
+      (v) => (ESTADOS_MX as readonly string[]).includes(v),
+      'Elige un estado de la lista.',
+    ),
   // Capitán
   nombreCapitan: z
     .string()
@@ -39,8 +44,12 @@ export const registroSchema = z.object({
   telefonoCapitan: z
     .string()
     .trim()
-    .min(10, 'El teléfono debe tener al menos 10 dígitos.'),
-  // Opcional para universitarios según el kit de inicio (P1-06 pendiente).
+    .min(1, 'Escribe tu número de teléfono.')
+    .regex(
+      /^\d+$/,
+      'El teléfono solo admite dígitos, sin espacios ni símbolos.',
+    )
+    .length(10, 'El teléfono debe tener exactamente 10 dígitos.'),
   identificacionInstitucional: z.string().trim().optional().or(z.literal('')),
 
   // Integrantes (sin límite fijo todavía: P1-03 pendiente)

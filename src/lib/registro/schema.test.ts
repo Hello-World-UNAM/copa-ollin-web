@@ -20,8 +20,8 @@ const payloadFicticio = {
   nombreEquipo: 'Equipo Prueba 01',
   categoria: primeraCategoria.slug,
   institucion: 'Facultad Ficticia de Ingeniería',
-  estadoCiudadProcedencia: 'Ciudad de México (dato ficticio)',
-  nombreCapitan: 'Nombre Ficticio Apellido',
+  estadoCiudadProcedencia: 'Ciudad de México',
+  nombreCapitan: 'Nombre Apellido',
   correoCapitan: 'equipo-prueba-0001@example.invalid',
   telefonoCapitan: '5555555555',
   identificacionInstitucional: '',
@@ -36,9 +36,75 @@ const payloadFicticio = {
   cartaResponsiva: crearPdfFicticio('carta-ficticia.pdf'),
 };
 
-describe('registroSchema (payload ficticio de sandbox)', () => {
-  it('acepta un payload ficticio completo', () => {
+describe('registroSchema (payload)', () => {
+  it('acepta un payload', () => {
     expect(registroSchema.safeParse(payloadFicticio).success).toBe(true);
+  });
+  it('teléfono: rechaza letras y símbolos, y conserva ceros iniciales', () => {
+    for (const telefono of ['abc', '55 5555 5555', '55-5555', '+525555']) {
+      expect(
+        registroSchema.safeParse({
+          ...payloadFicticio,
+          telefonoCapitan: telefono,
+        }).success,
+      ).toBe(false);
+    }
+    const valido = registroSchema.safeParse({
+      ...payloadFicticio,
+      telefonoCapitan: '0012345678',
+    });
+    expect(valido.success && valido.data.telefonoCapitan).toBe('0012345678');
+  });
+
+  it('correo de integrante: vacío válido, omitido válido e inválido con error anidado', () => {
+    const base = { ...payloadFicticio };
+    expect(
+      registroSchema.safeParse({
+        ...base,
+        integrantes: [{ nombre: 'A', correo: '' }],
+      }).success,
+    ).toBe(true);
+    expect(
+      registroSchema.safeParse({ ...base, integrantes: [{ nombre: 'A' }] })
+        .success,
+    ).toBe(true);
+    const invalido = registroSchema.safeParse({
+      ...base,
+      integrantes: [{ nombre: 'A', correo: 'no-es-correo' }],
+    });
+    expect(invalido.success).toBe(false);
+    if (!invalido.success) {
+      expect(invalido.error.issues[0]?.path).toEqual([
+        'integrantes',
+        0,
+        'correo',
+      ]);
+      expect(invalido.error.issues[0]?.message).toBe(
+        'Escribe un correo válido',
+      );
+    }
+    expect(
+      registroSchema.safeParse({
+        ...base,
+        integrantes: [{ nombre: 'A', correo: 'ok@example.invalid' }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('descripción de exactamente 300 palabras es válida y de 301 no', () => {
+    const palabras = (n: number) => Array(n).fill('palabra').join(' ');
+    expect(
+      registroSchema.safeParse({
+        ...payloadFicticio,
+        descripcionRobot: palabras(300),
+      }).success,
+    ).toBe(true);
+    expect(
+      registroSchema.safeParse({
+        ...payloadFicticio,
+        descripcionRobot: palabras(301),
+      }).success,
+    ).toBe(false);
   });
 
   it('rechaza un correo de capitán inválido', () => {
@@ -145,5 +211,18 @@ describe('registroSchema (payload ficticio de sandbox)', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+  it('teléfono: exactamente 10 dígitos', () => {
+    for (const t of ['123456789', '12345678901'])
+      expect(
+        registroSchema.safeParse({ ...payloadFicticio, telefonoCapitan: t })
+          .success,
+      ).toBe(false);
+    expect(
+      registroSchema.safeParse({
+        ...payloadFicticio,
+        telefonoCapitan: '0012345678',
+      }).success,
+    ).toBe(true);
   });
 });

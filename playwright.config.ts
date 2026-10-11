@@ -34,6 +34,7 @@ export default defineConfig({
       ENABLE_SANDBOX_REGISTRATION: 'true',
       SANDBOX_REGISTRATION_TOKEN: tokenSandboxE2e,
       USE_MOCK_GOOGLE: 'true',
+      LOCAL_SANDBOX_BROWSER_AUTH: 'true',
     },
     url: 'http://127.0.0.1:4337',
     reuseExistingServer: false,
