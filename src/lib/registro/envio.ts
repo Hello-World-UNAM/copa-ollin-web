@@ -6,8 +6,10 @@ import {
 } from './contract';
 
 export type ResultadoEnvio =
-  | { tipo: 'exito' }
-  | { tipo: 'duplicado' }
+  | { tipo: 'exito'; folio?: string }
+  | { tipo: 'duplicado'; folio?: string }
+  | { tipo: 'conflicto' }
+  | { tipo: 'datos_modificados' }
   | { tipo: 'validacion'; campos: string[] }
   | { tipo: 'temporal' }
   | { tipo: 'recuperacion' }
@@ -20,19 +22,34 @@ export type ResultadoEnvio =
 
 export type TipoResultado = ResultadoEnvio['tipo'];
 
+export const TIPOS_INCIERTOS: ReadonlySet<TipoResultado> = new Set([
+  'red',
+  'recuperacion',
+  'interno',
+  'conflicto',
+]);
+
 export const MENSAJES_ENVIO: Record<
   TipoResultado,
   { titulo: string; detalle: string }
 > = {
   exito: {
     titulo: 'Registro de prueba recibido',
-    detalle:
-      'Se guardó en el sandbox de pruebas con datos ficticios. Esto no representa una inscripción aceptada ni un lugar confirmado en Copa Ollin.',
+    detalle: 'Inscripción ha sido guardada exitosamente, ¡Mucha suerte!',
   },
   duplicado: {
-    titulo: 'Este registro de prueba ya se había recibido',
+    titulo: 'Este registro ya se ha recibido',
+    detalle: 'Revisa tus credenciales.',
+  },
+  conflicto: {
+    titulo: 'Este identificador ya corresponde a otros datos',
     detalle:
-      'No se creó una fila nueva. Esto no representa una inscripción aceptada.',
+      'El servidor ya recibió un envío con este identificador y datos o documentos distintos; no se guardó un registro nuevo. Conservamos lo que capturaste. No lo reenvíes con otro identificador sin avisar al equipo técnico: podrías duplicar la inscripción.',
+  },
+  datos_modificados: {
+    titulo: 'Cambiaste datos después de un envío incierto',
+    detalle:
+      'No sabemos si el envío anterior se guardó. Para evitar un registro duplicado o contradictorio no enviaremos datos distintos con el mismo identificador. Restaura los datos y documentos originales para reintentar o avisa al equipo técnico.',
   },
   validacion: {
     titulo: 'Hay datos o archivos que revisar',
@@ -61,7 +78,7 @@ export const MENSAJES_ENVIO: Record<
   },
   demasiado_grande: {
     titulo: 'Los archivos son demasiado grandes',
-    detalle: `Cada PDF puede pesar hasta ${formatearBytes(MAX_ARCHIVO_BYTES)} y los tres juntos hasta ${formatearBytes(MAX_TOTAL_ARCHIVOS_BYTES)}. Reemplaza los más pesados.`,
+    detalle: `Cada archivo puede pesar hasta ${formatearBytes(MAX_ARCHIVO_BYTES)} y los tres juntos hasta ${formatearBytes(MAX_TOTAL_ARCHIVOS_BYTES)}. Reemplaza los más pesados.`,
   },
   solicitud: {
     titulo: 'No pudimos preparar el envío',
@@ -83,6 +100,20 @@ export const MENSAJES_ENVIO: Record<
 function leerCodigo(cuerpo: unknown): string | undefined {
   if (typeof cuerpo === 'object' && cuerpo !== null && 'code' in cuerpo) {
     return typeof cuerpo.code === 'string' ? cuerpo.code : undefined;
+  }
+  return undefined;
+}
+
+/** El folio es opaco: se muestra tal cual y nunca se inventa. */
+function leerFolio(cuerpo: unknown): string | undefined {
+  if (
+    typeof cuerpo === 'object' &&
+    cuerpo !== null &&
+    'folio' in cuerpo &&
+    typeof cuerpo.folio === 'string' &&
+    cuerpo.folio.trim() !== ''
+  ) {
+    return cuerpo.folio.trim();
   }
   return undefined;
 }
@@ -113,14 +144,24 @@ export function interpretarRespuesta(
 ): ResultadoEnvio {
   const code = leerCodigo(cuerpo);
   if (status === 200) {
-    if (code === 'SAVED') return { tipo: 'exito' };
-    if (code === 'DUPLICATE') return { tipo: 'duplicado' };
+    const folio = leerFolio(cuerpo);
+    if (code === 'SAVED') {
+      return folio ? { tipo: 'exito', folio } : { tipo: 'exito' };
+    }
+    if (code === 'DUPLICATE') {
+      return folio ? { tipo: 'duplicado', folio } : { tipo: 'duplicado' };
+    }
     return { tipo: 'interno' };
   }
   if (status === 400) {
     return code === 'VALIDATION_ERROR'
       ? { tipo: 'validacion', campos: leerCampos(cuerpo) }
       : { tipo: 'solicitud' };
+  }
+  if (status === 409) {
+    return code === 'IDEMPOTENCY_CONFLICT'
+      ? { tipo: 'conflicto' }
+      : { tipo: 'interno' };
   }
   if (status === 413) return { tipo: 'demasiado_grande' };
   if (status === 502) {

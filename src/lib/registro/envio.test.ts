@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { archivosFicticios, payloadFicticio } from './fixtures';
 import { construirFormData } from './formData';
 import {
+  TIPOS_INCIERTOS,
   crearSesionEnvio,
   enviarRegistro,
   interpretarRespuesta,
@@ -15,9 +16,11 @@ describe('interpretarRespuesta', () => {
   it.each([
     [200, { code: 'SAVED' }, 'exito'],
     [200, { code: 'DUPLICATE' }, 'duplicado'],
-    [200, {}, 'interno'], // sin code no se simula éxito
+    [200, {}, 'interno'],
     [400, { code: 'VALIDATION_ERROR', details: [] }, 'validacion'],
     [400, { code: 'UNEXPECTED_FIELD' }, 'solicitud'],
+    [409, { code: 'IDEMPOTENCY_CONFLICT' }, 'conflicto'],
+    [409, {}, 'interno'],
     [413, null, 'demasiado_grande'],
     [401, { code: 'SANDBOX_UNAUTHORIZED' }, 'autorizacion'],
     [502, { code: 'TEMPORARY_STORAGE_ERROR' }, 'temporal'],
@@ -97,6 +100,34 @@ describe('enviarRegistro', () => {
     expect(cuerpos[0]?.get('transactionId')).toBe('reg-test-001');
     expect(cuerpos[1]?.get('transactionId')).toBe('reg-test-001');
     expect((cuerpos[1]?.get('cartaResponsiva') as File).name).toBe('carta.pdf');
+  });
+  it('conserva el folio en SAVED y DUPLICATE y no lo inventa sin folio', () => {
+    expect(
+      interpretarRespuesta(200, { code: 'SAVED', folio: 'PRUEBA-FOLIO-0001' }),
+    ).toEqual({ tipo: 'exito', folio: 'PRUEBA-FOLIO-0001' });
+    expect(
+      interpretarRespuesta(200, {
+        code: 'DUPLICATE',
+        folio: 'PRUEBA-FOLIO-0001',
+      }),
+    ).toEqual({ tipo: 'duplicado', folio: 'PRUEBA-FOLIO-0001' });
+    expect(interpretarRespuesta(200, { code: 'SAVED' })).toEqual({
+      tipo: 'exito',
+    });
+    expect(interpretarRespuesta(200, { code: 'SAVED', folio: '   ' })).toEqual({
+      tipo: 'exito',
+    });
+    expect(interpretarRespuesta(200, { code: 'SAVED', folio: 42 })).toEqual({
+      tipo: 'exito',
+    });
+  });
+
+  it('el conflicto 409 nunca se interpreta como guardado', () => {
+    const resultado = interpretarRespuesta(409, {
+      code: 'IDEMPOTENCY_CONFLICT',
+    });
+    expect(resultado.tipo).toBe('conflicto');
+    expect(TIPOS_INCIERTOS.has(resultado.tipo)).toBe(true);
   });
 });
 

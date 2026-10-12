@@ -16,12 +16,11 @@ const sandboxHabilitado = import.meta.env.REGISTRO_SANDBOX_MODE === 'true';
     {sandboxHabilitado ? (
       <>
         <Card>
-          <p class="eyebrow">Sandbox de prueba</p>
-          <h1>Registro (datos ficticios únicamente)</h1>
+          <p class="eyebrow">Convocatoria</p>
+          <h1>Registro </h1>
           <p>
-            Esta versión del formulario es exclusivamente de prueba. No envíes
-            datos reales de participantes: ningún documento ni dato aquí
-            capturado se conserva como inscripción productiva.
+            Inscríbete junto a tu equipo para participar en la Copa Ollin. Llena
+            los requisitos del formulario y sube los documentos requeridos.
           </p>
         </Card>
         <RegistroForm client:load />

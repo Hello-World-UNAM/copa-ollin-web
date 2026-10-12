@@ -743,20 +743,39 @@ p {
 }
 
 .registro-form {
+  margin-top: var(--space-8);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-8);
+  width: 100%;
   max-width: var(--form-max-width);
   margin-inline: auto;
 }
 
-.registro-progreso {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--text-caption);
-  color: var(--color-text-muted);
+.registro-form > *,
+.registro-form fieldset,
+.registro-integrante,
+.registro-archivo {
+  min-width: 0;
+}
+
+.registro-form input:not([type='checkbox']),
+.registro-form select,
+.registro-form textarea {
+  width: 100%;
+  max-width: 100%;
+}
+
+.registro-form input[type='file'] {
+  min-height: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.registro-resultado,
+.registro-confirmacion,
+.registro-form dd {
+  overflow-wrap: anywhere;
 }
 
 .registro-archivo,
@@ -783,14 +802,117 @@ p {
   margin: 0;
   padding-left: var(--space-6);
 }
-.registro-progreso li[aria-current='step'] {
+
+.registro-barra {
+  height: 0.75rem;
+  overflow: hidden;
+  border: 2px solid var(--color-black);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
+  width: 100%;
+  margin-inline: auto;
+}
+
+.registro-barra__relleno {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 200ms ease;
+}
+
+.registro-progreso {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  text-align: center;
+  width: 100%;
+  margin-inline: auto;
+  justify-items: center;
+}
+
+.registro-progreso li {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  text-align: center;
+}
+
+.registro-progreso__numero {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 2px solid var(--color-black);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
   color: var(--color-text);
+  font-family: var(--font-heading);
   font-weight: 700;
 }
 
-.registro-progreso li[data-completado='true']::before {
-  content: '✓ ';
-  color: var(--color-success);
+.registro-progreso li[aria-current='step'] {
+  color: var(--color-text);
+  font-weight: 700;
+  text-align: center;
+}
+
+.registro-progreso li[aria-current='step'] .registro-progreso__numero {
+  background: var(--color-primary);
+}
+
+.registro-progreso li[data-completado='true'] .registro-progreso__numero {
+  background: var(--color-success);
+  font-size: 0; /* oculta el número; el check ocupa su lugar */
+}
+
+.registro-progreso
+  li[data-completado='true']
+  .registro-progreso__numero::after {
+  content: '✓';
+  font-size: 1rem;
+}
+
+/* En móvil solo se ve el título de la sección actual. */
+@media (max-width: 47.99rem) {
+  .registro-progreso__titulo {
+    display: none;
+    grid-template-columns: repeat(5, 2rem);
+    justify-content: space-between;
+    row-gap: var(--space-2);
+  }
+
+  .registro-progreso li[aria-current='step'] .registro-progreso__titulo {
+    display: block;
+    grid-column: 1 / -1;
+    display: contents;
+  }
+
+  .registro-progreso__titulo {
+    display: none;
+  }
+
+  .registro-progreso li[aria-current='step'] .registro-progreso__titulo {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    text-align: center;
+  }
+
+  .registro-navegacion {
+    justify-content: center;
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .registro-navegacion .button {
+    width: 100%;
+  }
 }
 
 .registro-form fieldset {
@@ -850,4 +972,32 @@ p {
 .registro-confirmacion {
   max-width: var(--form-max-width);
   margin-inline: auto;
+}
+
+.registro-folio {
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.registro-aviso {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+}
+.registro-form label.registro-consentimiento {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  font-weight: 400;
+}
+
+.registro-consentimiento input[type='checkbox'] {
+  flex: 0 0 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0.125rem 0 0;
+  accent-color: var(--color-black);
 }
