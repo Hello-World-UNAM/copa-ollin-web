@@ -20,8 +20,8 @@ async function llenarHastaDocumentos(page: Page) {
     .getByLabel('Institución educativa')
     .fill(fixtureRegistro.equipo.institucion);
   await page
-    .getByLabel('Estado o ciudad de procedencia')
-    .fill('Ciudad Ficticia');
+    .getByLabel('Estado de procedencia')
+    .fill('Ciudad');
   await page.getByRole('button', { name: 'Continuar' }).click();
 
   await page
