@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import {
   GoogleAdapterConfigurationError,
+  GoogleAdapterConflictError,
   GoogleAdapterRecoveryError,
   GoogleAdapterTemporaryError,
 } from '../google/errors';
@@ -135,6 +136,10 @@ function parseFormData(formData: FormData): unknown {
   return raw;
 }
 
+// Texto sugerido para el cliente; el folio no valida pago ni inscripción.
+export const AVISO_FOLIO =
+  'Guarda tu folio: lo necesitarás para cualquier aclaración sobre tu registro. No confirma pago ni inscripción.';
+
 export function createRegistrationHandler(options: {
   adapter: GoogleAdapter;
   sandboxEnabled: boolean;
@@ -258,11 +263,25 @@ export function createRegistrationHandler(options: {
         {
           code: result.isDuplicate ? 'DUPLICATE' : 'SAVED',
           message: result.message,
+          ...(result.folio
+            ? { folio: result.folio, avisoFolio: AVISO_FOLIO }
+            : {}),
           isDuplicate: result.isDuplicate ?? false,
         },
         200,
       );
     } catch (error) {
+      if (error instanceof GoogleAdapterConflictError) {
+        return jsonResponse(
+          {
+            code: 'IDEMPOTENCY_CONFLICT',
+            error:
+              'El identificador ya se usó con datos o documentos distintos. No se guardó el contenido nuevo.',
+          },
+          409,
+        );
+      }
+
       if (error instanceof GoogleAdapterConfigurationError) {
         return jsonResponse(
           {

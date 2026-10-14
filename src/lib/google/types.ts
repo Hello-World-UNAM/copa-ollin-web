@@ -28,6 +28,7 @@ export interface RegistrationResult {
   success: true;
   message: string;
   isDuplicate?: boolean;
+  folio?: string;
 }
 
 export interface GoogleAdapter {
