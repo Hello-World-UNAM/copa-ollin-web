@@ -130,7 +130,9 @@ async function preflight() {
     spreadsheetId: config.SANDBOX_GOOGLE_SPREADSHEET_ID,
     range: 'Registros!A1:R1',
   });
-  const expected = [
+  // Nombres técnicos originales (hojas ya creadas) y nombres legibles actuales.
+  // Se aceptan ambos para no romper sandboxes existentes; el orden es el mismo.
+  const legacy = [
     'transactionId',
     'nombreEquipo',
     'categoria',
@@ -150,9 +152,33 @@ async function preflight() {
     'comprobantePago',
     'cartaResponsiva',
   ];
-  if (JSON.stringify(headers.data.values?.[0]) !== JSON.stringify(expected)) {
+  const legibles = [
+    'ID técnico',
+    'Equipo',
+    'Categoría',
+    'Institución',
+    'Procedencia',
+    'Capitán(na)',
+    'Correo',
+    'Teléfono',
+    'Identificación institucional',
+    'Integrantes',
+    'Robot',
+    'Descripción del robot',
+    'Reglamento',
+    'Uso de imagen',
+    'Restricciones de categoría',
+    'Identificación (enlace)',
+    'Comprobante (enlace)',
+    'Carta responsiva (enlace)',
+  ];
+  const actual = JSON.stringify(headers.data.values?.[0]);
+  if (
+    actual !== JSON.stringify(legacy) &&
+    actual !== JSON.stringify(legibles)
+  ) {
     throw new Error(
-      'Los encabezados no coinciden con el contrato de 18 columnas.',
+      'Los encabezados no coinciden con el contrato de 18 columnas (nombres técnicos o legibles).',
     );
   }
   console.log(

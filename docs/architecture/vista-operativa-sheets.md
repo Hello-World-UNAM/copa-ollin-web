@@ -18,7 +18,7 @@ Estado: transformación implementada y probada con datos ficticios; **aplicació
 
 - Formato `CO-XXXX-XXXX`, alfabeto sin `0/O/1/I/L`; es opaco, estable por reintento y **no** valida pago ni inscripción.
 - Las filas anteriores no necesitan relleno: la vista calcula su folio con la misma función.
-- Paso manual autorizado: escribir el encabezado `folio` en `S1` de la hoja sandbox. No sobrescribir A1:R1 ni filas existentes.
+- Paso manual autorizado: escribir el encabezado `Folio` en `S1` de la hoja sandbox. No sobrescribir filas existentes. Los encabezados legibles de `Registros` (`ENCABEZADOS_REGISTROS` en `vista-operativa.ts`) son un cambio manual de la fila 1; el orden de columnas no cambia y los nombres técnicos originales siguen aceptados por el preflight.
 - Riesgo abierto: la configuración exige `Registros!A:R` y el preflight lee `A1:R1`. Debe comprobarse en el sandbox autorizado que `append` escribe también la columna S con ese rango; si no, se propondrá a coordinación ampliar a `A:S` (cambio compartido).
 
 ## Aviso "guarda tu folio" (entrega al formulario)

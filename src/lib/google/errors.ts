@@ -29,6 +29,8 @@ export class GoogleAdapterRecoveryError extends GoogleAdapterTemporaryError {
       | 'idempotency-reservation-state-unknown',
     readonly providerStatus?: number,
     options?: ErrorOptions,
+    // IDs técnicos de Drive subidos antes del fallo; sin datos personales.
+    readonly driveFileIds: readonly string[] = [],
   ) {
     super(
       'Falló el guardado y no se pudo confirmar la limpieza completa del sandbox.',

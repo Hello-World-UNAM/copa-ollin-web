@@ -28,7 +28,7 @@ export interface ResultadoVista extends PlanVista {
 /**
  * Deriva la pestaña legible desde `Registros`. Por defecto sólo planifica
  * (lecturas); escribe únicamente con `confirmar: true`. Nunca modifica filas
- * de `Registros`: como máximo añade el encabezado `folio` en S1 si está vacío.
+ * de `Registros`: como máximo añade el encabezado `Folio` en S1 si está vacío.
  */
 export async function aplicarVistaOperativa(
   puerto: PuertoSheetsVista,
@@ -49,7 +49,7 @@ export async function aplicarVistaOperativa(
   if (!opciones.confirmar) return { ...plan, aplicado: false };
 
   if (plan.escribirEncabezadoFolio) {
-    await puerto.updateValues(`${PESTANA_CANONICA}!S1`, [['folio']]);
+    await puerto.updateValues(`${PESTANA_CANONICA}!S1`, [['Folio']]);
   }
 
   let sheetId = vista?.id;

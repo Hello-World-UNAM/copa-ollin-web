@@ -187,6 +187,29 @@ function createRegistrationFormData(
   return formData;
 }
 
+const comprobanteImagen = process.env.SANDBOX_GOOGLE_COMPROBANTE?.trim();
+const IMAGENES_FICTICIAS: Record<
+  string,
+  { mime: string; extension: string; bytes: number[] }
+> = {
+  png: {
+    mime: 'image/png',
+    extension: 'png',
+    // PNG de 1x1 píxel, generado sólo para pruebas.
+    bytes: [
+      137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1,
+      0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84,
+      120, 156, 99, 248, 207, 192, 240, 31, 0, 5, 0, 1, 255, 137, 153, 61, 29,
+      0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+    ],
+  },
+  jpeg: {
+    mime: 'image/jpeg',
+    extension: 'jpg',
+    bytes: [255, 216, 255, 224, 0, 16, 74, 70, 73, 70, 0, 1, 255, 217],
+  },
+};
+
 describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
   it('escribe una fila, omite el reintento y elimina la fila y archivos ficticios', async () => {
     if (!fileTestAuthorized) {
@@ -309,9 +332,17 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
       new Uint8Array(pdfBuffer).set(pdfContent);
       return new File([pdfBuffer], name, { type: 'application/pdf' });
     };
+    // Variante opt-in: SANDBOX_GOOGLE_COMPROBANTE=png|jpeg sube una imagen ficticia.
+    const imagenComprobante = IMAGENES_FICTICIAS[comprobanteImagen ?? ''];
     const registration = createFakeRegistrationData(transactionId, {
       archivoIdentificacion: createPdf('identificacion-ficticia.pdf'),
-      comprobantePago: createPdf('comprobante-ficticio.pdf'),
+      comprobantePago: imagenComprobante
+        ? new File(
+            [new Uint8Array(imagenComprobante.bytes)],
+            'comprobante-ficticio',
+            { type: imagenComprobante.mime },
+          )
+        : createPdf('comprobante-ficticio.pdf'),
       cartaResponsiva: createPdf('carta-ficticia.pdf'),
     });
     const driveFileNamePrefix = `copa-ollin-${transactionId}`;
@@ -391,7 +422,7 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
         corpora: 'allDrives',
         includeItemsFromAllDrives: true,
         pageSize: 100,
-        fields: 'files(id,name)',
+        fields: 'files(id,name,mimeType)',
         supportsAllDrives: true,
       });
       const createdFiles = driveFilesResponse.data.files ?? [];
@@ -401,6 +432,15 @@ describeGoogleIntegration('integración autorizada de Google Sandbox', () => {
       expect(matchingRows[0]?.[18]).toBe(folioEsperado);
       expect(matchingRows[0]?.[1]).toBe(registration.nombreEquipo);
       expect(createdFiles).toHaveLength(3);
+      if (imagenComprobante) {
+        const comprobante = createdFiles.find((f) =>
+          f.name?.includes('-comprobante-pago.'),
+        );
+        expect(
+          comprobante?.name?.endsWith(`.${imagenComprobante.extension}`),
+        ).toBe(true);
+        expect(comprobante?.mimeType).toBe(imagenComprobante.mime);
+      }
       const rowFileLinks = matchingRows[0]?.slice(15, 18) ?? [];
       expect(rowFileLinks).toHaveLength(3);
       for (const file of createdFiles) {
